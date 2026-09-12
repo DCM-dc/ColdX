@@ -1,0 +1,55 @@
+/* Frost semantic and motion tokens. Generated schemas use only --cx-sys-* values. */
+.cx-frost {
+  --cx-sys-surface: Canvas;
+  --cx-sys-surface-elevated: color-mix(in srgb, Canvas 94%, #d8eff7);
+  --cx-sys-text: CanvasText;
+  --cx-sys-text-muted: color-mix(in srgb, CanvasText 62%, transparent);
+  --cx-sys-accent: #5caecb;
+  --cx-sys-separator: color-mix(in srgb, CanvasText 16%, transparent);
+  --cx-sys-focus: #78c8e6;
+  --cx-sys-status-success: #3d9a70;
+  --cx-sys-status-warning: #ad7a20;
+  --cx-sys-status-danger: #c85b52;
+  --cx-sys-material-thin: color-mix(in srgb, Canvas 76%, transparent);
+  --cx-sys-material-regular: color-mix(in srgb, Canvas 86%, transparent);
+  --cx-sys-material-thick: color-mix(in srgb, Canvas 94%, transparent);
+  --cx-motion-press: 130ms;
+  --cx-motion-fade: 160ms;
+  --cx-motion-materialize: 520ms;
+  --cx-motion-ease: cubic-bezier(.23, 1, .32, 1);
+}
+
+.cx-surface { color: var(--cx-sys-text); background: var(--cx-sys-surface); border: 1px solid var(--cx-sys-separator); border-radius: 20px; }
+.cx-surface[data-material="thin"] { background: var(--cx-sys-material-thin); }
+.cx-surface[data-material="regular"] { background: var(--cx-sys-material-regular); }
+.cx-surface[data-material="thick"] { background: var(--cx-sys-material-thick); }
+.cx-action { min-height: 36px; padding: 8px 12px; border: 1px solid var(--cx-sys-separator); border-radius: 12px; background: var(--cx-sys-surface-elevated); color: var(--cx-sys-text); font: inherit; cursor: pointer; touch-action: manipulation; transition: transform var(--cx-motion-press) var(--cx-motion-ease), opacity var(--cx-motion-fade) ease, color var(--cx-motion-fade) ease, border-color var(--cx-motion-fade) ease, box-shadow var(--cx-motion-fade) ease; }
+.cx-action:disabled { opacity: .48; cursor: default; }
+.cx-action:focus-visible, .cx-disclosure > summary:focus-visible { outline: 2px solid var(--cx-sys-focus); outline-offset: 3px; }
+.cx-status { margin: 0; color: var(--cx-sys-text-muted); }
+.cx-status[data-tone="success"] { color: var(--cx-sys-status-success); }
+.cx-status[data-tone="warning"] { color: var(--cx-sys-status-warning); }
+.cx-status[data-tone="danger"] { color: var(--cx-sys-status-danger); }
+.cx-field { display: grid; gap: 6px; color: var(--cx-sys-text); }
+.cx-field-label { font-weight: 600; }
+.cx-field-hint, .cx-meter-value { color: var(--cx-sys-text-muted); font-size: .875em; }
+.cx-field-error { color: var(--cx-sys-status-danger); }
+.cx-meter { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; }
+.cx-meter-track { display: block; height: 6px; overflow: hidden; border-radius: 999px; background: color-mix(in srgb, var(--cx-sys-text) 12%, transparent); }
+.cx-meter-fill { display: block; width: 100%; height: 100%; transform-origin: left; background: var(--cx-sys-accent); transition: transform var(--cx-motion-fade) var(--cx-motion-ease); }
+.cx-disclosure > summary { cursor: pointer; color: var(--cx-sys-text); }
+
+/* Blur belongs to small floating materials only, never structural ancestors. */
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .cx-surface[data-floating="true"][data-material="thin"] { -webkit-backdrop-filter: blur(16px) saturate(125%); backdrop-filter: blur(16px) saturate(125%); }
+  .cx-surface[data-floating="true"][data-material="regular"] { -webkit-backdrop-filter: blur(24px) saturate(130%); backdrop-filter: blur(24px) saturate(130%); }
+  .cx-surface[data-floating="true"][data-material="thick"] { -webkit-backdrop-filter: blur(36px) saturate(135%); backdrop-filter: blur(36px) saturate(135%); }
+}
+/* This reset follows the floating allowlist so nested materials remain solid. */
+.cx-surface .cx-surface[data-material] { background: var(--cx-sys-surface-elevated); -webkit-backdrop-filter: none; backdrop-filter: none; }
+@media (pointer: coarse) { .cx-action { min-width: 44px; min-height: 44px; } }
+@media (prefers-reduced-motion: reduce) { .cx-action, .cx-meter-fill { transition: opacity 140ms ease, color 140ms ease, border-color 140ms ease, box-shadow 140ms ease; } }
+/* Equal specificity to floating blur rules; later preference rules win. */
+@media (prefers-reduced-transparency: reduce) { .cx-surface[data-material], .cx-surface[data-floating][data-material] { background: var(--cx-sys-surface); -webkit-backdrop-filter: none; backdrop-filter: none; } }
+@media (prefers-contrast: more) { .cx-surface[data-material], .cx-surface[data-floating][data-material] { background: var(--cx-sys-surface); -webkit-backdrop-filter: none; backdrop-filter: none; } .cx-surface, .cx-action { border-color: currentColor; background: var(--cx-sys-surface); } }
+@media (forced-colors: active) { .cx-surface[data-material], .cx-surface[data-floating][data-material] { background: Canvas; -webkit-backdrop-filter: none; backdrop-filter: none; } .cx-surface, .cx-action { color: CanvasText; border-color: CanvasText; background: Canvas; box-shadow: none; } .cx-meter-fill { background: Highlight; } }

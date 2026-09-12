@@ -1,0 +1,30 @@
+diff --git a/lib/client.js b/lib/client.js
+index 91e3d13af5b748dffb8e9668fadef423704bbe01..5df1cb4cf16029c8ea712f860e378187f1706d67 100644
+--- a/lib/client.js
++++ b/lib/client.js
+@@ -5994,11 +5994,17 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
+ 		//#region ../../host/apiproxy/lib/types/api/subagents.schema.js
+ 		/** Zod schemas for the browser-safe subagent domain. */
+ 		/** Healthy and diagnostic durable catalog rows. */
++		const subagentExecutionSchema = object({
++			status: union([literal("running"), literal("completed"), literal("failed"), literal("cancelled"), literal("interrupted")]),
++			seq: number().int().nonnegative(), time: number().nonnegative(),
++			code: string().max(40).optional(), httpStatus: number().int().min(100).max(599).optional()
++		});
+ 		const subagentListEntrySchema = union([
+ 			object({
+ 				kind: literal("child"),
+ 				id: sessionIdSchema,
+ 				mode: literal("one-shot"),
++				execution: subagentExecutionSchema.optional(),
+ 				activity: union([literal("running"), literal("inactive")]),
+ 				hasChildren: boolean(),
+ 				label: string().optional()
+@@ -6007,6 +6013,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
+ 				kind: literal("child"),
+ 				id: sessionIdSchema,
+ 				mode: literal("continuable"),
++				execution: subagentExecutionSchema.optional(),
+ 				activity: union([literal("running"), literal("inactive")]),
+ 				hasChildren: boolean(),
+ 				label: string()

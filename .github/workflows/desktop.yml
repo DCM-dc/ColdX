@@ -1,0 +1,56 @@
+name: Build ColdX desktop
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        # Tags produce the verified Windows target. Other platforms remain an
+        # explicit manual build until their installers have been accepted.
+        include: ${{ fromJSON(github.event_name == 'workflow_dispatch' && '[{"os":"windows-2022","arch":"x64"},{"os":"macos-15-intel","arch":"x64"},{"os":"macos-15","arch":"arm64"},{"os":"ubuntu-22.04","arch":"x64"}]' || '[{"os":"windows-2022","arch":"x64"}]') }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24.16.0
+          architecture: ${{ matrix.arch }}
+          package-manager-cache: false
+      - name: Check release tag and package versions
+        run: node .github/scripts/check-release.mjs
+      - run: npm install --global pnpm@11.19.0
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+      - run: pnpm desktop:dist
+      - name: Exercise the actual NSIS long-path uninstall hook
+        if: runner.os == 'Windows'
+        run: node --test test/desktop-installer.test.mjs
+      - name: Smoke test the unpacked app
+        if: runner.os != 'Linux'
+        run: node scripts/desktop/smoke.mjs
+      - name: Smoke test on Linux with a display
+        if: runner.os == 'Linux'
+        run: xvfb-run -a node scripts/desktop/smoke.mjs
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ColdX-${{ runner.os }}-${{ matrix.arch }}
+          if-no-files-found: error
+          compression-level: 0
+          path: |
+            dist/desktop/*.exe
+            dist/desktop/*.dmg
+            dist/desktop/*.zip
+            dist/desktop/*.AppImage
+            dist/desktop/*.deb

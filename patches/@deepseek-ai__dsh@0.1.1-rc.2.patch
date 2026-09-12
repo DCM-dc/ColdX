@@ -1,0 +1,92 @@
+diff --git a/lib/profile-boot-DG5t9aNs.js b/lib/profile-boot-DG5t9aNs.js
+index e63d193..266087f 100644
+--- a/lib/profile-boot-DG5t9aNs.js
++++ b/lib/profile-boot-DG5t9aNs.js
+@@ -1,6 +1,6 @@
+ import { writeFileSync } from "node:fs";
+ import { fileURLToPath } from "node:url";
+-import { PROFILE_PATCH_FILENAME, boot, composeEntries, healProfilesModuleFallback, installFailLoud, loadOptionalPatches, loadOverlayPatches, loadProfile, watchUserPatches } from "@deepseek-ai/dsh-app-boot";
++import { PROFILE_PATCH_FILENAME, boot, composeEntries, createProfileComposition, healProfilesModuleFallback, installFailLoud, loadOptionalPatches, loadOverlayPatches, loadProfile, readProfileManifest } from "@deepseek-ai/dsh-app-boot";
+ import { join, resolve } from "node:path";
+ import { resolveDshHome } from "@deepseek-ai/dsh-home-paths";
+ import { DSH_LAUNCH_ENVIRONMENT_KEY } from "@deepseek-ai/dsh-launch-environment";
+@@ -238,14 +238,27 @@ async function runProfile(options) {
+ 		await app.current?.fiber.dispose();
+ 	});
+ 	const rootConfig = join(composed.profile.dir, PROFILE_ROOT_FILENAME);
+-	const composeLive = () => structuredClone([
+-		...composed.bundlePatches,
+-		...loadOptionalPatches(NAME, composed.profile.patchPath) ?? [],
+-		...loadOptionalPatches(NAME, homePatchPath()) ?? [],
+-		...composed.overlays
+-	]);
++	const describeProfile = (profile) => ({
++		bundles: profile.layers.map((layer) => layer.packageName),
++		disabledBundles: readProfileManifest(NAME, profile.dir).dsh?.profile?.disabledBundles ?? [],
++		versions: Object.fromEntries(profile.layers.map((layer) => [layer.packageName, readProfileManifest(NAME, layer.packageDir).version ?? "unversioned"]))
++	});
++	const composeLive = () => {
++		const profile = loadProfile(NAME, options.profile, INSTALL_ANCHOR);
++		return {
++			...describeProfile(profile),
++			patches: structuredClone([
++				...profile.layers.flatMap((layer) => layer.patches),
++				...profile.patches,
++				...loadOptionalPatches(NAME, homePatchPath()) ?? [],
++				...composed.overlays
++			])
++		};
++	};
+ 	const ctx = await boot(NAME, rootConfig, structuredClone(allPatches(composed)), (hostCtx) => {
+ 		app.current = hostCtx;
++		app.profileComposition = createProfileComposition(hostCtx, composeLive, { ...describeProfile(composed.profile), patches: allPatches(composed) });
++		hostCtx.provide("profileComposition", app.profileComposition);
+ 		hostCtx.provide(DSH_LAUNCH_ENVIRONMENT_KEY, options.environment);
+ 		provideCmdline(hostCtx, {
+ 			args: options.args,
+@@ -261,16 +274,9 @@ async function runProfile(options) {
+ 				config: { root: [] }
+ 			});
+ 		}
+-		await watchUserPatches(ctx, {
+-			binName: NAME,
+-			filename: composed.profile.patchPath,
+-			compose: composeLive
+-		});
+-		await watchUserPatches(ctx, {
+-			binName: NAME,
+-			filename: homePatchPath(),
+-			compose: composeLive
+-		});
++		for (const filename of [join(composed.profile.dir, "package.json"), composed.profile.patchPath, homePatchPath()]) {
++			await ctx.get("hmr").registerConfig(filename, () => app.profileComposition.refresh());
++		}
+ 	} catch (error) {
+ 		suppressShutdownError(ctx, signalShutdown.signal, error);
+ 	}
+diff --git a/lib/plugin-9h8shc4d.js b/lib/plugin-9h8shc4d.js
+index 1d7b74d..705e2f0 100644
+--- a/lib/plugin-9h8shc4d.js
++++ b/lib/plugin-9h8shc4d.js
+@@ -48,10 +48,11 @@ function reconcilePlugins(before, profileDir) {
+ 	const beforeDeps = new Set(Object.keys(before.dependencies ?? {}));
+ 	const dependencies = Object.keys(after.dependencies ?? {});
+ 	const plugins = after.dsh?.profile?.bundles ?? [];
++	const disabled = new Set(after.dsh?.profile?.disabledBundles ?? []);
+ 	let changed = false;
+ 	for (const packageName of dependencies) {
+ 		const isBundle = exportsPatch(packageName, profileDir);
+-		if (isBundle && !plugins.includes(packageName)) {
++		if (isBundle && !disabled.has(packageName) && !plugins.includes(packageName)) {
+ 			plugins.push(packageName);
+ 			changed = true;
+ 		} else if (!isBundle && !beforeDeps.has(packageName)) process.stderr.write(`${NAME}: warning: ${packageName} declares no dsh.bundle — installed as a plain dependency, not a profile layer (a later update that gains one activates it automatically)
+@@ -60,7 +61,7 @@ function reconcilePlugins(before, profileDir) {
+ 	const dependencySet = new Set(dependencies);
+ 	for (const packageName of [...plugins]) {
+ 		const wasDependency = beforeDeps.has(packageName) || dependencySet.has(packageName);
+-		const stillBundle = dependencySet.has(packageName) && exportsPatch(packageName, profileDir);
++		const stillBundle = !disabled.has(packageName) && dependencySet.has(packageName) && exportsPatch(packageName, profileDir);
+ 		if (wasDependency && !stillBundle) {
+ 			plugins.splice(plugins.indexOf(packageName), 1);
+ 			changed = true;

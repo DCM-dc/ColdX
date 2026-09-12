@@ -1,0 +1,93 @@
+diff --git a/lib/index.js b/lib/index.js
+index 5398bce..d14633f 100644
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -4497,11 +4497,17 @@ const llmDiscoverModelsValueSchema = z$1.object({ models: z$1.array(discoveredMo
+ //#region lib/types/api/subagents.schema.js
+ /** Zod schemas for the browser-safe subagent domain. */
+ /** Healthy and diagnostic durable catalog rows. */
++const subagentExecutionSchema = z$1.object({
++	status: z$1.enum(["running", "completed", "failed", "cancelled", "interrupted"]),
++	seq: z$1.number().int().nonnegative(), time: z$1.number().nonnegative(),
++	code: z$1.string().max(40).optional(), httpStatus: z$1.number().int().min(100).max(599).optional()
++});
+ const subagentListEntrySchema = z$1.union([
+ 	z$1.object({
+ 		kind: z$1.literal("child"),
+ 		id: sessionIdSchema,
+ 		mode: z$1.literal("one-shot"),
++		execution: subagentExecutionSchema.optional(),
+ 		activity: z$1.union([z$1.literal("running"), z$1.literal("inactive")]),
+ 		hasChildren: z$1.boolean(),
+ 		label: z$1.string().optional()
+@@ -4510,6 +4516,7 @@ const subagentListEntrySchema = z$1.union([
+ 		kind: z$1.literal("child"),
+ 		id: sessionIdSchema,
+ 		mode: z$1.literal("continuable"),
++		execution: subagentExecutionSchema.optional(),
+ 		activity: z$1.union([z$1.literal("running"), z$1.literal("inactive")]),
+ 		hasChildren: z$1.boolean(),
+ 		label: z$1.string()
+diff --git a/lib/types/api/subagents.schema.js b/lib/types/api/subagents.schema.js
+index 3648b4a..a1633ce 100644
+--- a/lib/types/api/subagents.schema.js
++++ b/lib/types/api/subagents.schema.js
+@@ -2,11 +2,17 @@
+ import { z } from 'zod';
+ import { contentBlockSchema, historyEntrySchema, sessionIdSchema, sessionProjectionsBlockSchema, } from "./sessions.schema.js";
+ /** Healthy and diagnostic durable catalog rows. */
++const subagentExecutionSchema = z.object({
++    status: z.enum(['running', 'completed', 'failed', 'cancelled', 'interrupted']),
++    seq: z.number().int().nonnegative(), time: z.number().nonnegative(),
++    code: z.string().max(40).optional(), httpStatus: z.number().int().min(100).max(599).optional(),
++});
+ export const subagentListEntrySchema = z.union([
+     z.object({
+         kind: z.literal('child'),
+         id: sessionIdSchema,
+         mode: z.literal('one-shot'),
++        execution: subagentExecutionSchema.optional(),
+         activity: z.union([z.literal('running'), z.literal('inactive')]),
+         hasChildren: z.boolean(),
+         label: z.string().optional(),
+@@ -15,6 +21,7 @@ export const subagentListEntrySchema = z.union([
+         kind: z.literal('child'),
+         id: sessionIdSchema,
+         mode: z.literal('continuable'),
++        execution: subagentExecutionSchema.optional(),
+         activity: z.union([z.literal('running'), z.literal('inactive')]),
+         hasChildren: z.boolean(),
+         label: z.string(),
+@@ -71,4 +78,4 @@ const messageIdSchema = z.string();
+ export const subagentPromptValueSchema = z.object({
+     messageId: messageIdSchema,
+ });
+-//# sourceMappingURL=subagents.schema.js.map
+\ No newline at end of file
++//# sourceMappingURL=subagents.schema.js.map
+diff --git a/lib/types/api/subagents.d.ts b/lib/types/api/subagents.d.ts
+index 05ebaed..88953b3 100644
+--- a/lib/types/api/subagents.d.ts
++++ b/lib/types/api/subagents.d.ts
+@@ -16,6 +16,14 @@ export type SubagentListEntry = {
+     activity: 'running' | 'inactive';
+     /** Whether a direct descendant has durable `origin: 'subagent'`. */
+     hasChildren: boolean;
++    /** Whitelisted own-turn outcome; never contains prompt, reasoning or raw error text. */
++    execution?: {
++        status: 'running' | 'completed' | 'failed' | 'cancelled' | 'interrupted';
++        seq: number;
++        time: number;
++        code?: string;
++        httpStatus?: number;
++    };
+ } & ({
+     mode: 'one-shot';
+     label?: string;
+@@ -98,4 +106,4 @@ export interface SubagentsApi {
+         mode: 'continuable';
+     }>>): Promise<RpcResponse<SubagentInterruptReceipt>>;
+ }
+-//# sourceMappingURL=subagents.d.ts.map
+\ No newline at end of file
++//# sourceMappingURL=subagents.d.ts.map

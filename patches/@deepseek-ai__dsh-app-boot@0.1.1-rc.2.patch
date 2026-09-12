@@ -1,0 +1,96 @@
+diff --git a/lib/index.js b/lib/index.js
+index 66a9068..0bc3db6 100644
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -1,7 +1,7 @@
+ import { createRequire } from "node:module";
+ import { fileURLToPath, pathToFileURL } from "node:url";
+ import { existsSync, lstatSync, mkdirSync, readFileSync, readlinkSync, symlinkSync, unlinkSync, writeFileSync } from "node:fs";
+-import { parseEnv } from "node:util";
++import { parseEnv, isDeepStrictEqual } from "node:util";
+ import { basename, dirname, extname, isAbsolute, join, resolve } from "node:path";
+ import * as yaml from "js-yaml";
+ import { Context, Service } from "@deepseek-ai/cordis";
+@@ -758,6 +758,63 @@ const userPatchesSchema = entryListSchema;
+ * @returns an asynchronous disposer after the exact-path watcher is ready.
+ * @throws when HMR or the root Include is absent, watcher setup fails, or initial path resolution fails.
+ */
++/** Recompose the boot include through its existing transactional Cordis lifecycle. */
++function createProfileComposition(ctx, read, initial) {
++ let committed = initial;
++ let revision = 0;
++ let tail = Promise.resolve();
++ let holds = 0;
++ let wake;
++ let requests = 0;
++ let discardedThrough = 0;
++ const snapshot = () => ({ revision, bundles: [...committed.bundles], versions: { ...committed.versions }, disabledBundles: [...committed.disabledBundles ?? []] });
++ return {
++  snapshot,
++  hold() {
++   holds += 1;
++   let active = true;
++   return ({ discard = false } = {}) => {
++    if (!active) return;
++    active = false;
++    if (discard) discardedThrough = requests;
++    holds -= 1;
++    if (!holds) { wake?.resolve(); wake = undefined; }
++   };
++  },
++  refresh() {
++   const request = ++requests;
++   const task = tail.then(async () => {
++    while (holds) { wake ??= Promise.withResolvers(); await wake.promise; }
++    if (request <= discardedThrough) return snapshot();
++    const candidate = await read();
++    if (committed.bundles.some((name) => !candidate.bundles.includes(name) && candidate.disabledBundles?.includes(name))) {
++     throw Object.assign(new Error("A running plugin was quarantined after installation; restart is required."), { code: "profile-restart-required" });
++    }
++    for (const name of committed.bundles) {
++     if (candidate.bundles.includes(name) && committed.versions?.[name] !== candidate.versions?.[name]) {
++      throw Object.assign(new Error("An already imported plugin changed version; restart is required."), { code: "profile-restart-required" });
++     }
++    }
++    if (candidate.bundles.some((name) => !committed.bundles.includes(name))) {
++     const previousRows = composeEntries([committed.patches]);
++     const nextRows = composeEntries([candidate.patches]);
++     const retained = nextRows.filter((row) => previousRows.some((previous) => previous.id === row.id));
++     if (!isDeepStrictEqual(previousRows, retained)) {
++      throw Object.assign(new Error("The new bundle changes running entries; restart is required."), { code: "profile-restart-required" });
++     }
++    }
++    const entry = bootstrapIncludes.get(ctx);
++    if (entry === void 0) throw new Error("profile composition is not ready");
++    await entry.update({ config: { ...entry.options.config, patches: structuredClone(candidate.patches) } });
++    committed = candidate;
++    revision += 1;
++    return snapshot();
++   });
++   tail = task.catch(() => {});
++   return task;
++  }
++ };
++}
+ async function watchUserPatches(ctx, options) {
+ 	const { binName, filename, compose = (patches) => patches } = options;
+ 	const hmr = ctx.get("hmr");
+@@ -1213,4 +1270,4 @@ function addHarnessSourceSection(ctx, sourceRoot) {
+ 	});
+ }
+ //#endregion
+-export { DEFAULT_PROFILE_BUNDLES, FAIL_LOUD_RELEASE_TIMEOUT_MS, HARNESS_SOURCE_SECTION, PROFILES_DIR, PROFILE_PATCH_FILENAME, PROFILE_TEMPLATES, addHarnessSourceSection, assertEntriesActivated, assertEntriesLoaded, boot, composeEntries, healProfilesModuleFallback, initProfile, installFailLoud, loadEnv, loadLayeredEnv, loadOptionalPatches, loadOverlayPatches, loadProfile, mountRootInclude, readProfileManifest, renderConfigDump, resolveBundleDir, resolveConfigPath, resolveProfileDir, watchUserPatches, writeProfileManifest };
++export { createProfileComposition, DEFAULT_PROFILE_BUNDLES, FAIL_LOUD_RELEASE_TIMEOUT_MS, HARNESS_SOURCE_SECTION, PROFILES_DIR, PROFILE_PATCH_FILENAME, PROFILE_TEMPLATES, addHarnessSourceSection, assertEntriesActivated, assertEntriesLoaded, boot, composeEntries, healProfilesModuleFallback, initProfile, installFailLoud, loadEnv, loadLayeredEnv, loadOptionalPatches, loadOverlayPatches, loadProfile, mountRootInclude, readProfileManifest, renderConfigDump, resolveBundleDir, resolveConfigPath, resolveProfileDir, watchUserPatches, writeProfileManifest };
+diff --git a/lib/types/index.d.ts b/lib/types/index.d.ts
+index 40e642d..e9028d3 100644
+--- a/lib/types/index.d.ts
++++ b/lib/types/index.d.ts
+@@ -264,4 +264,6 @@ export declare const HARNESS_SOURCE_SECTION = "harness:source";
+  * @returns the section disposer, or `undefined` when no `systemPrompt` service is mounted.
+  */
+ export declare function addHarnessSourceSection(ctx: Context, sourceRoot: string): (() => void) | undefined;
+-//# sourceMappingURL=index.d.ts.map
+\ No newline at end of file
++//# sourceMappingURL=index.d.ts.map
++/** Native profile bundle refresh; uses the existing boot include and preserves unchanged fibers. */
++export declare function createProfileComposition(ctx: Context, read: () => { patches: any[]; bundles: string[]; versions: Record<string, string>; disabledBundles?: string[] }, initial: { patches: any[]; bundles: string[]; versions: Record<string, string>; disabledBundles?: string[] }): { hold(): (options?: { discard?: boolean }) => void; refresh(): Promise<{ revision: number; bundles: string[]; versions: Record<string, string>; disabledBundles: string[] }>; snapshot(): { revision: number; bundles: string[]; versions: Record<string, string>; disabledBundles: string[] } };

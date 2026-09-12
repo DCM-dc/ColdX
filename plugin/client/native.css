@@ -1,0 +1,378 @@
+/* DSH 0.1.1-rc.2 native client: verified CSS-module names from shipped client.js
+ * and dsh-web-frontend/dist/assets/index-C6eRlFa6.css. Keep native layout, state,
+ * focus management and semantic approval/error colours; this layer is visual. */
+.coldx-shell {
+  --dsw-font-family: "Segoe UI Variable Text", "Segoe UI", "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+  font-family: var(--dsw-font-family);
+  --coldx-native-shadow: 0 18px 56px -20px rgb(10 30 50 / 22%), 0 2px 8px rgb(10 30 50 / 5%);
+  --coldx-native-enter: var(--ds-ease-out);
+  --coldx-native-sheet: var(--coldx-spring-sheet);
+}
+.coldx-shell [data-slot="root"] {
+  --coldx-native-surface: var(--dsw-alias-bg-layer-1, var(--dsw-alias-bg-base));
+  --coldx-native-raised: var(--dsw-alias-bg-layer-2, var(--dsw-alias-bg-base));
+  --coldx-native-line: color-mix(in srgb, var(--dsw-alias-label-primary) 11%, transparent);
+  --coldx-native-wash: color-mix(in srgb, var(--dsw-alias-bg-base) 94%, #d4e8ef);
+  --coldx-native-selected: color-mix(in srgb, var(--dsw-alias-bg-base) 89%, #c8e3ed);
+  --coldx-native-focus: var(--dsw-alias-state-business-primary);
+}
+.coldx-shell body { font-family: var(--dsw-font-family); }
+.coldx-shell :is(.uV2eYG_input, .qDHVXG_searchInput, .Mbwy4a_fieldInput, .zGbnIq_input, .zGbnIq_selectInput, .At1oFq_input, .qSYn7G_search, ._input_1ao1y_25, .YDXeBa_renameInput, .qDHVXG_renameInput, ._button_kz6gm_4, ._item_19372_91, .Mbwy4a_option, .VOzbGW_navCell) { font-family: var(--dsw-font-family); }
+.coldx-shell :is(.uV2eYG_input, .qDHVXG_searchInput, .Mbwy4a_fieldInput)::placeholder { font-family: var(--dsw-font-family); color: var(--dsw-alias-label-secondary); opacity: .8; }
+
+/* Sidebar and workspace search. No changes to the native collapsed rail. */
+.coldx-shell .hHd-Xa_root { border-right: 1px solid var(--coldx-native-line); box-shadow: inset -1px 0 0 color-mix(in srgb, var(--dsw-alias-bg-base) 72%, transparent); }
+.coldx-shell .hHd-Xa_newSession { border-radius: 12px; font-weight: 550; }
+.coldx-shell :is(.hHd-Xa_iconButton, .qDHVXG_iconButton, .YDXeBa_iconButton, .qDHVXG_clearButton) { border-radius: 9px; }
+.coldx-shell :is(.YDXeBa_sessionRow, .YDXeBa_projectRow) { border-radius: 10px; }
+.coldx-shell .YDXeBa_sessionRow { min-height: 38px; }
+.coldx-shell .YDXeBa_title { font-size: 14px; line-height: 1.5; letter-spacing: -.01em; }
+.coldx-shell .YDXeBa_rowActions { flex-shrink: 0; height: 28px; }
+.coldx-shell .YDXeBa_sessionRow.YDXeBa_selected { background: var(--coldx-native-selected); box-shadow: inset 0 0 0 1px var(--coldx-native-line); }
+.coldx-shell .qDHVXG_sectionLabel { font-size: 12px; font-weight: 550; letter-spacing: .025em; }
+.coldx-shell :is(.YDXeBa_time, .YDXeBa_meta) { font-variant-numeric: tabular-nums; }
+.coldx-shell .qDHVXG_searchExpanded { border-radius: 10px; background: var(--coldx-native-surface); box-shadow: inset 0 0 0 1px var(--coldx-native-line); }
+.coldx-shell .qDHVXG_searchInput { font-size: 14px; line-height: 1.5; }
+.coldx-shell .YDXeBa_searchResultRow { border-radius: 11px; }
+.coldx-shell .YDXeBa_searchResultSnippet { line-height: 1.65; }
+.coldx-shell .YDXeBa_hoverContent { border-radius: 12px; }
+
+/* Shared native controls, menus and modal portals (html carries coldx-shell). */
+.coldx-shell ._button_kz6gm_4 { border-radius: 10px; gap: 6px; font-weight: 500; }
+.coldx-shell ._sm_kz6gm_30 { border-radius: 8px; }
+.coldx-shell ._wrap_1ao1y_1 { border-color: var(--coldx-native-line); border-radius: 10px; }
+.coldx-shell ._wrap_1ao1y_1:focus-within { border-color: var(--coldx-native-focus); box-shadow: 0 0 0 3px color-mix(in srgb, var(--coldx-native-focus) 10%, transparent); }
+.coldx-shell :is(._list_19372_8, ._submenu_19372_9) { padding: 5px; border: 1px solid var(--coldx-native-line); border-radius: 14px; background: var(--coldx-native-raised); box-shadow: var(--coldx-native-shadow); }
+.coldx-shell :is(._list_19372_8, ._submenu_19372_9)._compactList_19372_127 { padding: 4px; border-radius: 11px; }
+.coldx-shell ._item_19372_91 { min-height: 36px; padding: 7px 11px; border-radius: 9px; font-size: 14px; line-height: 21px; gap: 10px; }
+.coldx-shell ._compactList_19372_127 ._item_19372_91 { min-height: 33px; padding: 6px 9px; border-radius: 7px; font-size: 13px; }
+.coldx-shell ._label_19372_123 { padding: 7px 11px 5px; font-size: 12px; font-weight: 550; }
+.coldx-shell ._separator_19372_81 { background: var(--coldx-native-line); margin-inline: 7px; }
+.coldx-shell :is(._dialog_15u5s_22, .jLrgrW_dialog) { border-color: var(--coldx-native-line); border-radius: 20px; background: var(--coldx-native-raised); box-shadow: var(--coldx-native-shadow); }
+.coldx-shell ._title_15u5s_53 { font-size: 19px; font-weight: 600; letter-spacing: -.025em; line-height: 1.4; }
+.coldx-shell ._description_15u5s_80 { font-size: 14px; line-height: 1.7; color: var(--dsw-alias-label-secondary); }
+.coldx-shell ._close_15u5s_61 { border-radius: 9px; }
+.coldx-shell ._footer_15u5s_97 { gap: 10px; }
+
+/* Settings: a calm reading surface with clearly grouped editable controls. */
+.coldx-shell .VOzbGW_panel { border: 1px solid var(--coldx-native-line); border-radius: 20px; background: var(--coldx-native-raised); box-shadow: var(--coldx-native-shadow); }
+.coldx-shell .VOzbGW_nav { background: var(--coldx-native-wash); border-right: 1px solid var(--coldx-native-line); }
+.coldx-shell .VOzbGW_navCell { min-height: 42px; border-radius: 10px; font-size: 14px; }
+.coldx-shell .VOzbGW_navCell.VOzbGW_active { background: var(--coldx-native-surface); box-shadow: 0 1px 4px rgb(10 30 50 / 5%); }
+.coldx-shell :is(.VOzbGW_navTitle, .zGbnIq_title, .pbvGtq_heading) { font-weight: 600; letter-spacing: -.02em; }
+.coldx-shell .VOzbGW_header { border-bottom-color: var(--coldx-native-line); }
+.coldx-shell :is(.zGbnIq_intro, .pbvGtq_intro, .YyYd_a_description, .At1oFq_hint) { line-height: 1.65; }
+.coldx-shell :is(.zGbnIq_rowCard, .zGbnIq_addCard, .zGbnIq_setupCard, .YyYd_a_card, .qSYn7G_card) { border: 1px solid var(--coldx-native-line); border-radius: 14px; background: var(--coldx-native-surface); box-shadow: 0 1px 2px rgb(10 30 50 / 3%); }
+.coldx-shell :is(.zGbnIq_rowName, .YyYd_a_name, .qSYn7G_cardTitle) { font-size: 14px; font-weight: 550; line-height: 1.5; }
+.coldx-shell :is(.zGbnIq_editor, .zGbnIq_modelAdvanced, .YyYd_a_body, .qSYn7G_cardDetails) { border-color: var(--coldx-native-line); }
+.coldx-shell :is(.zGbnIq_fieldLabel, .zGbnIq_modelFieldLabel, .At1oFq_label) { font-size: 13px; font-weight: 550; line-height: 1.6; }
+.coldx-shell :is(.zGbnIq_input, .zGbnIq_selectInput, .At1oFq_input, .qSYn7G_search, .YDXeBa_renameInput, .qDHVXG_renameInput) { border-radius: 9px; border-color: var(--coldx-native-line); background: var(--coldx-native-surface); font-size: 14px; line-height: 1.5; }
+.coldx-shell .At1oFq_inputInvalid { border-color: var(--dsw-alias-state-error-primary); }
+.coldx-shell :is(.zGbnIq_secondaryButton, .zGbnIq_addButton, .zGbnIq_primaryButton, .zGbnIq_dangerButton, .YyYd_a_save, .YyYd_a_discard) { border-radius: 9px; font-weight: 500; }
+.coldx-shell :is(.zGbnIq_rowTag, .At1oFq_badge, .qSYn7G_configTag) { border-radius: 5px; font-size: 10px; line-height: 1.5; }
+.coldx-shell .pbvGtq_tabs { gap: 4px; border-bottom-color: var(--coldx-native-line); }
+.coldx-shell .pbvGtq_tab { border-radius: 8px; font-size: 14px; }
+
+/* Conversation chrome and the underlying native tool / reasoning trajectory. */
+.coldx-shell .wSkVaW_tabs { gap: 3px; }
+.coldx-shell .wSkVaW_tab { border-radius: 8px; font-size: 13px; }
+.coldx-shell .wSkVaW_tabActive { background: var(--coldx-native-wash); }
+.coldx-shell .wSkVaW_header { background: color-mix(in srgb, var(--dsw-alias-bg-base) 96%, #dcecf2); border-bottom: 1px solid var(--coldx-native-line); }
+.coldx-shell .gdEzaW_bubble { border: 1px solid var(--coldx-native-line); border-radius: 18px 18px 5px 18px; background: var(--coldx-native-selected); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-bg-base) 80%, white), 0 10px 28px -24px rgb(23 56 77 / 28%); line-height: 1.7; }
+.coldx-shell :is(.QWLzlG_row, ._Xvjua_row) { border: 1px solid transparent; border-radius: 10px; min-height: 34px; transition: background-color 150ms var(--coldx-native-enter), border-color 150ms var(--coldx-native-enter), box-shadow 180ms var(--coldx-native-enter); }
+.coldx-shell :is(.QWLzlG_title, ._Xvjua_title) { font-size: 14px; font-weight: 550; }
+.coldx-shell :is(.QWLzlG_summary, ._Xvjua_summary, .pC0e7a_summary) { font-size: 13px; line-height: 1.6; }
+.coldx-shell :is(.QWLzlG_thinkBody, ._Xvjua_body, .pC0e7a_body, .gdEzaW_compactionBody, .gdEzaW_retryDetails) { border-color: var(--coldx-native-line); border-radius: 13px; background: color-mix(in srgb, var(--dsw-alias-bg-base) 97%, #d7e9ef); font-size: 14px; line-height: 1.7; }
+.coldx-shell .QWLzlG_thinkBody { color: var(--dsw-alias-label-secondary); }
+.coldx-shell :is(.p-xYUq_action, .gdEzaW_compactionButton) { border-radius: 7px; }
+.coldx-shell .Md3f7G_toBottom { border: 1px solid var(--coldx-native-line); background: var(--coldx-native-raised); box-shadow: 0 3px 12px rgb(10 30 50 / 8%); }
+.coldx-shell .gdEzaW_turnErrorCopy { line-height: 1.65; }
+.coldx-shell :is(.gdEzaW_retrySummary, .gdEzaW_compactionSummary) { line-height: 1.6; }
+.coldx-shell .ydkMvW_root { border-left: 1px solid var(--coldx-native-line); background: color-mix(in srgb, var(--dsw-alias-bg-base) 97%, #dcecf2); box-shadow: -16px 0 42px -38px rgb(23 56 77 / 28%); }
+.coldx-shell .ydkMvW_header { border-bottom: 1px solid var(--coldx-native-line); background: var(--coldx-native-wash); }
+
+/* Native Markdown keeps code, tables, citations and overflow behavior intact. */
+.coldx-shell ._markdown_1r4m5_5 { font-size: 15px; line-height: 1.8; letter-spacing: .005em; }
+.coldx-shell ._markdown_1r4m5_5 :is(h1, h2, h3, h4, h5, h6) { line-height: 1.35; letter-spacing: -.02em; font-weight: 600; }
+.coldx-shell ._markdown_1r4m5_5 h1 { font-size: 1.65em; margin-block: 1.65em .7em; }
+.coldx-shell ._markdown_1r4m5_5 h2 { font-size: 1.4em; margin-block: 1.6em .65em; }
+.coldx-shell ._markdown_1r4m5_5 h3 { font-size: 1.18em; margin-block: 1.45em .6em; }
+.coldx-shell ._markdown_1r4m5_5 > :first-child { margin-top: 0; }
+.coldx-shell ._markdown_1r4m5_5 > :last-child { margin-bottom: 0; }
+.coldx-shell ._markdown_1r4m5_5 p { margin-block: .9em; }
+.coldx-shell ._markdown_1r4m5_5 :is(ul, ol) { margin-block: .85em; }
+.coldx-shell ._markdown_1r4m5_5 li:not(:first-child) { margin-top: .35em; }
+.coldx-shell ._markdown_1r4m5_5 blockquote { border-left: 3px solid var(--coldx-native-line); padding: 8px 16px; margin-block: 16px; border-radius: 0 10px 10px 0; background: var(--coldx-native-wash); color: var(--dsw-alias-label-secondary); }
+.coldx-shell ._markdown_1r4m5_5 hr { background: var(--coldx-native-line); margin-block: 26px; }
+.coldx-shell ._markdown_1r4m5_5 :not(pre) > code { border-radius: 5px; padding-inline: 5px; }
+.coldx-shell ._markdown_1r4m5_5 a { text-underline-offset: 3px; }
+.coldx-shell ._markdown_1r4m5_5 :is(th, td) { padding: 10px 14px; border-color: var(--coldx-native-line); line-height: 1.6; }
+.coldx-shell ._markdown_1r4m5_5 th { font-size: 13px; font-weight: 600; background: var(--coldx-native-wash); }
+
+/* Native permission, plan review and questions retain their own state colours. */
+.coldx-shell :is(.bqrRRG_card, .LVzXQa_card, .Mbwy4a_card) { border: 1px solid var(--coldx-native-line); border-radius: 18px; background: var(--coldx-native-raised); box-shadow: 0 8px 28px -16px rgb(10 30 50 / 16%); }
+.coldx-shell :is(.bqrRRG_headline, .Mbwy4a_title) { font-size: 14px; font-weight: 600; line-height: 1.55; }
+.coldx-shell :is(.bqrRRG_command, .LVzXQa_body, .Mbwy4a_detail) { line-height: 1.65; }
+.coldx-shell :is(.bqrRRG_actionRow, .LVzXQa_actions, .Mbwy4a_footerActions) { gap: 8px; }
+.coldx-shell :is(.Mbwy4a_header, .Mbwy4a_footer, .LVzXQa_footer) { border-color: var(--coldx-native-line); }
+.coldx-shell .Mbwy4a_option { border-radius: 11px; border-color: var(--coldx-native-line); padding: 11px 12px; }
+.coldx-shell .Mbwy4a_optionSelected { background: var(--coldx-native-selected); border-color: color-mix(in srgb, var(--coldx-native-focus) 35%, var(--coldx-native-line)); }
+.coldx-shell .Mbwy4a_optionLabel { font-size: 13px; font-weight: 550; line-height: 1.5; }
+.coldx-shell .Mbwy4a_description { font-size: 12px; line-height: 1.6; }
+.coldx-shell .Mbwy4a_number { font-variant-numeric: tabular-nums; font-size: 11px; border-radius: 5px; }
+.coldx-shell .Mbwy4a_field { border-radius: 10px; }
+.coldx-shell .Mbwy4a_fieldInput { font-size: 13px; line-height: 1.65; }
+.coldx-shell .Mbwy4a_iconButton { border-radius: 8px; }
+
+/* A bounded transition set: no layout animation and no motion on keyboard focus. */
+.coldx-shell :is(._button_kz6gm_4, ._item_19372_91, .hHd-Xa_iconButton, .hHd-Xa_newSession, .YDXeBa_sessionRow, .YDXeBa_projectRow, .VOzbGW_navCell, .wSkVaW_tab, .pbvGtq_tab, .Mbwy4a_option, .Mbwy4a_iconButton) { transition: background-color 150ms var(--ds-ease-out), border-color 150ms var(--ds-ease-out), box-shadow 150ms var(--ds-ease-out); }
+.coldx-shell :is(._button_kz6gm_4, ._item_19372_91, ._close_15u5s_61, .hHd-Xa_iconButton, .hHd-Xa_newSession, .YDXeBa_sessionRow, .YDXeBa_projectRow, .qDHVXG_iconButton, .VOzbGW_navCell, .VOzbGW_close, .wSkVaW_tab, .pbvGtq_tab, .Mbwy4a_option, .Mbwy4a_iconButton, .zGbnIq_input, .At1oFq_input, .qSYn7G_search):focus-visible { outline: 2px solid var(--coldx-native-focus); outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) {
+  .coldx-shell :is(.YDXeBa_sessionRow, .YDXeBa_projectRow):not(.YDXeBa_selected):hover { background: var(--coldx-native-wash); }
+  .coldx-shell :is(.VOzbGW_navCell, .wSkVaW_tab, .pbvGtq_tab):hover { background: var(--coldx-native-wash); }
+  .coldx-shell :is(.QWLzlG_row, ._Xvjua_row):hover { border-color: var(--coldx-native-line); background: var(--coldx-native-wash); box-shadow: 0 5px 18px -16px rgb(23 56 77 / 24%); }
+}
+@media (pointer: coarse) {
+  .coldx-shell :is(._item_19372_91, ._compactList_19372_127 ._item_19372_91, .YDXeBa_sessionRow, .Mbwy4a_option, .VOzbGW_navCell) { min-height: 44px; }
+  .coldx-shell :is(.zGbnIq_input, .At1oFq_input, .Mbwy4a_fieldInput, .qDHVXG_searchInput) { font-size: 16px; }
+  .coldx-shell ._button_kz6gm_4 { min-height: 40px; }
+}
+@media (max-width: 640px) {
+  .coldx-shell .VOzbGW_panel { border-radius: 14px; }
+  .coldx-shell :is(.bqrRRG_card, .LVzXQa_card, .Mbwy4a_card) { border-radius: 14px; }
+  .coldx-shell ._markdown_1r4m5_5 { line-height: 1.72; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .coldx-shell :is(._button_kz6gm_4, ._item_19372_91, .hHd-Xa_iconButton, .hHd-Xa_newSession, .YDXeBa_sessionRow, .YDXeBa_projectRow, .VOzbGW_navCell, .wSkVaW_tab, .pbvGtq_tab, .Mbwy4a_option, .Mbwy4a_iconButton) { transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease; transform: none; }
+}
+/* Menus float close to their source, while dialogs and Settings separate a
+   heavier task layer. These are conventional frosted materials: no gradient,
+   glow or refraction, and no filter on any structural/sidebar ancestor. */
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .coldx-shell :is(._list_19372_8, ._submenu_19372_9) {
+    background: var(--coldx-material-regular);
+    -webkit-backdrop-filter: blur(24px) saturate(135%);
+    backdrop-filter: blur(24px) saturate(135%);
+  }
+  .coldx-shell :is(._dialog_15u5s_22, .jLrgrW_dialog, .VOzbGW_panel) {
+    background: var(--coldx-material-thick);
+    -webkit-backdrop-filter: blur(32px) saturate(125%);
+    backdrop-filter: blur(32px) saturate(125%);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .coldx-shell :is(._list_19372_8, ._submenu_19372_9, ._dialog_15u5s_22, .jLrgrW_dialog, .VOzbGW_panel) {
+    background: var(--dsw-alias-bg-base);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+@media (prefers-contrast: more) {
+  .coldx-shell [data-slot="root"] { --coldx-native-line: color-mix(in srgb, var(--dsw-alias-label-primary) 35%, transparent); }
+  .coldx-shell :is(._list_19372_8, ._submenu_19372_9, ._dialog_15u5s_22, .jLrgrW_dialog, .VOzbGW_panel) {
+    background: var(--dsw-alias-bg-base);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+@media (forced-colors: active) {
+  .coldx-shell :is(._list_19372_8, ._submenu_19372_9, ._dialog_15u5s_22, .jLrgrW_dialog, .VOzbGW_panel, .zGbnIq_rowCard, .YyYd_a_card, .bqrRRG_card, .LVzXQa_card, .Mbwy4a_card) { border-color: CanvasText; background: Canvas; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .coldx-shell :is(.YDXeBa_selected, .VOzbGW_active, .Mbwy4a_optionSelected) { outline: 1px solid Highlight; outline-offset: -1px; }
+}
+
+/* The textarea is a transparent input over a mirror. Keep all three native
+   layers metrically identical; changing its text-fill would double the text. */
+.coldx-shell .uV2eYG_card { font-size: 16px; line-height: 26px; }
+.coldx-shell :is(.uV2eYG_input, .uV2eYG_mirror, .uV2eYG_backdrop) { font-family: var(--dsw-font-family); font-size: inherit; line-height: inherit; letter-spacing: .005em; }
+.coldx-shell :is(.Sh0Q9G_trigger, ._7KE1Ra_trigger) { border: 1px solid transparent; background: var(--coldx-native-wash); }
+.coldx-shell .Sh0Q9G_trigger { min-height: 31px; padding-inline: 9px 6px; border-radius: 10px; font-family: var(--dsw-font-family); }
+.coldx-shell ._7KE1Ra_trigger { min-height: 30px; border-radius: 10px; padding-inline: 9px 5px; }
+.coldx-shell .uV2eYG_add { border: 1px solid var(--coldx-native-line); background: var(--coldx-native-wash); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-bg-base) 82%, white); }
+.coldx-shell .uV2eYG_primary { box-shadow: 0 7px 17px -10px color-mix(in srgb, var(--dsw-alias-label-primary) 58%, transparent); }
+.coldx-shell :is(.uV2eYG_add, .uV2eYG_primary, ._7KE1Ra_trigger, .Sh0Q9G_trigger) { transform: none; transition: transform 264ms var(--coldx-spring-control), background-color 150ms ease, border-color 150ms ease, box-shadow 180ms var(--coldx-native-enter); }
+.coldx-shell :is(.uV2eYG_add, .uV2eYG_primary, ._7KE1Ra_trigger, .Sh0Q9G_trigger):active:not(:disabled):not(:focus-visible) { transform: scale(.96); transition-duration: 100ms; transition-timing-function: var(--coldx-native-enter); }
+.coldx-shell .Sh0Q9G_chevron { transform-origin: 50% 50%; transition: transform 180ms var(--coldx-native-enter); }
+.coldx-shell .VOzbGW_nav { padding-top: 25px; gap: 22px; }
+.coldx-shell .VOzbGW_navList { gap: 5px; }
+.coldx-shell .VOzbGW_navTitle { font-size: 18px; }
+.coldx-shell .VOzbGW_header { min-height: 61px; padding-top: 19px; }
+.coldx-shell .VOzbGW_options { padding-bottom: 30px; }
+.coldx-shell :is(.zGbnIq_title, .pbvGtq_heading, .jLrgrW_title) { font-size: 21px; line-height: 1.4; }
+.coldx-shell :is(.zGbnIq_intro, .pbvGtq_intro, .YyYd_a_description, .At1oFq_hint) { font-size: 13px; line-height: 1.7; }
+.coldx-shell :is(.zGbnIq_editor, .zGbnIq_modelAdvanced, .YyYd_a_body) { border-radius: 11px; }
+.coldx-shell :is(.zGbnIq_input, .zGbnIq_selectInput, .At1oFq_input, .qSYn7G_search, ._wrap_1ao1y_1) { transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease; }
+.coldx-shell .VOzbGW_close { width: 32px; height: 32px; border-radius: 10px; }
+.coldx-shell ._close_15u5s_61 { width: 30px; height: 30px; }
+.coldx-shell .gdEzaW_bubble { font-size: 15px; line-height: 1.75; }
+
+/* rc.2 retains DisclosureRow's shell and toggles data-open (present/absent).
+   Do not animate height or hide its native content. The shell can reverse
+   its highlight immediately while the mounted detail appears. */
+.coldx-shell ._root_9cl6j_3 > ._row_9cl6j_10 { min-height: 32px; height: auto; padding-block: 3px; border-radius: 9px; transition: background-color 150ms var(--coldx-native-enter), box-shadow 150ms var(--coldx-native-enter); }
+.coldx-shell ._root_9cl6j_3[data-open] > ._row_9cl6j_10 { background: var(--coldx-native-wash); box-shadow: inset 0 0 0 1px var(--coldx-native-line); }
+.coldx-shell :is(.QWLzlG_thinkBody, ._Xvjua_body, .pC0e7a_body) { opacity: 1; transform: none; transition: opacity 160ms var(--coldx-native-enter), transform 160ms var(--coldx-native-enter); }
+.coldx-shell ._leading_9cl6j_23 { margin-left: 4px; margin-right: 8px; }
+.coldx-shell ._iconIdle_9cl6j_42, .coldx-shell ._chevronHover_9cl6j_48 { transition: opacity 125ms ease; }
+
+/* Native DropdownMenu and Modal unmount on close; rc.2 exposes no exit state.
+   Starting styles provide immediate, cancellable entry without inventing a
+   display/visibility lifecycle. Persistent controls use regular transitions.
+   Native non-portaled menus expose side/alignment; portaled menus expose only
+   fixed coordinates, so their conservative origin is the panel center. */
+.coldx-shell :is(._list_19372_8, ._submenu_19372_9) {
+  --coldx-native-origin-x: 0%; --coldx-native-origin-y: 0%; --coldx-native-entry-y: -3px;
+  opacity: 1; transform: none;
+  transform-origin: var(--coldx-native-origin-x) var(--coldx-native-origin-y);
+  transition: opacity 170ms var(--coldx-native-enter), transform 220ms var(--coldx-native-enter);
+}
+.coldx-shell ._list_19372_8._sideTop_19372_51 { --coldx-native-origin-y: 100%; --coldx-native-entry-y: 3px; }
+.coldx-shell ._list_19372_8._alignEnd_19372_56 { --coldx-native-origin-x: 100%; }
+.coldx-shell ._list_19372_8._portal_19372_43 { --coldx-native-origin-x: 50%; --coldx-native-origin-y: 50%; --coldx-native-entry-y: 0px; }
+.coldx-shell ._submenu_19372_9 { --coldx-native-origin-y: calc(100% - 16px); --coldx-native-entry-y: 0px; }
+.coldx-shell :is(._dialog_15u5s_22, .VOzbGW_panel) { opacity: 1; transform: none; transform-origin: 50% 50%; transition: opacity 180ms var(--coldx-native-enter), transform 440ms var(--coldx-native-sheet); }
+.coldx-shell :is(._mask_15u5s_14, .VOzbGW_mask) { opacity: 1; transition: opacity 180ms ease; }
+@starting-style {
+  .coldx-shell :is(._list_19372_8, ._submenu_19372_9) { opacity: .72; transform: translateY(var(--coldx-native-entry-y)) scale(.975); }
+  .coldx-shell :is(._dialog_15u5s_22, .VOzbGW_panel) { opacity: .46; transform: translateY(18px) scale(.97); }
+  .coldx-shell :is(._mask_15u5s_14, .VOzbGW_mask) { opacity: .4; }
+  .coldx-shell :is(.QWLzlG_thinkBody, ._Xvjua_body, .pC0e7a_body) { opacity: .6; transform: translateY(-3px); }
+}
+
+/* A single owner for native press feedback. Keyboard focus never deforms;
+   no selector here reaches ColdX choices, lab controls or iframe documents. */
+.coldx-shell :is(._button_kz6gm_4, ._close_15u5s_61, .VOzbGW_close, .hHd-Xa_newSession, .hHd-Xa_iconButton, .Mbwy4a_iconButton, .zGbnIq_primaryButton, .zGbnIq_secondaryButton, .zGbnIq_addButton) { transform: none; transition: transform 264ms var(--coldx-spring-control), background-color 150ms ease, border-color 150ms ease, box-shadow 180ms var(--coldx-native-enter); }
+.coldx-shell :is(._button_kz6gm_4, ._close_15u5s_61, .VOzbGW_close, .hHd-Xa_newSession, .hHd-Xa_iconButton, .Mbwy4a_iconButton, .zGbnIq_primaryButton, .zGbnIq_secondaryButton, .zGbnIq_addButton):active:not(:disabled):not(:focus-visible) { transform: scale(.97); transition-duration: 100ms; transition-timing-function: var(--coldx-native-enter); }
+@media (hover: hover) and (pointer: fine) {
+  .coldx-shell ._root_9cl6j_3 > ._row_9cl6j_10[data-expandable]:hover { background: var(--coldx-native-wash); }
+  .coldx-shell :is(.Sh0Q9G_trigger, ._7KE1Ra_trigger):hover { border-color: var(--coldx-native-line); background: var(--coldx-native-selected); }
+}
+/* Native focus-visible reflects keyboard modality. Be conservative when a
+   text field owns focus: let the user type into a sharp, stationary surface. */
+.coldx-shell:has(:focus-visible) :is(._list_19372_8, ._submenu_19372_9, ._dialog_15u5s_22, .VOzbGW_panel, ._mask_15u5s_14, .VOzbGW_mask, .QWLzlG_thinkBody, ._Xvjua_body, .pC0e7a_body, .Sh0Q9G_chevron) { transition: none; }
+.coldx-shell ._root_9cl6j_3:has(:focus-visible) > ._row_9cl6j_10 { transition: none; }
+.coldx-shell :is(._button_kz6gm_4, ._close_15u5s_61, .VOzbGW_close, .hHd-Xa_newSession, .hHd-Xa_iconButton, .Mbwy4a_iconButton, .zGbnIq_primaryButton, .zGbnIq_secondaryButton, .zGbnIq_addButton):focus-visible { transform: none; transition: none; }
+@media (max-width: 640px) {
+  /* rc.2's SettingsPanel is nav + content. Move the existing four native
+     sections above content; never squeeze a form beside a fixed-width rail. */
+  .coldx-shell .VOzbGW_panel { box-sizing: border-box; flex-direction: column; width: calc(100vw - 24px); max-width: calc(100vw - 24px); height: min(800px, calc(100dvh - 24px)); }
+  .coldx-shell .VOzbGW_nav { width: 100%; padding: 16px 12px 10px; gap: 10px; border-right: 0; border-bottom: 1px solid var(--coldx-native-line); }
+  .coldx-shell .VOzbGW_navTitle { padding-inline: 4px; font-size: 18px; line-height: 25px; }
+  .coldx-shell .VOzbGW_navList { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
+  .coldx-shell .VOzbGW_navCell { width: 100%; min-width: 0; min-height: 42px; height: auto; padding: 9px 10px; gap: 8px; }
+  .coldx-shell .VOzbGW_navLabel { white-space: normal; overflow-wrap: anywhere; }
+  .coldx-shell .VOzbGW_content { width: 100%; min-height: 0; }
+  .coldx-shell .VOzbGW_header { min-height: 54px; height: auto; padding: 8px 12px; align-items: center; }
+  .coldx-shell .VOzbGW_actions { flex: 1; justify-content: flex-start; flex-wrap: wrap; }
+  .coldx-shell .VOzbGW_close { flex: none; width: 38px; height: 38px; }
+  .coldx-shell .VOzbGW_options { padding: 0 16px 24px; overscroll-behavior: contain; }
+  .coldx-shell .VOzbGW_panel .me01iq_action { flex-wrap: wrap; }
+  .coldx-shell .VOzbGW_panel .me01iq_error { max-width: 100%; white-space: normal; }
+
+  /* General settings own separate CSS modules but share the same native
+     label/control structure. Remove desktop label clearance before stacking. */
+  .coldx-shell .VOzbGW_panel :is(.hVGvvW_row, .T1PP_q_row, ._5QVD0a_row, .oY77xG_row) { flex-direction: column; align-items: stretch; gap: 10px; }
+  .coldx-shell .VOzbGW_panel :is(.hVGvvW_rowText, .T1PP_q_rowText, ._5QVD0a_rowText, .oY77xG_rowText) { flex: none; width: 100%; padding-right: 0; }
+  .coldx-shell .VOzbGW_panel :is(.hVGvvW_selector, .T1PP_q_selector, ._5QVD0a_selector, .oY77xG_selector) { box-sizing: border-box; width: 100%; max-width: 100%; min-height: 40px; height: auto; padding-block: 8px; justify-content: space-between; white-space: normal; text-align: left; }
+  .coldx-shell .VOzbGW_panel ._8HJdBW_cubeRow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+  .coldx-shell .VOzbGW_panel ._8HJdBW_themeCube { min-width: 0; padding: 14px 4px; border-radius: 12px; font-size: 13px; line-height: 20px; }
+
+  /* Text/select schema fields fill their column; buttons and reset actions
+     retain their own intrinsic width. No broad input rule reaches switches. */
+  .coldx-shell .VOzbGW_panel :is(.zGbnIq_section, .pbvGtq_section, .rtSEdW_section, .zGbnIq_field, .zGbnIq_modelField, .At1oFq_field) { min-width: 0; max-width: 100%; }
+  .coldx-shell .VOzbGW_panel :is(.zGbnIq_input, .At1oFq_input, .At1oFq_inputInvalid, .rtSEdW_input) { box-sizing: border-box; min-width: 0; width: 100%; max-width: 100%; min-height: 38px; font-size: 16px; }
+  .coldx-shell .VOzbGW_panel :is(.zGbnIq_rowHead, .zGbnIq_rowIdentity, .zGbnIq_editorHeader, .zGbnIq_fieldLabel, .zGbnIq_editorActions, .At1oFq_head, .At1oFq_badges, .YyYd_a_footer) { flex-wrap: wrap; }
+  .coldx-shell .VOzbGW_panel :is(.zGbnIq_rowName, .zGbnIq_editorRoute, .At1oFq_label, .At1oFq_hint, .rtSEdW_cardId) { overflow-wrap: anywhere; }
+  .coldx-shell .VOzbGW_panel .At1oFq_label { flex-basis: 100%; }
+  .coldx-shell .VOzbGW_panel :is(.zGbnIq_editor, .zGbnIq_addCard, .zGbnIq_setupCard) { padding: 12px; }
+  .coldx-shell .VOzbGW_panel :is(.zGbnIq_addCard, .zGbnIq_setupCard) .zGbnIq_editor { padding: 0; }
+  .coldx-shell .VOzbGW_panel .zGbnIq_addButton { min-width: 0; flex-basis: 100%; }
+  .coldx-shell .VOzbGW_panel .zGbnIq_modelRow { grid-template-columns: minmax(0, 1fr) 32px 32px; }
+  .coldx-shell .VOzbGW_panel .zGbnIq_modelRow > .zGbnIq_input:first-child { grid-column: 1 / -1; }
+  .coldx-shell .VOzbGW_panel .zGbnIq_modelAdvanced { grid-template-columns: minmax(0, 1fr); }
+  .coldx-shell .VOzbGW_panel .rtSEdW_cards { grid-template-columns: minmax(0, 1fr); }
+  .coldx-shell .VOzbGW_panel .pbvGtq_tabs { gap: 8px; flex-wrap: wrap; }
+  .coldx-shell :is(.zGbnIq_title, .pbvGtq_heading, .jLrgrW_title) { font-size: 19px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .coldx-shell :is(._list_19372_8, ._submenu_19372_9, ._dialog_15u5s_22, .VOzbGW_panel, ._mask_15u5s_14, .VOzbGW_mask, .QWLzlG_thinkBody, ._Xvjua_body, .pC0e7a_body) { opacity: 1; transform: none; transition: opacity 140ms ease; }
+  .coldx-shell .Sh0Q9G_chevron { transform: none; transition: none; }
+  .coldx-shell ._root_9cl6j_3 > ._row_9cl6j_10 { transition: background-color 120ms ease, box-shadow 120ms ease; }
+  .coldx-shell :is(._iconIdle_9cl6j_42, ._chevronHover_9cl6j_48) { transition: opacity 100ms ease; }
+  .coldx-shell :is(._button_kz6gm_4, ._close_15u5s_61, .VOzbGW_close, .hHd-Xa_newSession, .hHd-Xa_iconButton, .Mbwy4a_iconButton, .zGbnIq_primaryButton, .zGbnIq_secondaryButton, .zGbnIq_addButton) { transform: none; transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease; }
+  .coldx-shell :is(._button_kz6gm_4, ._close_15u5s_61, .VOzbGW_close, .hHd-Xa_newSession, .hHd-Xa_iconButton, .Mbwy4a_iconButton, .zGbnIq_primaryButton, .zGbnIq_secondaryButton, .zGbnIq_addButton):active:not(:disabled):not(:focus-visible) { transform: none; }
+  .coldx-shell :is(.uV2eYG_add, .uV2eYG_primary, ._7KE1Ra_trigger, .Sh0Q9G_trigger) { transform: none; transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease; }
+  .coldx-shell :is(.uV2eYG_add, .uV2eYG_primary, ._7KE1Ra_trigger, .Sh0Q9G_trigger):active:not(:disabled):not(:focus-visible) { transform: none; }
+  @starting-style {
+    .coldx-shell :is(._list_19372_8, ._submenu_19372_9, ._dialog_15u5s_22, .VOzbGW_panel, ._mask_15u5s_14, .VOzbGW_mask, .QWLzlG_thinkBody, ._Xvjua_body, .pC0e7a_body) { transform: none; }
+  }
+}
+
+/* Frost composer secondary surfaces: native portals retain their coordinates,
+   roles, focus ownership, keyboard navigation, dismissal and scroll containers. */
+.coldx-shell ._3e4SsG_menu[aria-label="触发候选建议"],
+.coldx-shell ._7KE1Ra_menu[role="menu"] {
+  box-sizing: border-box; max-width: calc(100vw - 24px); max-height: min(440px, 60dvh);
+  padding: 8px; border: 1px solid var(--cx-sys-separator); border-radius: 20px;
+  color: var(--cx-sys-text); background: var(--cx-sys-surface-elevated);
+  box-shadow: 0 24px 64px -18px rgb(12 38 58 / 24%), 0 4px 12px rgb(12 38 58 / 8%);
+  overflow: hidden; overscroll-behavior: contain;
+  transform-origin: center bottom; animation: cx-secondary-materialize 520ms var(--cx-motion-ease) both;
+}
+.coldx-shell ._3e4SsG_viewport { min-height: 0; max-height: min(420px, 56dvh); overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
+.coldx-shell ._3e4SsG_item {
+  min-height: 48px; padding: 10px 12px; gap: 3px 12px; border-radius: 12px;
+  color: var(--cx-sys-text); border: 1px solid transparent;
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+.coldx-shell ._3e4SsG_item:is(._3e4SsG_active, [aria-selected="true"]),
+.coldx-shell ._7KE1Ra_option._7KE1Ra_selected {
+  background: color-mix(in srgb, var(--cx-sys-accent) 16%, var(--cx-sys-surface));
+  border-color: color-mix(in srgb, var(--cx-sys-accent) 50%, var(--cx-sys-separator));
+  color: var(--cx-sys-text); box-shadow: inset 3px 0 var(--cx-sys-accent);
+}
+.coldx-shell ._3e4SsG_itemName { font-size: 14px; font-weight: 650; letter-spacing: -.015em; }
+.coldx-shell ._3e4SsG_itemDescription { color: var(--cx-sys-text-muted); font-size: 12px; line-height: 1.5; white-space: normal; overflow-wrap: anywhere; }
+.coldx-shell ._7KE1Ra_description { color: var(--cx-sys-text-muted); font-size: 12px; line-height: 1.5; white-space: normal; overflow-wrap: anywhere; }
+.coldx-shell ._7KE1Ra_groups { min-width: 0; max-height: min(400px, 54dvh); overflow-y: auto; overscroll-behavior: contain; padding: 2px; }
+.coldx-shell ._7KE1Ra_group { padding: 4px 0 8px; }
+.coldx-shell ._7KE1Ra_group + ._7KE1Ra_group { border-top: 1px solid var(--cx-sys-separator); padding-top: 10px; }
+.coldx-shell ._7KE1Ra_groupTitle { margin: 0; padding: 6px 12px 8px; color: var(--cx-sys-text-muted); font-size: 11px; font-weight: 650; letter-spacing: .06em; background: var(--cx-sys-surface-elevated); }
+.coldx-shell ._7KE1Ra_option { box-sizing: border-box; min-height: 44px; width: 100%; padding: 10px 12px; gap: 12px; border: 1px solid transparent; border-radius: 12px; color: var(--cx-sys-text); transition: background-color 160ms ease, border-color 160ms ease; }
+.coldx-shell ._7KE1Ra_optionCopy { min-width: 0; text-align: start; }
+.coldx-shell ._7KE1Ra_modelName { white-space: normal; font-size: 14px; font-weight: 550; overflow-wrap: anywhere; }
+.coldx-shell ._7KE1Ra_selected ._7KE1Ra_modelName { font-weight: 700; }
+.coldx-shell ._7KE1Ra_check { flex-shrink: 0; width: 18px; height: 18px; color: var(--cx-sys-accent); }
+.coldx-shell ._3e4SsG_item:focus-visible,
+.coldx-shell ._7KE1Ra_option:focus-visible { outline: 2px solid var(--cx-sys-focus); outline-offset: -3px; }
+@media (hover: hover) {
+  .coldx-shell ._3e4SsG_item:hover, .coldx-shell ._7KE1Ra_option:hover { background: color-mix(in srgb, var(--cx-sys-accent) 12%, var(--cx-sys-surface)); }
+}
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .coldx-shell ._3e4SsG_menu[aria-label="触发候选建议"], .coldx-shell ._7KE1Ra_menu[role="menu"] { background: var(--cx-sys-material-regular); -webkit-backdrop-filter: blur(24px) saturate(130%); backdrop-filter: blur(24px) saturate(130%); }
+}
+@keyframes cx-secondary-materialize {
+  0% { opacity: 0; transform: translateY(12px) scale(.975); }
+  30% { opacity: 1; }
+  64% { transform: translateY(-1px) scale(1.003); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes cx-secondary-fade { from { opacity: .3; } to { opacity: 1; } }
+@media (max-width: 640px) {
+  .coldx-shell ._3e4SsG_menu[aria-label="触发候选建议"], .coldx-shell ._7KE1Ra_menu[role="menu"] { min-width: 0; max-width: calc(100vw - 24px); max-height: min(360px, 52dvh); padding: 6px; border-radius: 16px; }
+  .coldx-shell ._7KE1Ra_groups { max-height: min(320px, 46dvh); }
+  .coldx-shell ._3e4SsG_item, .coldx-shell ._7KE1Ra_option { white-space: normal; overflow-wrap: anywhere; }
+}
+@media (pointer: coarse) { .coldx-shell ._3e4SsG_item, .coldx-shell ._7KE1Ra_option { min-height: 44px; } }
+@media (prefers-reduced-motion: reduce) {
+  .coldx-shell ._3e4SsG_menu[aria-label="触发候选建议"], .coldx-shell ._7KE1Ra_menu[role="menu"] { transform: none; animation: cx-secondary-fade 160ms ease both; }
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .coldx-shell ._3e4SsG_menu[aria-label="触发候选建议"], .coldx-shell ._7KE1Ra_menu[role="menu"] { background: var(--cx-sys-surface); border-color: currentColor; -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+@media (forced-colors: active) {
+  .coldx-shell ._3e4SsG_menu[aria-label="触发候选建议"], .coldx-shell ._7KE1Ra_menu[role="menu"] { background: Canvas; color: CanvasText; border-color: CanvasText; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .coldx-shell ._3e4SsG_item:is(._3e4SsG_active, [aria-selected="true"]), .coldx-shell ._7KE1Ra_option._7KE1Ra_selected { background: Highlight; color: HighlightText; border-color: Highlight; box-shadow: none; }
+  .coldx-shell ._3e4SsG_item:focus-visible, .coldx-shell ._7KE1Ra_option:focus-visible { outline-color: Highlight; }
+  .coldx-shell ._7KE1Ra_check { color: currentColor; }
+  .coldx-shell ._3e4SsG_itemDescription, .coldx-shell ._7KE1Ra_groupTitle { color: CanvasText; }
+}

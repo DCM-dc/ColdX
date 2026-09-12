@@ -1,0 +1,286 @@
+/* ColdX workbench presentation contract. Load after component styles.
+ * These tokens style application chrome only; iframe-authored pages own their
+ * content. Native roots also wrap portals, so their light/dark aliases are the
+ * source of truth. Layout, visibility and functional state stay with components.
+ */
+.coldx-shell,
+.coldx-shell [data-slot="root"],
+.coldx-shell .cx-frost {
+  --cx-wb-space-1: 8px;
+  --cx-wb-space-2: 16px;
+  --cx-wb-space-3: 24px;
+  --cx-wb-space-4: 32px;
+  --cx-wb-control-size: 32px;
+  --cx-wb-radius-control: 10px;
+  --cx-wb-radius-panel: 14px;
+  --cx-wb-surface: var(--dsw-alias-bg-base, Canvas);
+  --cx-wb-text: var(--dsw-alias-label-primary, CanvasText);
+  --cx-wb-muted: var(--dsw-alias-label-secondary, GrayText);
+  --cx-wb-raised: color-mix(in srgb, var(--cx-wb-surface) 97%, var(--cx-wb-text));
+  --cx-wb-hover: color-mix(in srgb, var(--cx-wb-surface) 94%, var(--cx-wb-text));
+  --cx-wb-line: color-mix(in srgb, var(--cx-wb-text) 14%, var(--cx-wb-surface));
+  --cx-wb-accent: color-mix(in srgb, #7665ed 82%, var(--cx-wb-text));
+  --cx-wb-selected: color-mix(in srgb, var(--cx-wb-accent) 10%, var(--cx-wb-surface));
+  --cx-wb-shadow-card: 0 1px 3px rgb(0 0 0 / 5%);
+  --cx-wb-shadow-popup: 0 8px 24px rgb(0 0 0 / 10%), 0 1px 4px rgb(0 0 0 / 5%);
+  --cx-wb-duration-press: 140ms;
+  --cx-wb-duration-fade: 160ms;
+  --cx-wb-duration-panel: 180ms;
+  --cx-wb-ease: cubic-bezier(.2, .8, .2, 1);
+  --cx-sys-surface: var(--cx-wb-surface);
+  --cx-sys-surface-elevated: var(--cx-wb-raised);
+  --cx-sys-text: var(--cx-wb-text);
+  --cx-sys-text-muted: var(--cx-wb-muted);
+  --cx-sys-accent: var(--cx-wb-accent);
+  --cx-sys-focus: var(--cx-wb-accent);
+  --cx-sys-separator: var(--cx-wb-line);
+  --cx-sys-material-thin: var(--cx-wb-surface);
+  --cx-sys-material-regular: var(--cx-wb-surface);
+  --cx-sys-material-thick: var(--cx-wb-surface);
+  --cx-motion-press: var(--cx-wb-duration-press);
+  --cx-motion-fade: var(--cx-wb-duration-fade);
+  --cx-motion-materialize: var(--cx-wb-duration-fade);
+  --cx-motion-ease: var(--cx-wb-ease);
+  --coldx-line: var(--cx-wb-line);
+  --coldx-muted: var(--cx-wb-muted);
+  --coldx-wash: var(--cx-wb-raised);
+  --coldx-material-regular: var(--cx-wb-surface);
+  --coldx-material-thick: var(--cx-wb-surface);
+  --coldx-native-surface: var(--cx-wb-surface);
+  --coldx-native-raised: var(--cx-wb-surface);
+  --coldx-native-line: var(--cx-wb-line);
+  --coldx-native-wash: var(--cx-wb-hover);
+  --coldx-native-selected: var(--cx-wb-selected);
+  --coldx-native-focus: var(--cx-wb-accent);
+  --coldx-native-shadow: var(--cx-wb-shadow-popup);
+  --coldx-native-enter: var(--cx-wb-ease);
+  --coldx-native-sheet: var(--cx-wb-ease);
+  --coldx-spring-sheet: var(--cx-wb-ease);
+  --coldx-spring-control: var(--cx-wb-ease);
+  --ds-ease-out: var(--cx-wb-ease);
+}
+
+/* Persistent surfaces have edges, rather than glass, glow or repeated depth. */
+.coldx-shell :is(.hHd-Xa_root, .wSkVaW_header, .ydkMvW_root, .ydkMvW_header) {
+  background: var(--cx-wb-raised);
+  box-shadow: none;
+}
+.coldx-shell [data-composer-card],
+.coldx-shell [data-composer-card]:has(.cx-coding-mode-menu, ._3e4SsG_menu, ._7KE1Ra_menu) {
+  border-color: var(--cx-wb-line);
+  border-radius: var(--cx-wb-radius-panel);
+  background: var(--cx-wb-surface);
+  box-shadow: var(--cx-wb-shadow-card);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  transition: border-color var(--cx-wb-duration-fade) ease, box-shadow var(--cx-wb-duration-fade) ease;
+}
+.coldx-shell [data-composer-card]:focus-within {
+  border-color: var(--cx-wb-accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--cx-wb-accent) 20%, transparent);
+}
+.coldx-shell :is(.gdEzaW_bubble, .coldx-page-shell, .bqrRRG_card, .LVzXQa_card, .Mbwy4a_card,
+  .zGbnIq_rowCard, .zGbnIq_addCard, .zGbnIq_setupCard, .YyYd_a_card, .qSYn7G_card) {
+  border-color: var(--cx-wb-line);
+  border-radius: var(--cx-wb-radius-panel);
+  background: var(--cx-wb-surface);
+  box-shadow: var(--cx-wb-shadow-card);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.coldx-shell :is(.gdEzaW_bubble, .coldx-page-titlebar, .coldx-page-foot,
+  .QWLzlG_thinkBody, ._Xvjua_body, .pC0e7a_body, .gdEzaW_compactionBody, .gdEzaW_retryDetails) {
+  background: var(--cx-wb-raised);
+  box-shadow: none;
+}
+.coldx-shell .hHd-Xa_newSession { border-radius: var(--cx-wb-radius-control); box-shadow: none; }
+.coldx-shell :is(.VOzbGW_nav, .VOzbGW_navCell.VOzbGW_active) { background: var(--cx-wb-raised); box-shadow: none; }
+.coldx-shell .YDXeBa_sessionRow.YDXeBa_selected { box-shadow: none; }
+.coldx-shell :is(.QWLzlG_row, ._Xvjua_row):hover { box-shadow: none; }
+
+/* DSH rc.2 already owns collapsed Think/tool disclosures. Bound only their
+ * expanded prose/output so a long run cannot consume the whole viewport;
+ * preserve the native toggle, error states and full execution-details entry.
+ * These selectors never reach generated pages or assistant answer content.
+ */
+.coldx-shell .QWLzlG_thinkBody {
+  max-block-size: min(18rem, 45vh);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  margin: 4px 0 4px 22px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.coldx-shell :is(._Xvjua_body, .o3BgMG_bodyScroll) {
+  max-height: min(240px, 45vh);
+  scrollbar-gutter: stable;
+}
+.coldx-shell .o3BgMG_ioSection { max-height: 144px; padding: 10px 12px; }
+.coldx-shell .o3BgMG_terminalBody { --dsl-terminal-output-max-height: 192px; }
+.coldx-shell :is(.QWLzlG_thinkBody, ._Xvjua_body, .pC0e7a_body) {
+  transform: none;
+  transition: opacity var(--cx-wb-duration-fade) ease;
+}
+.coldx-shell .coldx-process-group { min-width: 0; margin-block: 2px; }
+.coldx-shell .coldx-process-group > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  color: var(--cx-wb-muted);
+  font-size: 13px;
+  line-height: 1.5;
+  list-style: none;
+  cursor: pointer;
+}
+.coldx-shell .coldx-process-group > summary::-webkit-details-marker { display: none; }
+.coldx-shell .coldx-process-group > summary::before { content: '›'; font-size: 18px; width: 10px; text-align: center; }
+.coldx-shell .coldx-process-group[open] > summary::before { transform: rotate(90deg); }
+.coldx-shell .coldx-process-group > summary:hover { background: var(--cx-wb-hover); }
+.coldx-shell .coldx-process-group > summary:focus-visible { outline: 2px solid var(--cx-wb-accent); outline-offset: 2px; }
+.coldx-shell .coldx-process-count { margin-inline-start: auto; font-size: 12px; opacity: .8; }
+.coldx-shell .coldx-process-body { display: flex; flex-direction: column; gap: 8px; margin: 4px 0 8px 12px; padding-inline-start: 12px; border-inline-start: 1px solid var(--cx-wb-line); }
+@media (pointer: coarse) { .coldx-shell .coldx-process-group > summary { min-height: 44px; } }
+@media print {
+  .coldx-shell :is(.QWLzlG_thinkBody, ._Xvjua_body, .o3BgMG_bodyScroll, .o3BgMG_ioSection) {
+    max-height: none;
+    max-block-size: none;
+    overflow: visible;
+  }
+}
+
+/* Shared popovers are opaque and use the same elevation. Attribute selectors
+ * match the native menu material allowlist instead of every role=menu element.
+ */
+.coldx-shell :is(.cx-surface[data-material], .cx-surface[data-floating][data-material],
+  .cx-coding-mode-menu, .cx-attachment-menu,
+  ._list_19372_8, ._submenu_19372_9, ._dialog_15u5s_22, .jLrgrW_dialog, .VOzbGW_panel,
+  ._3e4SsG_menu[aria-label="触发候选建议"], ._7KE1Ra_menu[role="menu"]) {
+  border-color: var(--cx-wb-line);
+  border-radius: var(--cx-wb-radius-panel);
+  background: var(--cx-wb-surface);
+  box-shadow: var(--cx-wb-shadow-popup);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.coldx-shell :is(.cx-coding-mode-menu, .cx-attachment-menu) {
+  transform: none;
+  transition: opacity var(--cx-wb-duration-fade) ease;
+}
+.coldx-shell :is(.cx-coding-mode-menu, .cx-attachment-menu)[data-presence="closed"] { transform: none; }
+.coldx-shell :is(._3e4SsG_menu[aria-label="触发候选建议"], ._7KE1Ra_menu[role="menu"]) {
+  animation: none;
+  transform: none;
+}
+.coldx-shell :is(._list_19372_8, ._submenu_19372_9, ._dialog_15u5s_22, .VOzbGW_panel) {
+  transform: none;
+  transition: opacity var(--cx-wb-duration-panel) ease;
+}
+@starting-style {
+  .coldx-shell :is(.cx-coding-mode-menu, .cx-attachment-menu)[data-presence="open"],
+  .coldx-shell :is(._list_19372_8, ._submenu_19372_9, ._dialog_15u5s_22, .VOzbGW_panel) { transform: none; }
+  .coldx-shell .cx-coding-mode-tag[data-presence="open"] { transform: none; }
+}
+
+/* Edge-aligned inspection and native composer docks are structural surfaces. */
+.coldx-shell .cx-surface.cx-activity-sheet[data-material][data-floating] {
+  border-radius: 0;
+  box-shadow: none;
+}
+.coldx-shell .cx-surface.cx-terminal-panel[data-material] { box-shadow: none; }
+
+/* Controls keep their roles, icon direction and active state, with no tilt or
+ * hover movement. Native chevrons still rotate to communicate open/closed.
+ */
+.coldx-shell :is(.cx-action, .cx-coding-mode-trigger, .cx-attachment-trigger,
+  .cx-coding-mode-choice, .cx-attachment-choice, .cx-attachment-file-row,
+  .coldx-icon-button, .coldx-stage-button, ._button_kz6gm_4, ._item_19372_91,
+  ._3e4SsG_item, ._7KE1Ra_option, ._7KE1Ra_trigger, .Sh0Q9G_trigger,
+  .uV2eYG_add, .uV2eYG_primary, ._close_15u5s_61, .VOzbGW_close,
+  .hHd-Xa_iconButton, .hHd-Xa_newSession, .Mbwy4a_iconButton,
+  .zGbnIq_primaryButton, .zGbnIq_secondaryButton, .zGbnIq_addButton) {
+  border-radius: var(--cx-wb-radius-control);
+  box-shadow: none;
+  transition: background-color var(--cx-wb-duration-press) ease,
+    border-color var(--cx-wb-duration-press) ease, color var(--cx-wb-duration-press) ease,
+    opacity var(--cx-wb-duration-fade) ease;
+}
+.coldx-shell :is(.cx-coding-mode-choice, .cx-attachment-trigger, .cx-attachment-choice,
+  .cx-attachment-file-row, .coldx-icon-button, .coldx-stage-button,
+  ._button_kz6gm_4, ._7KE1Ra_trigger, .Sh0Q9G_trigger, .uV2eYG_add, .uV2eYG_primary,
+  ._close_15u5s_61, .VOzbGW_close, .hHd-Xa_iconButton, .hHd-Xa_newSession,
+  .Mbwy4a_iconButton, .zGbnIq_primaryButton, .zGbnIq_secondaryButton, .zGbnIq_addButton):is(:hover, :active, [aria-expanded="true"]):not(:disabled):not(:focus-visible) {
+  transform: none;
+}
+.coldx-shell .cx-attachment-trigger[aria-expanded="true"] { transform: none; }
+.coldx-shell :is(.cx-coding-mode-check, .cx-coding-mode-tag, .cx-coding-mode-tag-dot,
+  .cx-attachment-choice-icon, .cx-attachment-preview, .cx-attachment-remove) {
+  box-shadow: none;
+}
+.coldx-shell :is(.cx-coding-mode-tag, .cx-coding-mode-check) { transition: opacity var(--cx-wb-duration-fade) ease; }
+.coldx-shell .cx-coding-mode-tag[data-presence] { transform: none; }
+.coldx-shell .cx-coding-mode-choice[aria-checked="true"] .cx-coding-mode-check { transform: none; box-shadow: none; }
+.coldx-shell .cx-coding-mode-choice[aria-checked="true"],
+.coldx-shell ._3e4SsG_item:is(._3e4SsG_active, [aria-selected="true"]),
+.coldx-shell ._7KE1Ra_option._7KE1Ra_selected {
+  background: var(--cx-wb-selected);
+  border-color: color-mix(in srgb, var(--cx-wb-accent) 28%, var(--cx-wb-line));
+  box-shadow: none;
+}
+.coldx-shell .cx-attachment-choice-icon,
+.coldx-shell .cx-attachment-choice-icon[data-kind="folder"] {
+  color: var(--cx-wb-muted);
+  background: var(--cx-wb-raised);
+  border-color: var(--cx-wb-line);
+}
+.coldx-shell :is(.cx-coding-mode-name, .cx-attachment-choice-copy strong,
+  .cx-attachment-file-copy strong, ._3e4SsG_itemName, ._7KE1Ra_selected ._7KE1Ra_modelName) { font-weight: 600; }
+.coldx-shell :is(.cx-attachment-search input, .cx-attachment-preview) { border-radius: var(--cx-wb-radius-control); }
+
+/* New chats and routine attachments should feel immediately ready. */
+.coldx-shell :is(.coldx-hero, .coldx-hero .coldx-ice-cube, .cx-attachment-tile) { animation: none; }
+.coldx-shell .cx-attachment-drop {
+  border-radius: var(--cx-wb-radius-panel);
+  background: color-mix(in srgb, var(--cx-wb-surface) 97%, transparent);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  animation: cx-workbench-fade var(--cx-wb-duration-fade) ease both;
+}
+.coldx-shell .cx-attachment-drop-icon { transform: none; border-radius: var(--cx-wb-radius-panel); }
+.coldx-shell .cx-attachment-lightbox img {
+  border-radius: var(--cx-wb-radius-panel);
+  animation: cx-workbench-fade var(--cx-wb-duration-fade) ease both;
+}
+.coldx-shell .cx-attachment-lightbox::backdrop { -webkit-backdrop-filter: none; backdrop-filter: none; }
+@keyframes cx-workbench-fade { from { opacity: 0; } to { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .coldx-shell :is(.cx-attachment-drop, .cx-attachment-lightbox img) { animation: none; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .coldx-shell .cx-attachment-drop { background: var(--cx-wb-surface); }
+}
+@media (prefers-contrast: more) {
+  .coldx-shell, .coldx-shell [data-slot="root"], .coldx-shell .cx-frost { --cx-wb-line: var(--cx-wb-text); }
+}
+@media (forced-colors: active) {
+  .coldx-shell, .coldx-shell [data-slot="root"], .coldx-shell .cx-frost {
+    --cx-wb-surface: Canvas;
+    --cx-wb-raised: Canvas;
+    --cx-wb-hover: Canvas;
+    --cx-wb-text: CanvasText;
+    --cx-wb-muted: CanvasText;
+    --cx-wb-line: CanvasText;
+    --cx-wb-accent: Highlight;
+    --cx-wb-selected: Canvas;
+    --cx-wb-shadow-card: none;
+    --cx-wb-shadow-popup: none;
+  }
+  .coldx-shell .cx-coding-mode-choice[aria-checked="true"],
+  .coldx-shell ._3e4SsG_item:is(._3e4SsG_active, [aria-selected="true"]),
+  .coldx-shell ._7KE1Ra_option._7KE1Ra_selected { background: Highlight; color: HighlightText; border-color: Highlight; }
+  .coldx-shell [data-composer-card]:focus-within { box-shadow: none; }
+}

@@ -1,0 +1,54 @@
+.coldx-shell .cx-attachment-root { position: relative; display: inline-flex; align-items: center; flex: none; }
+.coldx-shell .cx-attachment-bridge { display: none; }
+.coldx-shell .cx-attachment-file-input { position: fixed; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.coldx-shell .cx-attachment-trigger { display: grid; width: 32px; min-width: 32px; min-height: 32px; padding: 0; place-items: center; border-color: transparent; border-radius: 999px; background: transparent; color: color-mix(in srgb, var(--cx-sys-text) 74%, transparent); }
+.coldx-shell .cx-attachment-trigger:hover:not(:disabled) { color: var(--cx-sys-text); background: color-mix(in srgb, var(--cx-sys-text) 7%, transparent); transform: translateY(-1px) rotate(-4deg) scale(1.045); }
+.coldx-shell .cx-attachment-trigger[aria-expanded="true"] { color: var(--cx-sys-accent); background: color-mix(in srgb, var(--cx-sys-accent) 12%, transparent); transform: rotate(-12deg) scale(1.08); }
+.coldx-shell .cx-attachment-menu { position: absolute; z-index: 48; bottom: calc(100% + 14px); left: -8px; box-sizing: border-box; width: min(352px, calc(100vw - 34px)); padding: 8px; border-radius: 22px; background: color-mix(in srgb, var(--cx-sys-surface) 97%, transparent); opacity: 1; transform: translate3d(0,0,0) rotate(0) scale(1); transform-origin: 30px 100%; box-shadow: 0 34px 80px -24px rgb(8 31 48 / 38%), 0 12px 30px -22px rgb(8 31 48 / 30%), inset 0 1px 0 rgb(255 255 255 / 55%); transition: opacity 220ms ease, transform 440ms cubic-bezier(.16,1.34,.3,1); }
+.coldx-shell .cx-attachment-menu[data-presence="closed"] { opacity: 0; pointer-events: none; transform: translate3d(-9px,14px,0) rotate(-2.5deg) scale(.9); }
+.coldx-shell .cx-attachment-menu-heading { display: grid; gap: 2px; padding: 10px 11px 8px; }
+.coldx-shell .cx-attachment-menu-heading strong { font-size: 13px; letter-spacing: -.015em; }
+.coldx-shell .cx-attachment-menu-heading span { color: var(--cx-sys-text-muted); font-size: 10.5px; line-height: 1.45; }
+.coldx-shell .cx-attachment-choice { display: grid; grid-template-columns: 34px minmax(0,1fr) auto; align-items: center; gap: 10px; width: 100%; min-height: 62px; padding: 9px 10px; border-color: transparent; border-radius: 15px; background: transparent; text-align: left; box-shadow: none; }
+.coldx-shell .cx-attachment-choice + .cx-attachment-choice { margin-top: 3px; }
+.coldx-shell .cx-attachment-choice:hover:not(:disabled) { background: color-mix(in srgb, var(--cx-sys-accent) 10%, transparent); transform: translateX(2px) scale(1.008); }
+.coldx-shell .cx-attachment-choice-icon { display: grid; width: 30px; height: 30px; place-items: center; border: 1px solid color-mix(in srgb, var(--cx-sys-accent) 24%, var(--cx-sys-separator)); border-radius: 10px; color: var(--cx-sys-accent); background: color-mix(in srgb, var(--cx-sys-accent) 10%, var(--cx-sys-surface-elevated)); box-shadow: inset 0 1px 0 rgb(255 255 255 / 55%); }
+.coldx-shell .cx-attachment-choice-icon[data-kind="folder"] { color: #a87428; background: color-mix(in srgb, #eeb95f 13%, var(--cx-sys-surface-elevated)); border-color: color-mix(in srgb, #c99a4e 28%, var(--cx-sys-separator)); }
+.coldx-shell .cx-attachment-choice-copy, .coldx-shell .cx-attachment-file-copy { display: grid; gap: 2px; min-width: 0; }
+.coldx-shell .cx-attachment-choice-copy strong, .coldx-shell .cx-attachment-file-copy strong { overflow: hidden; font-size: 12.5px; font-weight: 680; text-overflow: ellipsis; white-space: nowrap; }
+.coldx-shell .cx-attachment-choice-copy span, .coldx-shell .cx-attachment-file-copy span { overflow: hidden; color: var(--cx-sys-text-muted); font-size: 10.5px; text-overflow: ellipsis; white-space: nowrap; }
+.coldx-shell .cx-attachment-choice-key, .coldx-shell .cx-attachment-file-kind { padding: 3px 6px; border: 1px solid var(--cx-sys-separator); border-radius: 999px; color: var(--cx-sys-text-muted); font-size: 9px; white-space: nowrap; }
+.coldx-shell .cx-attachment-file-head { display: grid; grid-template-columns: 34px minmax(0,1fr); align-items: center; gap: 7px; padding: 2px 2px 8px; }
+.coldx-shell .cx-attachment-back { display: grid; width: 34px; min-width: 34px; min-height: 34px; padding: 0; place-items: center; border-color: transparent; background: transparent; }
+.coldx-shell .cx-attachment-search input { box-sizing: border-box; width: 100%; min-height: 36px; padding: 7px 11px; border: 1px solid var(--cx-sys-separator); border-radius: 12px; outline: none; background: color-mix(in srgb, var(--cx-sys-surface-elevated) 78%, transparent); color: var(--cx-sys-text); font: inherit; font-size: 12px; }
+.coldx-shell .cx-attachment-search input:focus { border-color: var(--cx-sys-focus); box-shadow: 0 0 0 3px color-mix(in srgb, var(--cx-sys-focus) 18%, transparent); }
+.coldx-shell .cx-attachment-results { max-height: min(284px, 48dvh); overflow-y: auto; overscroll-behavior: contain; }
+.coldx-shell .cx-attachment-file-row { display: grid; grid-template-columns: 28px minmax(0,1fr) auto; align-items: center; gap: 9px; width: 100%; min-height: 50px; padding: 7px 9px; border-color: transparent; border-radius: 13px; background: transparent; text-align: left; box-shadow: none; }
+.coldx-shell .cx-attachment-file-row:hover { background: color-mix(in srgb, var(--cx-sys-accent) 9%, transparent); transform: translateX(2px); }
+.coldx-shell .cx-attachment-file-glyph { display: grid; width: 26px; height: 26px; place-items: center; color: var(--cx-sys-text-muted); }
+.coldx-shell .cx-attachment-state { margin: 0; padding: 24px 12px; color: var(--cx-sys-text-muted); font-size: 11px; text-align: center; }
+.coldx-shell .cx-attachment-error { margin: 6px 8px 4px; color: var(--cx-sys-status-danger); font-size: 10.5px; }
+.coldx-shell .cx-attachment-upload-status { margin: 6px 8px 4px; padding: 9px 10px; border-radius: 11px; background: color-mix(in srgb, var(--cx-sys-accent) 9%, transparent); color: var(--cx-sys-text); overflow-wrap: anywhere; font-size: 11px; line-height: 1.5; }
+.coldx-shell .cx-attachment-rail { display: flex; gap: 8px; min-width: 0; padding: 8px 12px 2px; overflow-x: auto; }
+.coldx-shell .cx-attachment-tile { position: relative; width: 64px; height: 64px; flex: none; margin: 0; animation: cx-attachment-arrive 460ms cubic-bezier(.16,1.34,.3,1) both; }
+.coldx-shell .cx-attachment-preview { width: 64px; height: 64px; padding: 0; overflow: hidden; border: 1px solid var(--cx-sys-separator); border-radius: 16px; background: var(--cx-sys-surface-elevated); cursor: zoom-in; box-shadow: 0 12px 26px -18px rgb(7 32 49 / 38%); }
+.coldx-shell .cx-attachment-preview img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.coldx-shell .cx-attachment-remove { position: absolute; top: -5px; right: -5px; display: grid; width: 22px; height: 22px; padding: 0; place-items: center; border: 1px solid color-mix(in srgb, var(--cx-sys-text) 18%, transparent); border-radius: 999px; background: color-mix(in srgb, var(--cx-sys-surface) 92%, transparent); color: var(--cx-sys-text); box-shadow: 0 6px 14px -8px rgb(0 0 0 / 55%); cursor: pointer; }
+.coldx-shell .cx-attachment-remove svg { width: 12px; height: 12px; }
+.coldx-shell .cx-attachment-drop { position: fixed; z-index: 1000; inset: 18px; display: grid; place-content: center; justify-items: center; gap: 9px; border: 2px dashed color-mix(in srgb, var(--cx-sys-accent) 62%, transparent); border-radius: 30px; background: color-mix(in srgb, var(--cx-sys-surface) 76%, transparent); color: var(--cx-sys-text); -webkit-backdrop-filter: blur(28px) saturate(135%); backdrop-filter: blur(28px) saturate(135%); animation: cx-attachment-drop-in 360ms cubic-bezier(.16,1.34,.3,1) both; }
+.coldx-shell .cx-attachment-drop[data-disabled="true"] { border-color: var(--cx-sys-status-danger); }
+.coldx-shell .cx-attachment-drop-icon { display: grid; width: 56px; height: 56px; place-items: center; border-radius: 18px; background: color-mix(in srgb, var(--cx-sys-accent) 16%, transparent); color: var(--cx-sys-accent); transform: rotate(-4deg); }
+.coldx-shell .cx-attachment-drop span:last-child { color: var(--cx-sys-text-muted); font-size: 11px; }
+.coldx-shell .cx-attachment-lightbox { position: fixed; inset: 0; box-sizing: border-box; width: 100vw; height: 100dvh; max-width: none; max-height: none; margin: 0; border: 0; padding: 40px; overflow: auto; background: transparent; animation: cx-attachment-fade 180ms ease both; }
+.coldx-shell .cx-attachment-lightbox[open] { display: grid; place-items: center; }
+.coldx-shell .cx-attachment-lightbox::backdrop { background: rgb(5 10 14 / 74%); -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px); animation: cx-attachment-fade 180ms ease both; }
+.coldx-shell .cx-attachment-lightbox img { max-width: min(90vw, 1200px); max-height: 86vh; border-radius: 20px; box-shadow: 0 36px 100px rgb(0 0 0 / 58%); animation: cx-attachment-zoom 480ms cubic-bezier(.16,1.34,.3,1) both; }
+.coldx-shell .cx-attachment-lightbox-close { position: fixed; top: 22px; right: 22px; display: grid; width: 38px; height: 38px; padding: 0; place-items: center; border: 1px solid rgb(255 255 255 / 25%); border-radius: 999px; background: rgb(25 29 33 / 58%); color: white; cursor: pointer; }
+@keyframes cx-attachment-arrive { from { opacity: 0; transform: translateY(12px) rotate(-4deg) scale(.78); } to { opacity: 1; transform: none; } }
+@keyframes cx-attachment-drop-in { from { opacity: 0; transform: scale(.93); } to { opacity: 1; transform: none; } }
+@keyframes cx-attachment-fade { from { opacity: 0; } }
+@keyframes cx-attachment-zoom { from { opacity: 0; transform: translateY(18px) rotate(-1deg) scale(.88); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .coldx-shell :is(.cx-attachment-menu,.cx-attachment-tile,.cx-attachment-drop,.cx-attachment-lightbox,.cx-attachment-lightbox img) { animation: none; transform: none; transition: opacity 140ms ease; } }
+@media (prefers-reduced-motion: reduce) { .coldx-shell .cx-attachment-lightbox::backdrop { animation: none; } }
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) { .coldx-shell :is(.cx-attachment-menu,.cx-attachment-drop) { background: var(--cx-sys-surface); -webkit-backdrop-filter: none; backdrop-filter: none; } }
+@media (forced-colors: active) { .coldx-shell :is(.cx-attachment-menu,.cx-attachment-choice,.cx-attachment-file-row,.cx-attachment-preview,.cx-attachment-remove,.cx-attachment-drop) { color: CanvasText; border-color: CanvasText; background: Canvas; box-shadow: none; } }

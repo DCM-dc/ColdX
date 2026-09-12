@@ -1,0 +1,86 @@
+diff --git a/lib/index.js b/lib/index.js
+index 74fcc55..0fafb6a 100644
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -1013,6 +1013,19 @@ async function* translate(payloads) {
+ 		} catch {
+ 			throw new LlmError(`malformed SSE payload: ${payload.slice(0, 120)}`, "MALFORMED_RESPONSE");
+ 		}
++		if (chunk !== null && typeof chunk === "object" && !Array.isArray(chunk) && chunk.error !== null && typeof chunk.error === "object" && !Array.isArray(chunk.error)) {
++			const providerError = chunk.error;
++			const status = Number.isInteger(chunk.status_code) && chunk.status_code >= 100 && chunk.status_code <= 599 ? chunk.status_code : void 0;
++			const detail = [
++				providerError.type,
++				providerError.code
++			].filter((field) => typeof field === "string" && field.length > 0).join("/");
++			const message = typeof providerError.message === "string" && providerError.message.trim().length > 0 ? providerError.message : `DeepSeek API returned an in-band error${detail.length > 0 ? ` (${detail})` : ""}`;
++			const authenticationCode = providerError.code === "authentication_failed" || providerError.code === "invalid_api_key" || providerError.type === "authentication_failed" || providerError.type === "invalid_api_key";
++			throw new LlmError(message, status === void 0 ? authenticationCode ? "AUTH" : "PROVIDER_ERROR" : httpErrorCode(status, providerError), {
++				...status === void 0 ? {} : { status }
++			});
++		}
+ 		for (const choice of chunk.choices ?? []) {
+ 			const delta = choice.delta;
+ 			const reasoning = delta?.reasoning_content;
+@@ -1277,11 +1290,40 @@ function normalizedImageDiagnostic(files, providerMessage, providerDetail) {
+ 	if (target !== void 0) return `DeepSeek rejected normalized image ${normalizedImageFacts(target)}: ${providerMessage}. The provider rejected bytes already normalized by the harness; PNG, JPEG, WebP, and GIF remain supported input formats.`;
+ 	return `DeepSeek rejected a normalized request image: ${providerMessage}. Candidate images: ${[...new Map(files.map((file) => [`${file.version.variantId}\0${file.location.message}\0${file.location.image}`, file])).values()].map(normalizedImageFacts).join("; ")}. The provider rejected bytes already normalized by the harness; PNG, JPEG, WebP, and GIF remain supported input formats.`;
+ }
++function coldxModelDisplayName(model) {
++  const known = [
++    {
++      "id": "deepseek-flash",
++      "name": "DeepSeek-V4.1-Flash",
++      "legacy": "DeepSeek V4.1 Flash · Vision"
++    },
++    {
++      "id": "deepseek-v4-flash",
++      "name": "DeepSeek-V4-Flash",
++      "legacy": "DeepSeek Flash · 兼容名称"
++    },
++    {
++      "id": "deepseek-v4-flash-vision-exp",
++      "name": "DeepSeek-V4-Flash-Vision-Exp",
++      "legacy": "DeepSeek Flash · Vision 兼容名称"
++    },
++    {
++      "id": "deepseek-v4-pro",
++      "name": "DeepSeek-V4-Pro",
++      "legacy": "DeepSeek V4 Pro"
++    }
++  ];
++  const entry = known.find(item => item.id === model.id);
++  if (!entry) return model.name ?? model.id;
++  return model.name == null || model.name === model.id || model.name === entry.legacy
++    ? entry.name : model.name;
++}
++
+ function modelInfo(provider, model) {
+ 	return {
+ 		provider,
+ 		id: model.id,
+-		name: model.name ?? model.id,
++		name: coldxModelDisplayName(model),
+ 		...model.description === void 0 ? {} : { description: model.description },
+ 		inputModalities: model.inputModalities ?? ["text"]
+ 	};
+diff --git a/lib/types/types.d.ts b/lib/types/types.d.ts
+index 9580ee7ff4c76c6ea7ff75eac84aad9753a65f35..d7060aa6fa2cea979926f3cacabf64d8434343e1 100644
+--- a/lib/types/types.d.ts
++++ b/lib/types/types.d.ts
+@@ -111,6 +111,15 @@ export interface WireChunk {
+     choices?: WireChoice[];
+     /** Arrives attached to the finish chunk and/or as a trailing usage-only chunk. */
+     usage?: WireUsage | null;
++    /** Some DeepSeek gateways deliver provider failures in-band despite HTTP 200. */
++    status_code?: number;
++    /** An in-band provider failure; it is terminal even when earlier chunks carried output. */
++    error?: {
++        message?: string;
++        type?: string;
++        code?: string;
++        param?: unknown;
++    };
+ }
+ /** One streamed choice (requests always ask for a single one); `finish_reason` is non-null only on its terminal chunk. */
+ export interface WireChoice {

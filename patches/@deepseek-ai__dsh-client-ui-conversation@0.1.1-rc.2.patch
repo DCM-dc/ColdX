@@ -1,0 +1,211 @@
+diff --git a/lib/client.js b/lib/client.js
+index c6be134..4ef4f49 100644
+--- a/lib/client.js
++++ b/lib/client.js
+@@ -135,9 +135,18 @@ window.__ModuleLoader__.load({
+ 					type: "text",
+ 					text
+ 				}]];
+-				if (!(await session.prompt(content, mode, signal)).ok) return { kind: "error" };
+-				this.releaseDraftImages(attachments);
+-				return { kind: "success" };
++				// Synchronize ColdX draft modes only after real composer content is ready.
++				// Other DSH clients keep the native admission path without this service.
++				const modeDraft = content.length ? await this.ctx.get("coldxCodingMode")?.beforeSend(session, signal) : void 0;
++				try {
++					signal?.throwIfAborted();
++					if (!(await session.prompt(content, mode, signal)).ok) return { kind: "error" };
++					modeDraft?.commit();
++					this.releaseDraftImages(attachments);
++					return { kind: "success" };
++				} finally {
++					modeDraft?.release();
++				}
+ 			}
+ 			/**
+ 			* Create runtime-only draft images and their object URLs.
+@@ -4068,7 +4077,11 @@ window.__ModuleLoader__.load({
+ 								children: [(0, react_jsx_runtime.jsxs)("div", {
+ 									className: InputBar_module_css_default.tools,
+ 									children: [
+-										(0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Tooltip, {
++										renderSlot("conversation.input.add", {
++											sessionId, input, inputActions, locked, commandsAvailable: toggleCommandMenu !== void 0,
++											openCommands: onToggleCommandMenu, keepInputFocus: keepFocus, commandMenuOpen,
++											getInputSelection: () => inputRef.current === null ? null : ({ ...selectionOf(inputRef.current), draftRev: input?.draftRev })
++										}, { fallback: (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Tooltip, {
+ 											label: t("input.commands"),
+ 											side: "top",
+ 											delayMs: 500,
+@@ -4083,7 +4096,7 @@ window.__ModuleLoader__.load({
+ 												onClick: onToggleCommandMenu,
+ 												children: (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.IconPlusOutline16, { size: 14 })
+ 											})
+-										}),
++										}) }),
+ 										(0, react_jsx_runtime.jsxs)("div", {
+ 											className: InputBar_module_css_default.modes,
+ 											children: [accessSelect, renderSlot("conversation.input.plan", { locked })]
+@@ -5498,7 +5511,7 @@ window.__ModuleLoader__.load({
+ 				renderMessageImages,
+ 				fileMentions
+ 			]);
+-			if (routedNode === void 0 || owner === null) return null;
++			if (routedNode === void 0 || owner === null || routedNode.kind === "command" && coldxHiddenModeReceipt(routedNode.data)) return null;
+ 			const routedOwner = {
+ 				...owner,
+ 				node: routedNode
+@@ -5520,6 +5533,93 @@ window.__ModuleLoader__.load({
+ 			});
+ 		});
+ 		//#endregion
++		// ColdX process model begin
++		// Keep the exact receipt predicate shared with the plugin renderer. Suppress
++		// its outer seat, while retaining the original command node in the native log.
++		const coldxHiddenModeReceipt = function shouldHideModeReceipt(node) {
++		    if (node?.kind !== 'command' || node.outcome?.kind !== 'success') return false;
++		    const args = typeof node.args === 'string' ? node.args.trim() : node.args === null ? '' : undefined;
++		    // Older ColdX profiles intentionally omitted command args from the log.
++		    // Recognize only their exact successful acknowledgement, never an error or arbitrary output.
++		    if (node.name === 'coldx-goal' && ['Goal mode selected for the next direct human request.', 'Goal mode turned off.'].includes(node.outcome.text)) return true;
++		    return node.name === 'plan' && (args === '' || args === 'off')
++		      || node.name === 'coldx-goal' && (args === 'on' || args === 'off');
++		  };
++		const COLDX_PROCESS_TOOLS = new Set(['read', 'write', 'edit', 'bash', 'pwsh', 'grep', 'glob', 'web_fetch', 'web_search', 'run_code', 'cordis_package_inspect', 'cordis_runtime_inspect']);
++		function coldxCompletedCallIds(root) {
++		  const ids = [], pending = [root], seen = new Set();
++		  while (pending.length) {
++		    const call = pending.pop();
++		    if (!call || seen.has(call)) return null;
++		    seen.add(call);
++		    if (call.kind !== 'tool-result' || call.isError || call.error || !COLDX_PROCESS_TOOLS.has(call.call?.name)) return null;
++		    if (typeof call.callId !== 'string') return null;
++		    ids.push(call.callId);
++		    pending.push(...(call.subCalls ?? []));
++		  }
++		  return ids;
++		}
++		function coldxProcessInfo(node) {
++		  const location = node?.location;
++		  if (location?.kind !== 'step' || location.step.status !== 'closed' || !Number.isInteger(location.turn.turn) || !Number.isInteger(location.step.step)) return null;
++		  const common = { turn: location.turn.turn, step: location.step.step };
++		  if (node.kind === 'tool-call') {
++		    const callIds = coldxCompletedCallIds(node.data?.root);
++		    return callIds === null ? null : { ...common, callIds };
++		  }
++		  if (node.kind !== 'assistant' || node.data?.status !== 'settled' || !Array.isArray(node.data.blocks) || node.data.blocks.length === 0) return null;
++		  // Never fold prose, images, final answers, unknown blocks or decision tools.
++		  const processOnly = node.data.blocks.every(block => block.kind === 'reasoning' || block.kind === 'text' && block.text.trim() === '' || block.kind === 'tool-call' && COLDX_PROCESS_TOOLS.has(block.name));
++		  return processOnly ? { ...common, callIds: [] } : null;
++		}
++		function coldxProcessGroups(order, nodes) {
++		  const groups = [];
++		  let run = [], turn;
++		  const flush = () => {
++		    if (!run.length) return;
++		    const callIds = [...new Set(run.flatMap(item => item.info.callIds))];
++		    if (run.length >= 4 && callIds.length >= 2) groups.push({ key: run[0].key, nodeKeys: run.map(item => item.key), stepCount: new Set(run.map(item => item.info.step)).size, callCount: callIds.length, callIds });
++		    else for (const item of run) groups.push({ key: item.key, nodeKeys: [item.key] });
++		    run = [];
++		  };
++		  for (const key of order) {
++		    const info = coldxProcessInfo(nodes.get(key));
++		    if (!info) { flush(); groups.push({ key, nodeKeys: [key] }); continue; }
++		    if (run.length && turn !== info.turn) flush();
++		    turn = info.turn;
++		    run.push({ key, info });
++		  }
++		  flush();
++		  return groups;
++		}
++		// ColdX process model end
++		// ColdX file mentions begin
++		function coldxFileMentions(ctx, sessionId, owner) {
++		  const native = ctx.get('chatFileMentions')?.forClosing(owner);
++		  if (typeof ctx.get('coldxFilePreview')?.resolve !== 'function') return native;
++		  return { resolve(value) {
++		    return native?.resolve(value) ?? ctx.get('coldxFilePreview')?.resolve?.(sessionId, value);
++		  } };
++		}
++		// ColdX file mentions end
++		function ColdXProcessGroup({ group, selectedCallId, chatScroll, onExplore, children }) {
++		  const selected = group.callIds?.includes(selectedCallId) ?? false;
++		  const [expanded, setExpanded] = (0, react.useState)(() => selected || group.nodeKeys.includes(chatScroll.read()?.anchorKey));
++		  (0, react.useEffect)(() => { if (selected) { onExplore(); setExpanded(true); } }, [selected]);
++		  if (group.stepCount === void 0) return children;
++		  return (0, react_jsx_runtime.jsxs)('details', {
++		    className: 'coldx-process-group', open: expanded,
++		    children: [(0, react_jsx_runtime.jsxs)('summary', {
++		      // Native Enter/Space activation emits click too. Cancel the default DOM
++		      // toggle so its delayed event cannot race this state or the parent scroll
++		      // update. Nested native tool disclosures keep their own toggle behavior.
++		      'data-chat-anchor-key': group.key,
++		      onClick: event => { event.preventDefault(); onExplore(); setExpanded(value => !value); },
++		      children: [(0, react_jsx_runtime.jsx)('span', { children: '已执行 ' + group.stepCount + ' 个步骤' }), (0, react_jsx_runtime.jsx)('span', { className: 'coldx-process-count', children: group.callCount + ' 次工具调用' })]
++		    }), (0, react_jsx_runtime.jsx)('div', { className: 'coldx-process-body', children })]
++		  });
++		}
++		
+ 		//#region lib/types/client/chat/ChatView.js
+ 		/** Active column host when present; otherwise the view-local scroller. */
+ 		function scrollerOf(from) {
+@@ -5527,7 +5627,7 @@ window.__ModuleLoader__.load({
+ 		}
+ 		/** Find an already-rendered settled row without interpolating a selector. */
+ 		function anchorElement(list, key) {
+-			for (const row of list.querySelectorAll("[data-chat-anchor-key]")) if (row.dataset.chatAnchorKey === key) return row;
++			for (const row of list.querySelectorAll("[data-chat-anchor-key]")) if (row.dataset.chatAnchorKey === key) return row.closest("details.coldx-process-group:not([open])")?.querySelector("summary") ?? row;
+ 			return null;
+ 		}
+ 		/** Row position in scrollport coordinates (viewport-independent). */
+@@ -5621,6 +5721,8 @@ window.__ModuleLoader__.load({
+ 		function ChatView({ useSession, useSessions, useStore, renderSlot, sessionId, openFile, loadOlder, loadImage, inspectCall, chatScroll, forkAt, fileMentions, t }) {
+ 			const order = useSession((s) => s.chat.order);
+ 			const nodeStore = useSession((s) => s.chat.nodes);
++			const processNodes = useSession((s) => s.chat.nodes.values());
++			const processGroups = (0, react.useMemo)(() => coldxProcessGroups(order, nodeStore), [order, processNodes]);
+ 			const timeline = useSession((s) => s.chat.timeline);
+ 			const inbox = useSession((s) => s.queue);
+ 			const cwd = useSessions((s) => s.byId[sessionId]?.cwd);
+@@ -5848,7 +5950,10 @@ window.__ModuleLoader__.load({
+ 									children: loadingOlder ? t("loading") : t("chat.loadOlder")
+ 								})
+ 							}),
+-							order.map((nodeKey) => (0, react_jsx_runtime.jsx)(ChatNodeSeat, {
++							processGroups.map((group) => (0, react_jsx_runtime.jsx)(ColdXProcessGroup, {
++								group, selectedCallId, chatScroll,
++								onExplore: () => { atBottomRef.current = false; setAtBottom(false); },
++							children: group.nodeKeys.map((nodeKey) => (0, react_jsx_runtime.jsx)(ChatNodeSeat, {
+ 								nodeKey,
+ 								useSession,
+ 								selectedCallId,
+@@ -5861,6 +5966,7 @@ window.__ModuleLoader__.load({
+ 								renderSlot,
+ 								t
+ 							}, nodeKey)),
++							}, group.key)),
+ 							running && (0, react_jsx_runtime.jsx)(TurnStatus, {
+ 								startTime: runningTurnStart,
+ 								t
+@@ -10071,6 +10177,10 @@ window.__ModuleLoader__.load({
+ 				name: "conversation.composer.bar",
+ 				locale: NS,
+ 				children: {
++					"conversation.input.add": {
++						kind: "single",
++						scope: "session-maybe"
++					},
+ 					"conversation.input.attachments": {
+ 						kind: "single",
+ 						scope: "session-maybe"
+@@ -10184,8 +10294,9 @@ window.__ModuleLoader__.load({
+ 							actions.select(target);
+ 							layout.openDetails();
+ 						},
+-						fileMentions: (owner) => ctx.get("chatFileMentions")?.forClosing(owner),
++						fileMentions: (owner) => coldxFileMentions(ctx, sessionId, owner),
+ 						openFile: (path) => {
++							if (ctx.get("coldxFilePreview")?.open(sessionId, path) === true) return Promise.resolve();
+ 							const cwd = sessions.list.getSnapshot().byId[sessionId]?.cwd;
+ 							return workspaces.openPath((0, _deepseek_ai_dsh_client_runtime_client.resolveWorkspacePath)(cwd, path));
+ 						},

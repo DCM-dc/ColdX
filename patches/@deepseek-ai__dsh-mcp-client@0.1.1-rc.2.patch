@@ -1,0 +1,97 @@
+diff --git a/lib/index.js b/lib/index.js
+index 571dbb3ba16fcd7443065422c746591e1e12705b..b4f20c3ac2c13bf476ac6d7775d77d1bbe1eb266 100644
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -10,6 +10,7 @@ import { isDeepStrictEqual } from "node:util";
+ import { z as z$1 } from "zod";
+ import { isImageAdmissionError } from "@deepseek-ai/dsh-attachment";
+ import { assertSupportedJsonSchema } from "@deepseek-ai/dsh-tools";
++import { scopeOf } from "@deepseek-ai/dsh-scope";
+ //#region lib/types/transport.js
+ /**
+ * Transport factory: creates the appropriate MCP transport based on the
+@@ -162,7 +163,10 @@ async function syncTools(client, ctx, opts, previous) {
+ 	for (const dispose of previous.values()) dispose();
+ 	const disposers = /* @__PURE__ */ new Map();
+ 	try {
+-		for (const [publicName, definition] of definitions) disposers.set(publicName, ctx.tools.register(definition));
++		for (const [publicName, definition] of definitions) {
++			if (opts.allowedTools !== void 0 && !opts.allowedTools.includes(definition.rawMcpName)) continue;
++			disposers.set(publicName, ctx.tools.register(definition));
++		}
+ 	} catch (error) {
+ 		for (const dispose of disposers.values()) dispose();
+ 		ctx.logger.error(`mcp-client(${opts.serverName}): tool registration failed, no tools registered: ${String(error)}`);
+@@ -198,6 +202,7 @@ function createDefinition(client, ctx, publicName, rawName, description, paramet
+ 	const projections = /* @__PURE__ */ new WeakMap();
+ 	return {
+ 		name: publicName,
++		rawMcpName: rawName,
+ 		description,
+ 		parameters,
+ 		output: createOutput(rawName, structuredSchema),
+@@ -513,7 +518,8 @@ function startConnection(ctx, config, policy) {
+ 	const opts = {
+ 		registrationFailure: "contain",
+ 		serverName: config.serverName,
+-		toolCallTimeoutMs: config.toolCallTimeoutMs
++		toolCallTimeoutMs: config.toolCallTimeoutMs,
++		allowedTools: config.allowedTools
+ 	};
+ 	const startupOpts = config.failOnStartupError ? {
+ 		...opts,
+@@ -743,6 +749,7 @@ const Config = z.union([z.object({
+ 	env: z.dict(String).default({}),
+ 	cwd: z.string().default(""),
+ 	toolCallTimeoutMs: z.number().default(DEFAULT_TOOL_CALL_TIMEOUT_MS),
++	allowedTools: z.array(String),
+ 	failOnStartupError: z.boolean().default(false),
+ 	reconnect: Reconnect
+ }), z.object({
+@@ -751,6 +758,7 @@ const Config = z.union([z.object({
+ 	url: z.string().required(),
+ 	headers: z.dict(String).default({}),
+ 	toolCallTimeoutMs: z.number().default(DEFAULT_TOOL_CALL_TIMEOUT_MS),
++	allowedTools: z.array(String),
+ 	failOnStartupError: z.boolean().default(false),
+ 	reconnect: Reconnect
+ })]);
+@@ -763,12 +771,14 @@ const Config = z.union([z.object({
+ * @returns startup readiness after connection and initial tool discovery settle.
+ */
+ async function apply(ctx, config) {
++	if (config.allowedTools !== void 0 && (!Array.isArray(config.allowedTools) || config.allowedTools.some(value => typeof value !== "string" || value.length === 0) || new Set(config.allowedTools).size !== config.allowedTools.length)) throw new Error("mcp-client: allowedTools must contain unique non-empty raw tool names");
++	const namespaceOwner = scopeOf(ctx) ?? ctx.root;
+ 	const reconnect = resolveReconnectPolicy(config.reconnect, `mcp-client(${config.serverName}): reconnect`);
+ 	ctx.effect(() => {
+-		let names = activeServerNames.get(ctx.root);
++		let names = activeServerNames.get(namespaceOwner);
+ 		if (!names) {
+ 			names = /* @__PURE__ */ new Set();
+-			activeServerNames.set(ctx.root, names);
++			activeServerNames.set(namespaceOwner, names);
+ 		}
+ 		if (names.has(config.serverName)) throw new Error(`mcp-client: serverName "${config.serverName}" is already in use by another mcp-client instance — pick a unique serverName in cordis.yml`);
+ 		names.add(config.serverName);
+diff --git a/lib/types/index.d.ts b/lib/types/index.d.ts
+index 483203ed182c904ad983cde14d0aec2b75c84a6f..05a001d64bb44bd02aad92074159355c765bbfce 100644
+--- a/lib/types/index.d.ts
++++ b/lib/types/index.d.ts
+@@ -41,6 +41,8 @@ export interface StdioConfig {
+     cwd: string;
+     /** Per-tool-call timeout in milliseconds. */
+     toolCallTimeoutMs: number;
++    /** Optional exact raw tool allowlist. Omission preserves all tools. */
++    allowedTools?: string[];
+     /** Fail plugin activation when the initial connection or tool synchronization fails. */
+     failOnStartupError: boolean;
+     /** Automatic reconnect policy after a lost connection; omission uses the defaults. */
+@@ -62,6 +64,8 @@ export interface StreamableHttpConfig {
+     headers: Record<string, string>;
+     /** Per-tool-call timeout in milliseconds. */
+     toolCallTimeoutMs: number;
++    /** Optional exact raw tool allowlist. Omission preserves all tools. */
++    allowedTools?: string[];
+     /** Fail plugin activation when the initial connection or tool synchronization fails. */
+     failOnStartupError: boolean;
+     /** Automatic reconnect policy after a lost connection; omission uses the defaults. */

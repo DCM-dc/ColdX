@@ -1,0 +1,143 @@
+diff --git a/lib/index.js b/lib/index.js
+index bd9741e..148e08d 100644
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -499,9 +499,11 @@ function resolveChildDepth(parent, maxDepth) {
+ * @returns the resolved options for `ctx.agents.create()`.
+ */
+ function resolveChildAgentOptions(parent, requested, childDepth) {
+-	const parentProvider = parent.options.provider;
+-	const parentModel = parent.options.model;
+-	const parentMaxTokens = parent.options.maxTokens;
++	// Web model selection changes the effective request, not Agent.options.
++	const active = parent.session.requestHeader()?.config;
++	const parentProvider = active?.provider ?? parent.options.provider;
++	const parentModel = active?.model ?? parent.options.model;
++	const parentMaxTokens = active?.maxTokens ?? parent.options.maxTokens;
+ 	return {
+ 		...parentProvider !== void 0 ? { provider: parentProvider } : {},
+ 		...parentModel !== void 0 ? { model: parentModel } : {},
+@@ -569,6 +571,22 @@ const SUBAGENT_DELEGATION_CONTEXT = "You are a delegated subagent: your permissi
+ */
+ function applyChildComposition(childCtx, parent, composition) {
+ 	childCtx.get("agentPresets")?.composeFrom(childCtx, parent.ctx);
++	// Inherit explicit effort once, when a new child starts on the same route.
++	// A resumed child keeps its own persisted selection; adapter defaults and
++	// later user switches must never become a permanent delegation override.
++	const child = childCtx.agent;
++	const parentHeader = parent.session.requestHeader();
++	const active = parentHeader?.config;
++	const ownEvents = child.session.events.slice(child.session.header.seedLength ?? 0);
++	if (!ownEvents.some((event) => event.type === "request/header") && active?.reasoningEffort !== void 0 && parentHeader.adapterDefaults?.reasoningEffort !== true && child.options.provider === active.provider && child.options.model === active.model) {
++		let firstRequest = true;
++		childCtx.on("agent/request", async (_payload, next) => {
++			const proposed = await next();
++			if (!firstRequest) return proposed;
++			firstRequest = false;
++			return proposed.provider === active.provider && proposed.model === active.model ? { ...proposed, reasoningEffort: active.reasoningEffort } : proposed;
++		});
++	}
+ 	childCtx.systemPrompt.context({
+ 		name: "subagent:delegation",
+ 		order: 120,
+@@ -777,8 +795,9 @@ var SubagentContinuationManager = class {
+ 		const childId = spec.childId ?? SessionId(randomUUID());
+ 		this.assertChildIdAvailable(childId);
+ 		const childDepth = resolveChildDepth(parent, request.maxDepth);
+-		const agentProvider = request.agentOptions?.provider ?? parent.options.provider;
+-		const agentModel = request.agentOptions?.model ?? parent.options.model;
++		const childAgentOptions = resolveChildAgentOptions(parent, request.agentOptions, childDepth);
++		const agentProvider = childAgentOptions.provider;
++		const agentModel = childAgentOptions.model;
+ 		const descriptor = snapshotSubagentDescriptor({
+ 			mode: "continuable",
+ 			provider: spec.provider,
+@@ -820,7 +839,7 @@ var SubagentContinuationManager = class {
+ 						meta: childSessionMeta(parent, childDepth, lineageSeedLength),
+ 						delegatedPolicies
+ 					},
+-					agentOptions: resolveChildAgentOptions(parent, request.agentOptions, childDepth),
++					agentOptions: childAgentOptions,
+ 					composition: {
+ 						persona: request.persona,
+ 						toolFilter: request.toolFilter
+@@ -1914,20 +1933,23 @@ async function resolveColdIdentity(persistence, projections, cache, header, hasC
+ }
+ /** Materialize one served identity as its child row. */
+ function childRow(id, identity, activity, hasChildren) {
++	const execution = identity.execution?.status === "running" && activity === "inactive" ? { ...identity.execution, status: "interrupted", code: "HOST_STOPPED" } : identity.execution;
+ 	return identity.mode === "one-shot" ? {
+ 		kind: "child",
+ 		id,
+ 		mode: "one-shot",
+ 		...identity.label !== void 0 ? { label: identity.label } : {},
+ 		activity,
+-		hasChildren
++		hasChildren,
++		...execution === void 0 ? {} : { execution }
+ 	} : {
+ 		kind: "child",
+ 		id,
+ 		mode: "continuable",
+ 		label: identity.label,
+ 		activity,
+-		hasChildren
++		hasChildren,
++		...execution === void 0 ? {} : { execution }
+ 	};
+ }
+ /** Immutable header fields that distinguish one session lifecycle from another under the same id. */
+@@ -2040,14 +2062,20 @@ const subagentTimingProjectionDefinition = {
+ 	},
+ 	stateVersion: 2
+ };
++const subagentExecutionSchema = z.object({
++	status: z.enum(["running", "completed", "failed", "cancelled", "interrupted"]),
++	seq: z.number().int().nonnegative(), time: z.number().nonnegative(),
++	code: z.string().max(40).optional(), httpStatus: z.number().int().min(100).max(599).optional()
++}).strict();
++const SAFE_SUBAGENT_ERROR_CODES = new Set(["AUTH", "RATE_LIMIT", "SERVER", "TIMEOUT", "TRANSPORT", "EMPTY_RESPONSE", "PROVIDER_ERROR", "INVALID_REQUEST", "MODEL_NOT_FOUND", "NO_PROVIDER", "PERMISSION_DENIED", "APPROVAL_REQUIRED", "ABORTED"]);
+ const identityValueSchema = z.discriminatedUnion("mode", [z.object({
+ 	mode: z.literal("one-shot"),
+ 	label: z.string().optional(),
+-	seq: z.number().int().nonnegative()
++	seq: z.number().int().nonnegative(), execution: subagentExecutionSchema.optional()
+ }).strict(), z.object({
+ 	mode: z.literal("continuable"),
+ 	label: z.string(),
+-	seq: z.number().int().nonnegative()
++	seq: z.number().int().nonnegative(), execution: subagentExecutionSchema.optional()
+ }).strict()]);
+ const identitySchema = identityValueSchema.nullable();
+ const identityStateSchema = z.object({ identity: identityValueSchema.optional() }).strict();
+@@ -2086,15 +2114,26 @@ const subagentIdentityProjectionDefinition = {
+ 	stateSchema: identityStateSchema,
+ 	init: () => ({}),
+ 	apply: (state, event) => {
+-		if (event.type !== "subagent/descriptor") return state;
+-		const identity = descriptorIdentity(event);
+-		return identity === void 0 ? {} : { identity };
++		if (event.type === "subagent/descriptor") {
++			const identity = descriptorIdentity(event);
++			return identity === void 0 ? {} : { identity };
++		}
++		if (!state.identity || !["turn/start", "turn/end"].includes(event.type)) return state;
++		const reason = event.data?.reason;
++		const status = event.type === "turn/start" ? "running" : reason?.kind === "completed" ? "completed" : reason?.kind === "error" || reason?.kind === "refusal" ? "failed" : reason?.kind === "aborted" ? "cancelled" : "interrupted";
++		const execution = { status, seq: event.seq, time: event.time };
++		if (reason?.kind === "error") {
++			execution.code = SAFE_SUBAGENT_ERROR_CODES.has(reason.error?.code) ? reason.error.code : "PROVIDER_ERROR";
++			if (Number.isInteger(reason.error?.status) && reason.error.status >= 100 && reason.error.status <= 599) execution.httpStatus = reason.error.status;
++		} else if (reason?.kind === "refusal") execution.code = "REFUSAL";
++		else if (reason?.kind === "max-tokens") execution.code = "MAX_TOKENS";
++		return { identity: { ...state.identity, execution } };
+ 	},
+ 	wire: {
+ 		viewSchema: identitySchema,
+ 		view: (state) => state.identity ?? null
+ 	},
+-	stateVersion: 2
++	stateVersion: 3
+ };
+ //#endregion
+ //#region lib/types/out-of-process.js

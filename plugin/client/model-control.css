@@ -1,0 +1,84 @@
+.coldx-shell ._7KE1Ra_menu:has(.cx-model-control) { box-sizing:border-box; width:304px; min-width:0; max-width:calc(100vw - 24px); padding:12px 14px; overflow:visible; border:1px solid var(--cx-wb-line); border-radius:16px; background:var(--cx-wb-surface); box-shadow:var(--cx-wb-shadow-popup); backdrop-filter:none; -webkit-backdrop-filter:none; opacity:1; transform:none; transform-origin:right bottom; transition:opacity 170ms var(--ds-ease-out,cubic-bezier(.23,1,.32,1)),transform 170ms var(--ds-ease-out,cubic-bezier(.23,1,.32,1)); }
+@starting-style { .coldx-shell ._7KE1Ra_menu:has(.cx-model-control) { opacity:0; transform:translateY(4px) scale(.98); } }
+.coldx-shell .cx-model-control { --cx-effort-accent:color-mix(in srgb,var(--cx-wb-text) 84%,var(--cx-wb-muted)); width:100%; min-width:0; color:var(--cx-wb-text); }
+.coldx-shell .cx-model-control[data-max="true"] { --cx-effort-accent:color-mix(in srgb,var(--cx-wb-accent) 70%,var(--cx-wb-text)); }
+.coldx-shell .cx-model-control-head { display:grid; grid-template-columns:minmax(0,1fr) 28px; align-items:center; gap:6px; padding-bottom:10px; border-bottom:1px solid var(--cx-wb-line); }
+.coldx-shell .cx-model-control-model { display:flex; align-items:center; justify-content:flex-start; gap:5px; min-width:0; min-height:28px; padding:0; margin:0; border:0; border-radius:6px; background:transparent; color:var(--cx-wb-text); text-align:left; font:inherit; font-size:13px; font-weight:550; line-height:20px; cursor:pointer; }
+.coldx-shell .cx-model-control-name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.coldx-shell .cx-model-control-model svg { flex:none; color:var(--cx-wb-muted); }
+.coldx-shell .cx-model-control-reset { display:grid; place-items:center; width:28px; height:28px; padding:0; border:0; border-radius:7px; background:transparent; color:var(--cx-wb-muted); cursor:pointer; }
+.coldx-shell .cx-model-control-reset svg { width:15px; height:15px; }
+.coldx-shell .cx-model-control-setting { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:22px; margin-top:10px; }
+.coldx-shell .cx-model-control-caption { color:var(--cx-wb-muted); font-size:12px; line-height:20px; }
+.coldx-shell .cx-model-control-value { display:flex; align-items:center; gap:8px; }
+.coldx-shell .cx-model-control-effort { display:block; padding:1px 7px; border-radius:6px; background:var(--cx-wb-hover); color:var(--cx-effort-accent); font-size:12px; font-weight:600; line-height:20px; font-variant-numeric:tabular-nums; transition:color 140ms ease,background-color 140ms ease; }
+/* Fast settings writes stay visually quiet. CSS owns the delay so closing or
+   changing the menu removes all pending feedback without a timer callback. */
+.coldx-shell .cx-model-control-saving { color:var(--cx-wb-muted); font-size:11px; line-height:20px; opacity:0; animation:cx-model-saving-reveal 120ms ease-out 600ms both; }
+@keyframes cx-model-saving-reveal { from { opacity:0; } to { opacity:1; } }
+.coldx-shell .cx-model-control-slider { position:relative; min-width:0; height:40px; margin-top:2px; }
+.coldx-shell .cx-model-control-track { position:absolute; inset:16px 12px; border-radius:999px; background:color-mix(in srgb,var(--cx-wb-muted) 13%,var(--cx-wb-surface)); overflow:hidden; pointer-events:none; }
+.coldx-shell .cx-model-control-fill { position:absolute; inset:0; background:var(--cx-effort-accent); border-radius:inherit; transition:clip-path 180ms var(--ds-ease-out,cubic-bezier(.23,1,.32,1)),background-color 140ms ease; }
+.coldx-shell .cx-model-control-ticks { position:absolute; inset:0 1px; }
+.coldx-shell .cx-model-control-ticks i { position:absolute; top:3px; width:2px; height:2px; border-radius:50%; background:var(--cx-wb-muted); transform:translateX(-50%); opacity:.42; }
+.coldx-shell .cx-model-control-ticks i[data-filled="true"] { background:var(--cx-wb-surface); opacity:.55; }
+.coldx-shell .cx-model-control-thumb-lane { position:absolute; inset:0 12px; pointer-events:none; }
+.coldx-shell .cx-model-control-thumb-position { display:block; width:100%; height:100%; transition:transform 180ms var(--ds-ease-out,cubic-bezier(.23,1,.32,1)); }
+.coldx-shell .cx-model-control-thumb { position:absolute; top:8px; left:-12px; display:grid; place-items:center; box-sizing:border-box; width:24px; height:24px; border:1px solid color-mix(in srgb,var(--cx-wb-muted) 28%,#fff); border-radius:50%; background:#fff; box-shadow:0 1px 3px #0002; transition:transform 130ms var(--ds-ease-out,cubic-bezier(.23,1,.32,1)),box-shadow 130ms ease; }
+.coldx-shell .cx-model-control-thumb::after { content:''; width:2px; height:8px; border-radius:1px; background:#737581; opacity:.6; }
+.coldx-shell .cx-model-control[data-dragging="true"] .cx-model-control-thumb-position,
+.coldx-shell .cx-model-control[data-dragging="true"] .cx-model-control-fill { transition:none; }
+.coldx-shell .cx-model-control[data-dragging="true"] .cx-model-control-thumb { transform:scale(1.08); box-shadow:0 2px 5px #0002; }
+/* Native and decorative thumbs share 24px geometry. The entire row is a
+   40px hit target; only the visible rail is 8px high. */
+.coldx-shell .cx-model-control-slider input { position:relative; z-index:1; display:block; box-sizing:border-box; appearance:none; -webkit-appearance:none; width:100%; height:40px; padding:0; margin:0; background:transparent; border:0; border-radius:999px; cursor:ew-resize; touch-action:none; }
+.coldx-shell .cx-model-control-slider input::-webkit-slider-runnable-track { height:8px; background:transparent; }
+.coldx-shell .cx-model-control-slider input::-webkit-slider-thumb { appearance:none; -webkit-appearance:none; box-sizing:border-box; width:24px; height:24px; margin-top:-8px; border:0; border-radius:50%; background:transparent; box-shadow:none; }
+.coldx-shell .cx-model-control-slider input::-moz-range-track { height:8px; background:transparent; }
+.coldx-shell .cx-model-control-slider input::-moz-range-progress { background:transparent; }
+.coldx-shell .cx-model-control-slider input::-moz-range-thumb { box-sizing:border-box; width:24px; height:24px; border:0; border-radius:50%; background:transparent; box-shadow:none; }
+.coldx-shell .cx-model-control-particles { position:absolute; inset:0; pointer-events:none; contain:paint; animation:cx-effort-burst 240ms linear both; }
+.coldx-shell .cx-model-control-particles i { position:absolute; display:block; width:1.5px; height:1.5px; border-radius:50%; background:#fff; animation:cx-effort-spark 240ms var(--ds-ease-out,cubic-bezier(.23,1,.32,1)) both; }
+@keyframes cx-effort-burst { from,to { opacity:0; } 25%,60% { opacity:.8; } }
+@keyframes cx-effort-spark { from { transform:translate3d(-3px,1px,0); } to { transform:translate3d(3px,-1px,0); } }
+.coldx-shell .cx-model-control-slider[data-unset="true"] :is(.cx-model-control-track,.cx-model-control-thumb-lane) { opacity:.5; }
+.coldx-shell .cx-model-control-detail { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+.coldx-shell .cx-model-control-error { display:flex; align-items:flex-start; gap:8px; margin-top:6px; color:var(--dsw-alias-state-error-primary,#b64b58); font-size:12px; line-height:18px; }
+.coldx-shell .cx-model-control-error span { flex:1; min-width:0; overflow-wrap:anywhere; }
+.coldx-shell .cx-model-control-error button { flex:none; color:inherit; font:inherit; font-weight:600; padding:0; border:0; background:transparent; cursor:pointer; }
+.coldx-shell .cx-model-control button { transition:transform 130ms var(--ds-ease-out,cubic-bezier(.23,1,.32,1)),color 130ms ease,background-color 130ms ease; }
+.coldx-shell .cx-model-control button:active:not(:disabled,[aria-disabled="true"]) { transform:scale(.97); }
+.coldx-shell .cx-model-control :is(button,input):is(:disabled,[aria-disabled="true"]) { cursor:default; }
+.coldx-shell .cx-model-control button:disabled,
+.coldx-shell .cx-model-control-reset[data-at-default="true"] { opacity:.45; }
+.coldx-shell .cx-model-control button:focus-visible { outline:2px solid var(--cx-wb-accent); outline-offset:2px; }
+.coldx-shell .cx-model-control-slider input:focus-visible { outline:none; }
+.coldx-shell .cx-model-control-slider:has(input:focus-visible) .cx-model-control-thumb { outline:3px solid color-mix(in srgb,var(--cx-wb-accent) 28%,transparent); outline-offset:3px; }
+@media (hover:hover) and (pointer:fine) {
+  .coldx-shell .cx-model-control-reset:hover:not(:disabled,[aria-disabled="true"]) { background:var(--cx-wb-hover); color:var(--cx-wb-text); }
+  .coldx-shell .cx-model-control-model:hover:not(:disabled,[aria-disabled="true"]) { color:var(--cx-wb-accent); }
+}
+@media (pointer:coarse) {
+  .coldx-shell .cx-model-control-head { grid-template-columns:minmax(0,1fr) 44px; }
+  .coldx-shell .cx-model-control-model,.coldx-shell .cx-model-control-reset { min-height:44px; }
+  .coldx-shell .cx-model-control-reset { width:44px; height:44px; }
+  .coldx-shell .cx-model-control-slider,.coldx-shell .cx-model-control-slider input { height:44px; }
+  .coldx-shell .cx-model-control-track { top:18px; bottom:18px; }
+  .coldx-shell .cx-model-control-thumb { top:10px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .coldx-shell ._7KE1Ra_menu:has(.cx-model-control) { transition:opacity 120ms ease; transform:none; }
+  @starting-style { .coldx-shell ._7KE1Ra_menu:has(.cx-model-control) { transform:none; } }
+  .coldx-shell .cx-model-control-particles { visibility:hidden; animation-duration:.01ms; }
+  .coldx-shell .cx-model-control-particles i { animation:none; }
+  .coldx-shell .cx-model-control :is(.cx-model-control-fill,.cx-model-control-thumb-position,.cx-model-control-thumb,button) { transition:color 120ms ease,background-color 120ms ease,opacity 120ms ease; }
+  .coldx-shell .cx-model-control[data-dragging="true"] .cx-model-control-thumb,.coldx-shell .cx-model-control button:active:not(:disabled,[aria-disabled="true"]) { transform:none; }
+}
+@media (forced-colors:active) {
+  .coldx-shell .cx-model-control-track { background:Canvas; border:1px solid ButtonText; }
+  .coldx-shell .cx-model-control-fill { background:Highlight; }
+  .coldx-shell .cx-model-control-thumb { background:ButtonFace; border-color:ButtonText; }
+  .coldx-shell .cx-model-control-slider:has(input:focus-visible) .cx-model-control-thumb { outline-color:Highlight; }
+  .coldx-shell .cx-model-control-particles { visibility:hidden; }
+}
+

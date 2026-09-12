@@ -1,0 +1,11 @@
+{
+  "name": "coldx-desktop",
+  "productName": "ColdX",
+  "version": "0.1.1",
+  "description": "ColdX generative workspace powered by DeepSeek Harness",
+  "private": true,
+  "type": "module",
+  "main": "main.mjs",
+  "author": "ColdX",
+  "license": "UNLICENSED"
+}

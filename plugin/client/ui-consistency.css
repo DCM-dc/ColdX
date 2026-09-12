@@ -1,0 +1,255 @@
+/* Application chrome only. Load after component styles; reuse the workbench
+ * tokens and native state/permission semantics. Generated page content is out
+ * of scope. Native rc.2 module names are pinned by the frontend dependency. */
+
+/* Sidebar actions must be reachable without first hovering with a mouse. */
+.coldx-shell :is(.YDXeBa_sessionRow, .YDXeBa_projectRow):is(:hover, :focus-within, .YDXeBa_menuOpen) .YDXeBa_rowActions { opacity: 1; }
+.coldx-shell .YDXeBa_sessionRow:focus-within .YDXeBa_time { display: none; }
+.coldx-shell .YDXeBa_rowActions { display: inline-flex; opacity: 0; gap: 4px; height: 32px; }
+.coldx-shell .YDXeBa_iconButton { width: 28px; height: 28px; border-radius: var(--cx-wb-radius-control); }
+.coldx-shell .YDXeBa_iconButton:hover { background: var(--cx-wb-hover); }
+.coldx-shell .YDXeBa_iconButton:focus-visible { outline: 2px solid var(--cx-wb-accent); outline-offset: 1px; }
+.coldx-shell :is(.YDXeBa_sessionRow, .YDXeBa_projectRow) { scroll-margin-block: 8px; }
+.coldx-shell .wSkVaW_headerUtilities { gap: 8px; }
+.coldx-shell .wSkVaW_headerUtilities :is(.cx-file-trigger, .cx-activity-trigger) {
+  border-color: var(--cx-wb-line);
+  background: var(--cx-wb-surface);
+  color: var(--cx-wb-text);
+}
+.coldx-shell .wSkVaW_headerUtilities :is(.cx-file-trigger, .cx-activity-trigger)[aria-expanded="true"] { background: var(--cx-wb-selected); }
+
+/* Settings use one selected state and retain room for their editable content. */
+.coldx-shell .VOzbGW_navCell.VOzbGW_active { background: var(--cx-wb-selected); color: var(--cx-wb-text); font-weight: 600; }
+.coldx-shell .VOzbGW_options { scrollbar-gutter: stable; overscroll-behavior: contain; }
+.coldx-shell .VOzbGW_panel :is(.VOzbGW_close, .pbvGtq_tab) { border-radius: var(--cx-wb-radius-control); }
+.coldx-shell :is(._list_19372_8, ._submenu_19372_9) { box-sizing: border-box; max-inline-size: calc(100vw - 24px); }
+.coldx-shell ._item_19372_91 { border-radius: var(--cx-wb-radius-control); }
+.coldx-shell ._compactList_19372_127 ._item_19372_91 { min-height: 34px; }
+
+/* Work panel: one reading column, live work first, quiet expandable history. */
+.coldx-shell .cx-workbench-header { min-height: 60px; padding: 12px 20px 8px; gap: 12px; border-bottom: 0; }
+.coldx-shell .cx-workbench-header strong { font-size: 16px; font-weight: 600; letter-spacing: -.02em; }
+.coldx-shell .cx-workbench-tabs { padding: 0 20px; gap: 20px; }
+.coldx-shell .cx-workbench-tabs button { flex: 0 1 auto; min-height: 42px; padding: 0 2px; border-radius: 0; border-bottom: 2px solid transparent; font-size: 13px; }
+.coldx-shell .cx-workbench-tabs button[aria-selected="true"] { color: var(--cx-wb-text); background: transparent; border-bottom-color: var(--cx-wb-accent); }
+.coldx-shell .cx-workbench-header > button { border-radius: var(--cx-wb-radius-control); }
+.coldx-shell .cx-workbench-header > button:hover { background: var(--cx-wb-hover); }
+.coldx-shell .cx-activity-header { grid-template-columns: minmax(0,1fr) auto; padding: 16px 20px 8px; border-bottom: 0; }
+.coldx-shell .cx-activity-header h2 { font-size: 16px; }
+.coldx-shell .cx-activity-scroll { padding: 20px 20px 28px; scroll-behavior: auto; }
+.coldx-shell .cx-activity-grid { padding: 0; gap: 24px; }
+.coldx-shell .cx-activity-now { margin: 0 0 24px; padding: 0; border: 0; border-radius: 0; background: transparent; gap: 12px; align-items: start; }
+.coldx-shell .cx-activity-now > .cx-activity-live-mark { margin-top: 5px; }
+.coldx-shell .cx-activity-now > div { gap: 6px; }
+.coldx-shell .cx-activity-now-label { font-size: 11px; line-height: 16px; }
+.coldx-shell .cx-activity-now strong { font-size: 14px; font-weight: 500; line-height: 1.6; white-space: normal; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.coldx-shell .cx-activity-group { margin: 0; padding: 0; }
+.coldx-shell .cx-activity-group + .cx-activity-group { margin-top: 16px; }
+.coldx-shell .cx-activity-group > summary { min-height: 44px; padding: 8px 0; gap: 12px; }
+.coldx-shell .cx-activity-group > summary::after { margin-inline-start: 0; font-size: 15px; }
+.coldx-shell .cx-activity-group > summary .cx-activity-group-label { display: flex; flex: 1; min-width: 0; align-items: center; gap: 9px; color: var(--cx-wb-text); font-size: 13px; }
+.coldx-shell .cx-activity-group-label > svg { flex: none; }
+.coldx-shell .cx-activity-group > summary strong { flex: none; font-size: 13px; font-weight: 600; }
+.coldx-shell .cx-activity-group-label .cx-activity-group-meta { min-width: 0; margin-inline-start: auto; font-size: 11px; color: var(--cx-wb-muted); }
+.coldx-shell .cx-activity-group > summary .cx-activity-group-count { margin-inline-start: auto; padding: 1px 6px; min-width: 20px; box-sizing: border-box; border-radius: 6px; text-align: center; background: var(--cx-wb-raised); color: var(--cx-wb-muted); font-size: 11px; line-height: 18px; font-variant-numeric: tabular-nums; }
+.coldx-shell .cx-activity-group-meta + .cx-activity-group-count { margin-inline-start: 0 !important; }
+.coldx-shell .cx-activity-group section > h4 { margin: 12px 0 4px; font-size: 11px; font-weight: 500; color: var(--cx-wb-muted); }
+.coldx-shell .cx-activity-group li { padding: 12px 0; border-radius: 0; background: transparent; gap: 12px; }
+.coldx-shell .cx-activity-group li + li { margin-block-start: 0; border-top: 1px solid var(--cx-wb-line); }
+.coldx-shell .cx-activity-group li strong { font-size: 13px; line-height: 1.5; font-weight: 500; }
+.coldx-shell .cx-activity-group li small { font-size: 12px; line-height: 1.5; }
+.coldx-shell .cx-activity-group li > div { gap: 4px; }
+.coldx-shell .cx-activity-source a { font-size: 13px; line-height: 1.5; font-weight: 500; }
+.coldx-shell .cx-activity-source p { font-size: 12px; line-height: 1.5; }
+.coldx-shell .cx-activity-inline-action { min-height: 32px; font-size: 12px; border-radius: var(--cx-wb-radius-control); }
+.coldx-shell :is(.cx-activity-agent-action, .cx-activity-source-action) { min-height: 32px; border-radius: var(--cx-wb-radius-control); }
+.coldx-shell :is(.cx-activity-agent-action, .cx-activity-source-action):hover:not(:disabled) { background: var(--cx-wb-hover); }
+.coldx-shell .cx-activity-subagents { margin-bottom: 24px; }
+.coldx-shell .cx-activity-subagents li { padding: 0; }
+.coldx-shell :is(.cx-activity-agent-action, .cx-activity-agent-static) { display: grid; grid-template-columns: 28px minmax(0,1fr); align-items: start; gap: 12px; padding: 12px 0; text-align: start; }
+.coldx-shell .cx-activity-monogram { margin-top: 1px; width: 28px; height: 28px; font-size: 17px; background: transparent; color: var(--cx-wb-muted); }
+.coldx-shell .cx-activity-agent-copy { display: grid; min-width: 0; gap: 5px !important; }
+.coldx-shell .cx-activity-agent-copy .cx-activity-agent-name { display: block; color: var(--cx-wb-text); font-size: 13px; font-weight: 500; line-height: 1.55; overflow-wrap: anywhere; }
+.coldx-shell .cx-activity-agent-copy .cx-activity-agent-status { display: block; font-size: 11px; line-height: 16px; color: var(--cx-wb-muted); }
+.coldx-shell .cx-activity-agent-status[data-tone="danger"] { color: var(--cx-sys-status-danger); }
+.coldx-shell .cx-activity-agent-status[data-tone="accent"] { color: var(--cx-wb-accent); }
+.coldx-shell :is(.cx-activity-process-files, .cx-activity-agent-history, .cx-activity-computer-history) > summary { min-height: 32px; padding-block: 6px; color: var(--cx-wb-muted); font-size: 12px; cursor: pointer; }
+.coldx-shell .cx-activity-group pre { font-size: 12px; border-radius: var(--cx-wb-radius-control); }
+.coldx-shell .cx-activity-group .cx-activity-terminal-item { display: block; }
+.coldx-shell .cx-activity-operations { min-width: 0; }
+.coldx-shell .cx-activity-live-operations > h3 { margin: 0 0 6px; color: var(--cx-wb-muted); font-size: 11px; line-height: 18px; font-weight: 500; }
+.coldx-shell .cx-activity-timeline { gap: 0; }
+.coldx-shell .cx-activity-row + .cx-activity-row { border-top: 1px solid var(--cx-wb-line); }
+.coldx-shell .cx-activity-row-core { grid-template-columns: 10px minmax(0,1fr) auto; align-items: start; gap: 3px 10px; padding: 12px 0; border: 0; border-radius: 0; background: transparent; }
+.coldx-shell .cx-activity-row-core > .cx-activity-live-mark { margin-top: 6px; }
+.coldx-shell .cx-activity-row-title { font-size: 13px; font-weight: 500; line-height: 1.5; white-space: normal; overflow-wrap: anywhere; }
+.coldx-shell .cx-activity-row-time { grid-column: 2; grid-row: 2; font-size: 11px; line-height: 16px; color: var(--cx-wb-muted); }
+.coldx-shell .cx-activity-row-status { grid-column: 3; grid-row: 1; font-size: 11px; line-height: 20px; }
+.coldx-shell .cx-activity-row-status[data-tone="success"] { color: var(--cx-wb-muted); }
+.coldx-shell .cx-activity-row-core .cx-activity-live-mark[data-status="completed"] { background: transparent; border-color: var(--cx-wb-muted); }
+.coldx-shell .cx-activity-row details > summary { border-radius: 6px; }
+.coldx-shell .cx-activity-row details > summary:hover { background: var(--cx-wb-hover); }
+.coldx-shell .cx-activity-row details > summary .cx-activity-row-title::after { content: '›'; display: inline-block; margin-inline-start: 8px; color: var(--cx-wb-muted); }
+.coldx-shell .cx-activity-row details[open] > summary .cx-activity-row-title::after { transform: rotate(90deg); }
+.coldx-shell .cx-activity-row-detail { margin: 0 0 12px 20px; padding: 10px 12px; animation: none; font-size: 12px; line-height: 1.6; background: var(--cx-wb-raised); border-radius: 0 8px 8px 0; }
+.coldx-shell .cx-activity-command-detail { white-space: pre-wrap; max-height: 180px; overflow: auto; }
+.coldx-shell .cx-activity-background { margin-top: 24px; padding-top: 16px; }
+.coldx-shell .cx-activity-background > h3 { font-weight: 500; letter-spacing: 0; }
+.coldx-shell .cx-activity-background li { padding: 12px 0; border: 0; border-radius: 0; background: transparent; grid-template-columns: 10px minmax(0,1fr) auto; gap: 3px 10px; align-items: start; }
+.coldx-shell .cx-activity-background li + li { border-top: 1px solid var(--cx-wb-line); }
+.coldx-shell .cx-activity-background .cx-activity-live-mark { margin-top: 6px; }
+.coldx-shell .cx-activity-group .cx-activity-session-source { display: grid; gap: 4px; }
+.coldx-shell .cx-activity-history { margin-top: 16px; border-block: 1px solid var(--cx-wb-line); }
+.coldx-shell .cx-activity-history > summary { display: flex; align-items: center; min-height: 48px; gap: 12px; padding: 8px 0; list-style: none; cursor: pointer; }
+.coldx-shell .cx-activity-history > summary::-webkit-details-marker { display: none; }
+.coldx-shell .cx-activity-history > summary::after { content: '›'; margin-inline-start: auto; color: var(--cx-wb-muted); }
+.coldx-shell .cx-activity-history[open] > summary::after { transform: rotate(90deg); }
+.coldx-shell .cx-activity-history-label { min-width: 0; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; color: var(--cx-wb-muted); font-size: 12px; }
+.coldx-shell .cx-activity-history-label strong { color: var(--cx-wb-text); font-size: 13px; font-weight: 500; }
+.coldx-shell .cx-activity-history-errors { color: var(--cx-sys-status-danger); font-size: 11px; }
+.coldx-shell .cx-activity-history > summary:focus-visible { outline: 2px solid var(--cx-wb-accent); outline-offset: 2px; }
+.coldx-shell .cx-activity-empty { padding: 20px 0; text-align: start; font-size: 13px; line-height: 1.65; }
+
+/* File controls share the same geometry and theme-aware focus/selection. */
+.coldx-shell .cx-file-workspace :is(button, a),
+.coldx-shell .cx-file-tabs > div { border-radius: var(--cx-wb-radius-control); }
+.coldx-shell .cx-file-workspace :is(button, a) { box-sizing: border-box; }
+.coldx-shell .cx-file-workspace .cx-workbench-tabs button { border-radius: 0; }
+.coldx-shell .cx-file-tabs { padding-inline: 16px; }
+.coldx-shell .cx-file-tabs > div[data-active="true"] { background: var(--cx-wb-selected); }
+.coldx-shell .cx-file-tabs > div > button:first-child { font-weight: 500; }
+.coldx-shell .cx-file-tabs > div[data-active="true"] > button:first-child { font-weight: 600; }
+.coldx-shell .cx-file-tabs button { min-height: 32px; }
+.coldx-shell .cx-file-toolbar { gap: 8px; padding: 8px 16px; }
+.coldx-shell .cx-file-breadcrumb > button { flex: none; min-height: 32px; }
+.coldx-shell .cx-file-actions { gap: 4px 8px; }
+.coldx-shell .cx-file-actions :is(button, a) { display: inline-flex; align-items: center; min-height: 32px; font-size: 12px; }
+.coldx-shell .cx-file-item > span:last-child { flex: none; white-space: nowrap; color: var(--cx-wb-muted); }
+.coldx-shell .cx-file-search { min-height: 36px; border-color: var(--cx-wb-line); border-radius: var(--cx-wb-radius-control); }
+.coldx-shell .cx-file-code > [data-highlighted="true"] { background: var(--cx-wb-selected); }
+.coldx-shell .cx-file-notice { background: var(--cx-wb-raised); color: var(--cx-wb-muted); padding: 10px 16px; line-height: 1.5; }
+.coldx-shell .cx-file-error { padding: 10px 16px; background: color-mix(in srgb, var(--dsw-alias-state-error-primary) 8%, var(--cx-wb-surface)); color: var(--dsw-alias-state-error-primary); line-height: 1.5; }
+.coldx-shell .cx-file-empty { padding: 24px 16px; font-size: 13px; line-height: 1.6; }
+.coldx-shell .cx-file-workspace button:disabled { opacity: .5; cursor: default; background: transparent; }
+
+/* Keep real terminal states legible without an entrance or perpetual glow. */
+.coldx-shell .cx-terminal-panel { animation: none; }
+.coldx-shell .cx-terminal-record { background: var(--cx-wb-surface); border-color: var(--cx-wb-line); border-radius: var(--cx-wb-radius-control); }
+.coldx-shell .cx-terminal-output { background: var(--cx-wb-raised); font-size: 12px; line-height: 1.6; }
+.coldx-shell .cx-terminal-command-wrap strong { font-size: 12px; }
+.coldx-shell .cx-terminal-record-state { font-size: 12px; }
+.coldx-shell .cx-terminal-record[data-status="running"] .cx-terminal-status-dot { animation: none; box-shadow: none; }
+.coldx-shell .cx-terminal-collapse { background: transparent; border-color: var(--cx-wb-line); border-radius: var(--cx-wb-radius-control); }
+.coldx-shell .cx-terminal-collapse:hover { background: var(--cx-wb-hover); }
+.coldx-shell .cx-terminal-switch, .coldx-shell .cx-terminal-switch[data-on="true"] { box-shadow: none; }
+.coldx-shell .cx-terminal-switch-thumb { box-shadow: 0 1px 3px rgb(0 0 0 / 16%); transition-timing-function: ease; }
+
+/* These are chrome controls, not selectors reaching a generated iframe/page. */
+.coldx-shell :is(.cx-file-trigger, .cx-file-search, .cx-file-code,
+  .cx-file-workspace button, .cx-file-workspace a, .cx-activity-agent-action,
+  .cx-activity-inline-action, .cx-computer-controls button,
+  .cx-activity-process-files > summary, .cx-activity-agent-history > summary,
+  .cx-activity-computer-history > summary, .cx-computer-older-preview > summary):focus-visible {
+  outline: 2px solid var(--cx-wb-accent); outline-offset: 2px;
+}
+.coldx-shell :is(.cx-computer-controls button, .cx-computer-preview button) { border-radius: var(--cx-wb-radius-control); }
+
+/* Short feedback for chrome only. Frost buttons use the interruptible WAAPI
+   press runtime; these native controls have no competing JS transform owner. */
+.coldx-shell :is(.cx-file-trigger, .cx-workbench-header > button,
+  .cx-file-tabs button, .cx-file-actions button, .cx-computer-controls button,
+  .YDXeBa_iconButton, .VOzbGW_close, .hHd-Xa_newSession):not(.cx-action) {
+  transition: transform var(--cx-wb-duration-press) var(--cx-motion-ease, cubic-bezier(.23,1,.32,1)),
+    background-color var(--cx-wb-duration-press) ease, color var(--cx-wb-duration-press) ease;
+}
+.coldx-shell :is(.cx-file-trigger, .cx-workbench-header > button,
+  .cx-file-tabs button, .cx-file-actions button, .cx-computer-controls button,
+  .YDXeBa_iconButton, .VOzbGW_close, .hHd-Xa_newSession):not(.cx-action):active:not(:disabled):not(:focus-visible) { transform: scale(.98); }
+.coldx-shell :is(.cx-file-trigger, .cx-workbench-header > button,
+  .cx-file-tabs button, .cx-file-actions button, .cx-computer-controls button,
+  .YDXeBa_iconButton, .VOzbGW_close, .hHd-Xa_newSession):focus-visible { transition: none; }
+
+/* The full-width + menu still originates at its small trigger. Starting style
+   handles the first mount; ordinary transitions reverse rapid open/close. */
+.coldx-shell .cx-composer-add .cx-composer-menu {
+  opacity: 1; transform: none;
+  transform-origin: var(--cx-add-menu-origin, 24px) bottom;
+  transition: opacity 170ms var(--cx-motion-ease, cubic-bezier(.23,1,.32,1)),
+    transform 170ms var(--cx-motion-ease, cubic-bezier(.23,1,.32,1));
+}
+.coldx-shell .cx-composer-add .cx-composer-menu[data-side="below"] { transform-origin: var(--cx-add-menu-origin, 24px) top; }
+.coldx-shell .cx-composer-add .cx-composer-menu[data-presence="closed"] { opacity: 0; transform: translateY(6px) scale(.98); }
+.coldx-shell .cx-composer-add .cx-composer-menu[data-side="below"][data-presence="closed"] { transform: translateY(-6px) scale(.98); }
+@starting-style {
+  .coldx-shell .cx-composer-add .cx-composer-menu[data-presence="open"] { opacity: 0; transform: translateY(6px) scale(.98); }
+  .coldx-shell .cx-composer-add .cx-composer-menu[data-side="below"][data-presence="open"] { transform: translateY(-6px) scale(.98); }
+}
+
+/* Native dialog still owns modality, focus and visibility. Discrete display /
+   overlay transitions retain only the closing visual, with no delayed state. */
+.coldx-shell .cx-workbench-panel[data-motion="pointer"] {
+  opacity: 0; transform: translateX(12px);
+  transition: opacity 200ms var(--cx-motion-ease, cubic-bezier(.23,1,.32,1)),
+    transform 200ms var(--cx-motion-ease, cubic-bezier(.23,1,.32,1));
+}
+.coldx-shell .cx-workbench-panel[data-motion="pointer"][open] { opacity: 1; transform: none; }
+.coldx-shell .cx-workbench-panel[data-open="false"] { pointer-events: none; }
+@supports (transition-behavior: allow-discrete) {
+  .coldx-shell .cx-workbench-panel[data-motion="pointer"] {
+    transition: opacity 200ms var(--cx-motion-ease, cubic-bezier(.23,1,.32,1)),
+      transform 200ms var(--cx-motion-ease, cubic-bezier(.23,1,.32,1)),
+      display 200ms allow-discrete, overlay 200ms allow-discrete;
+  }
+}
+@starting-style {
+  .coldx-shell .cx-workbench-panel[data-motion="pointer"][open] { opacity: 0; transform: translateX(12px); }
+}
+.coldx-shell .cx-composer-add .cx-composer-menu[data-motion="instant"],
+.coldx-shell .cx-workbench-panel[data-motion="instant"] { transform: none; transition: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .coldx-shell :is(.cx-file-trigger, .cx-workbench-header > button,
+    .cx-file-tabs button, .cx-file-actions button, .cx-computer-controls button,
+    .YDXeBa_iconButton, .VOzbGW_close, .hHd-Xa_newSession):not(.cx-action):active:not(:disabled):not(:focus-visible) { transform: none; }
+  .coldx-shell .cx-composer-add .cx-composer-menu,
+  .coldx-shell .cx-composer-add .cx-composer-menu[data-presence],
+  .coldx-shell .cx-composer-add .cx-composer-menu[data-side][data-presence],
+  .coldx-shell .cx-workbench-panel[data-motion="pointer"] { transform: none; transition: opacity 120ms ease; }
+  @starting-style {
+    .coldx-shell .cx-composer-add .cx-composer-menu[data-presence="open"],
+    .coldx-shell .cx-composer-add .cx-composer-menu[data-side="below"][data-presence="open"],
+    .coldx-shell .cx-workbench-panel[data-motion="pointer"][open] { transform: none; }
+  }
+  .coldx-shell .cx-composer-add .cx-composer-menu[data-motion="instant"],
+  .coldx-shell .cx-workbench-panel[data-motion="instant"] { transition: none; }
+}
+
+@media (max-width: 640px) {
+  .coldx-shell .VOzbGW_navList { display: flex; flex-direction: row; flex-wrap: nowrap; overflow-x: auto; gap: 4px; scrollbar-width: thin; padding: 2px; }
+  .coldx-shell .VOzbGW_navCell { flex: none; width: auto; min-height: 36px; padding: 8px 10px; }
+  .coldx-shell .VOzbGW_navLabel { white-space: nowrap; }
+  .coldx-shell .cx-file-search { font-size: 16px; }
+}
+@media (hover: none) {
+  .coldx-shell :is(.YDXeBa_sessionRow, .YDXeBa_projectRow) .YDXeBa_rowActions { opacity: 1; }
+  .coldx-shell .YDXeBa_sessionRow .YDXeBa_time { display: none; }
+}
+@media (pointer: coarse) {
+  .coldx-shell .YDXeBa_rowActions { height: 44px; }
+  .coldx-shell .YDXeBa_iconButton { width: 44px; height: 44px; }
+  .coldx-shell .YDXeBa_projectRow { min-height: 44px; }
+  .coldx-shell .VOzbGW_navCell { min-height: 44px; }
+  .coldx-shell :is(.cx-workbench-header > button, .cx-workbench-tabs button,
+    .cx-file-tabs button, .cx-file-breadcrumb > button, .cx-file-item,
+    .cx-file-actions button, .cx-file-actions a, .cx-activity-inline-action,
+    .cx-activity-agent-action, .cx-activity-source-action, .cx-computer-controls button,
+    .cx-computer-preview button) { min-height: 44px; }
+  .coldx-shell .cx-workbench-header > button { min-width: 44px; }
+}
+@media (forced-colors: active) {
+  .coldx-shell :is(.cx-file-error, .cx-file-notice) { color: CanvasText; background: Canvas; border-block-end: 1px solid CanvasText; }
+  .coldx-shell .VOzbGW_navCell.VOzbGW_active,
+  .coldx-shell .cx-workbench-tabs button[aria-selected="true"],
+  .coldx-shell .cx-file-tabs > div[data-active="true"] { outline: 1px solid Highlight; outline-offset: -1px; }
+  .coldx-shell .cx-file-code > [data-highlighted="true"] { outline: 1px solid Highlight; }
+}

@@ -1,0 +1,21 @@
+allowBuilds:
+  '@deepseek-ai/dsh-subprocess-local': true
+  '@google/genai': true
+  koffi: true
+  node-pty: true
+  protobufjs: true
+  esbuild: true
+  electron: true
+  electron-winstaller: false
+patchedDependencies:
+  '@deepseek-ai/dsh@0.1.1-rc.2': patches/@deepseek-ai__dsh@0.1.1-rc.2.patch
+  '@deepseek-ai/dsh-app-boot@0.1.1-rc.2': patches/@deepseek-ai__dsh-app-boot@0.1.1-rc.2.patch
+  '@deepseek-ai/dsh-client-ui-workspace@0.1.1-rc.2': patches/@deepseek-ai__dsh-client-ui-workspace@0.1.1-rc.2.patch
+  '@deepseek-ai/dsh-client-ui-model-selection@0.1.1-rc.2': patches/@deepseek-ai__dsh-client-ui-model-selection@0.1.1-rc.2.patch
+  '@deepseek-ai/dsh-llm-deepseek@0.1.1-rc.2': patches/@deepseek-ai__dsh-llm-deepseek@0.1.1-rc.2.patch
+  '@deepseek-ai/dsh-subagent@0.1.1-rc.2': patches/@deepseek-ai__dsh-subagent@0.1.1-rc.2.patch
+  '@deepseek-ai/dsh-host-apiproxy@0.1.1-rc.2': patches/@deepseek-ai__dsh-host-apiproxy@0.1.1-rc.2.patch
+  '@deepseek-ai/dsh-client-ui-conversation@0.1.1-rc.2': patches/@deepseek-ai__dsh-client-ui-conversation@0.1.1-rc.2.patch
+  '@deepseek-ai/dsh-subprocess-local@0.1.1-rc.2': patches/@deepseek-ai__dsh-subprocess-local@0.1.1-rc.2.patch
+  '@deepseek-ai/dsh-client-connection@0.1.1-rc.2': patches/@deepseek-ai__dsh-client-connection@0.1.1-rc.2.patch
+  '@deepseek-ai/dsh-mcp-client@0.1.1-rc.2': patches/@deepseek-ai__dsh-mcp-client@0.1.1-rc.2.patch

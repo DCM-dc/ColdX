@@ -1,0 +1,89 @@
+diff --git a/lib/client.js b/lib/client.js
+index d01b916..f0f0ec0 100644
+--- a/lib/client.js
++++ b/lib/client.js
+@@ -49,7 +49,16 @@ window.__ModuleLoader__.load({
+ 					s.status = "loading";
+ 					s.error = null;
+ 				});
+-				const { result } = await this.sessions.models({ sessionId: this.sessionId });
++				let result;
++				try {
++					({ result } = await this.sessions.models({ sessionId: this.sessionId }));
++				} catch (error) {
++					if (!this.disposed && generation === this.generation) this.store.update((s) => {
++						s.status = "error";
++						s.error = error instanceof Error ? error.message : String(error);
++					});
++					throw error;
++				}
+ 				if (this.disposed || generation !== this.generation) {
+ 					if (!result.ok) throw new Error(`${result.error.code}: ${result.error.message}`);
+ 					return result.value;
+@@ -85,12 +94,21 @@ window.__ModuleLoader__.load({
+ 					s.status = "selecting";
+ 					s.error = null;
+ 				});
+-				const { result } = await this.sessions.selectModel({
++				let result;
++				try {
++					({ result } = await this.sessions.selectModel({
+ 					sessionId: this.sessionId,
+ 					provider: selection.provider,
+ 					model: selection.model,
+ 					...selection.reasoningEffort === void 0 ? {} : { reasoningEffort: selection.reasoningEffort }
+-				});
++				}));
++				} catch (error) {
++					if (!this.disposed && generation === this.generation) this.store.update((s) => {
++						s.status = "error";
++						s.error = error instanceof Error ? error.message : String(error);
++					});
++					throw error;
++				}
+ 				if (this.disposed || generation !== this.generation) {
+ 					if (!result.ok) throw new Error(`${result.error.code}: ${result.error.message}`);
+ 					return;
+@@ -288,7 +306,7 @@ window.__ModuleLoader__.load({
+ 		* store/verbs) + the standard locale seat.
+ 		* @returns the trigger and, while open, the two-level menu.
+ 		*/
+-		function ModelSelect({ locked, available, directory, load, select, t }) {
++		function ModelSelect({ sessionId, locked, available, directory, load, select, t, renderSlot }) {
+ 			const state = (0, react.useSyncExternalStore)((fn) => directory.subscribe(fn), () => directory.getSnapshot());
+ 			const [open, setOpen] = (0, react.useState)(false);
+ 			const [pane, setPane] = (0, react.useState)("root");
+@@ -464,11 +482,14 @@ window.__ModuleLoader__.load({
+ 					open && (0, react_jsx_runtime.jsxs)("div", {
+ 						id: `${id}-menu`,
+ 						className: ModelSelect_module_css_default.menu,
+-						role: "menu",
++						role: pane === "root" ? "dialog" : "menu",
+ 						"aria-label": t("menu.aria"),
+ 						"aria-busy": state.status === "loading" || busy,
+ 						children: [
+-							pane === "root" && (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [(0, react_jsx_runtime.jsxs)("button", {
++							pane === "root" && renderSlot("conversation.input.model.effort", {
++								sessionId, locked, available, directory, load, select,
++								openModels: () => { setPane("model"); queueMicrotask(() => itemRefs.current.find(item => item && !item.disabled)?.focus()); }
++							}, { fallback: (0, react_jsx_runtime.jsx)("div", { role: "menu", children: (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [(0, react_jsx_runtime.jsxs)("button", {
+ 								ref: itemRef(),
+ 								type: "button",
+ 								role: "menuitem",
+@@ -506,7 +527,7 @@ window.__ModuleLoader__.load({
+ 									}),
+ 									(0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.IconChevronRightOutline14, { className: ModelSelect_module_css_default.cellChevron })
+ 								]
+-							})] }),
++							})] }) }) }),
+ 							pane === "model" && (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [
+ 								state.status === "loading" && (0, react_jsx_runtime.jsx)("div", {
+ 									className: ModelSelect_module_css_default.status,
+@@ -776,6 +797,7 @@ window.__ModuleLoader__.load({
+ 				const sessions = scope.sessions;
+ 				scope.slots.inject("conversation.input.model", () => scope.slots.register({
+ 					name: "conversation.input.model",
++					children: { "conversation.input.model.effort": { kind: "single", scope: "session" } },
+ 					locale: NS,
+ 					inject: (sessionId) => {
+ 						const directory = models.directoryFor(sessionId);

@@ -1,0 +1,207 @@
+/* Layout adapter for pinned DSH rc.2. Keep generated pages in their native
+   message seats; reserve workbench space rather than covering the transcript. */
+.coldx-shell .wSkVaW_root {
+  position: relative;
+  container: coldx-conversation / inline-size;
+  --cx-inspector-width: 440px;
+  box-sizing: border-box;
+}
+.coldx-shell .wSkVaW_header { position: static; border-bottom: 1px solid var(--cx-wb-line); }
+.coldx-shell .wSkVaW_header::after { content: none; }
+/* Native header groups used to share a non-wrapping row: fixed-size actions
+   overflowed the shrinking title into utilities. Each group now owns its space
+   and wraps by available conversation width, also when details are open. */
+.coldx-shell .wSkVaW_titleRow { flex-wrap: wrap; gap: 6px 12px; }
+.coldx-shell .wSkVaW_titleCluster {
+  flex: 1 1 22rem;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  max-width: 100%;
+  position: relative;
+}
+.coldx-shell .wSkVaW_crumbs { flex: 1 1 140px; }
+.coldx-shell .wSkVaW_crumbSeg { max-width: 100%; }
+.coldx-shell .wSkVaW_crumbs .ZKlsPq_root { flex: 0 0 auto; }
+.coldx-shell .wSkVaW_headerActions {
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+.coldx-shell .wSkVaW_headerUtilities {
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  margin-left: 0;
+  margin-inline-start: auto;
+}
+.coldx-shell .wSkVaW_header :is(.QsffPG_trigger, .ZKlsPq_trigger) { white-space: nowrap; }
+.coldx-shell .wSkVaW_headerUtilities :is(.nL4_yW_sessionLogButton, .cx-file-trigger, .cx-activity-trigger) {
+  flex: none;
+  box-sizing: border-box;
+  min-height: 32px;
+  height: 32px;
+  border-radius: var(--cx-wb-radius-control);
+}
+.coldx-shell .wSkVaW_headerUtilities .cx-file-trigger { min-width: 40px; padding-inline: 6px; }
+@container coldx-conversation (max-width: 600px) {
+  .coldx-shell .wSkVaW_header { padding-inline: 12px; }
+  /* Jobs is an inline native popup. Anchor it to the available title group,
+     rather than letting a 336px menu overflow from the rightmost trigger. */
+  .coldx-shell .wSkVaW_headerActions .QsffPG_root { position: static; }
+  .coldx-shell .wSkVaW_headerActions .QsffPG_menu { left: 0; right: 0; width: auto; max-width: 100%; }
+  .coldx-shell .wSkVaW_headerUtilities .cx-activity-trigger { min-width: 32px; width: 32px; padding-inline: 0; justify-content: center; }
+  .coldx-shell .wSkVaW_headerUtilities .cx-activity-trigger-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+.coldx-shell .wSkVaW_tabs { gap: 4px; padding-inline-start: 0; margin-top: 6px; }
+.coldx-shell .wSkVaW_tabs [role="tab"] { min-width: 48px; min-height: 32px; padding: 4px 10px; }
+.coldx-shell .cx-activity-sheet {
+  position: absolute;
+  inset: var(--cx-inspector-top, 83px) 0 0 auto;
+  width: min(var(--cx-inspector-width), 100%);
+  max-width: 100%;
+  min-height: 0;
+  border-radius: 0;
+  border-width: 0 0 0 1px;
+  z-index: 8;
+  box-sizing: border-box;
+}
+.coldx-shell .cx-activity-header { min-height: 56px; padding: 12px 16px; }
+.coldx-shell .cx-activity-header > div > p { margin: 0 0 2px; font-size: 11px; }
+.coldx-shell .cx-activity-header h2 { font-size: 14px; line-height: 20px; }
+.coldx-shell .cx-activity-scroll { padding: 12px 16px 20px; }
+.coldx-shell .cx-activity-tabs { margin-inline: 16px; }
+.coldx-shell .cx-activity-trigger { min-height: 32px; padding: 0 10px; }
+
+/* On smaller conversation areas the inspector is a dismissible drawer. The
+   breakpoint follows available conversation width, including native details. */
+@container coldx-conversation (min-width: 960px) {
+  .wSkVaW_root:has(.cx-activity-sheet[data-open="true"], .cx-workbench-panel[data-open="true"]) > .wSkVaW_scrollBody {
+    margin-inline-end: var(--cx-inspector-width);
+  }
+}
+@container coldx-conversation (min-width: 1200px) {
+  .cx-workbench-panel { --cx-inspector-width: 460px; }
+  .wSkVaW_root:has(.cx-workbench-panel[data-open="true"]) > .wSkVaW_scrollBody { margin-inline-end: 460px; }
+}
+
+/* Shared progress / results / file surface. show() is nonmodal on desktop;
+   showModal() only supplies native focus containment for the narrow drawer. */
+.coldx-shell .cx-workbench-panel {
+  position: absolute;
+  inset: var(--cx-workbench-top, 83px) 0 0 auto;
+  width: min(var(--cx-inspector-width), 100%);
+  max-width: none;
+  height: auto;
+  max-height: none;
+  min-height: 0;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  border: 0;
+  border-inline-start: 1px solid var(--cx-wb-line);
+  border-radius: 0;
+  background: var(--cx-wb-surface, var(--dsw-alias-bg-base));
+  color: var(--dsw-alias-label-primary);
+  overflow: hidden;
+  z-index: 8;
+  text-align: start;
+  outline: none;
+}
+.coldx-shell .cx-workbench-panel[open] { display: flex; flex-direction: column; }
+.coldx-shell .cx-workbench-panel:not([open]) { display: none; }
+.coldx-shell .cx-workbench-panel[data-mode="drawer"] {
+  position: fixed;
+  inset: var(--cx-workbench-viewport-top, 0px) 0 0 auto;
+  width: min(460px, calc(100vw - 12px));
+  max-height: calc(100dvh - var(--cx-workbench-viewport-top, 0px));
+}
+.cx-workbench-panel::backdrop { background: rgb(0 0 0 / 22%); }
+.cx-workbench-header { display: flex; align-items: center; gap: 12px; flex: none; min-height: 52px; padding: 8px 12px; border-bottom: 1px solid var(--cx-wb-line); box-sizing: border-box; }
+.cx-workbench-header strong { flex: none; font-size: 14px; font-weight: 600; }
+.cx-workbench-header .cx-activity-counts { margin-inline-start: auto; }
+.cx-workbench-header > button { margin-inline-start: auto; flex: none; width: 32px; height: 32px; min-height: 32px; padding: 5px; border: 0; border-radius: 8px; background: transparent; color: inherit; cursor: pointer; }
+.cx-workbench-tabs { flex: none; display: flex; gap: 4px; padding: 8px 12px; border-bottom: 1px solid var(--cx-wb-line); }
+.cx-workbench-tabs button { flex: 1; min-width: 0; min-height: 32px; border: 0; border-radius: 8px; background: transparent; color: var(--dsw-alias-label-secondary); font: inherit; font-size: 12px; cursor: pointer; }
+.cx-workbench-tabs button[aria-selected="true"] { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-label-primary); font-weight: 600; }
+.cx-workbench-tabs button:focus-visible, .cx-workbench-header > button:focus-visible { outline: 2px solid var(--cx-sys-accent); outline-offset: 1px; }
+
+/* Native conversation.input.dock measures this alongside Goal and the input.
+   There is no terminal geometry to guess when the sidebar changes width. */
+.coldx-shell .cx-terminal-panel,
+.coldx-shell .cx-terminal-panel[data-collapsed="true"],
+.coldx-shell:has([data-phase="hero"]) .cx-terminal-panel {
+  position: relative;
+  inset: auto;
+  width: calc(100% - 32px);
+  max-width: var(--dsh-composer-card-max-width, 760px);
+  height: auto;
+  max-height: clamp(150px, 28vh, 220px);
+  min-width: 0;
+  margin-block-end: 8px;
+  margin-inline: auto;
+  box-sizing: border-box;
+  z-index: auto;
+}
+.coldx-shell .cx-terminal-panel[data-collapsed="true"] { max-height: 44px; }
+.coldx-shell .cx-terminal-panel-header { flex: 0 0 auto; min-height: 44px; height: 44px; padding: 6px 12px; box-sizing: border-box; }
+.coldx-shell .cx-terminal-collapse { width: 32px; height: 32px; min-width: 32px; min-height: 32px; padding: 0; }
+.coldx-shell .cx-terminal-panel-header > div { display: flex; align-items: baseline; gap: 12px; min-width: 0; }
+.coldx-shell .cx-terminal-panel-header h2 { flex: 0 0 auto; white-space: nowrap; }
+.coldx-shell .cx-terminal-panel-header p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.coldx-shell .cx-terminal-scroll { min-height: 0; flex: 1; padding: 0 16px 12px; }
+
+/* The native toolbar already owns inline-size containment. Query that toolbar,
+   not the input card: its textarea, overlays and height measurement stay native.
+   Permission and both chips form one group; Coding mode never wraps internally. */
+.coldx-shell .uV2eYG_row { container-name: coldx-composer; align-items: center; flex-wrap: wrap; gap: 8px; padding: 8px; }
+.coldx-shell .uV2eYG_tools { align-items: center; gap: 6px; flex-wrap: nowrap; min-width: 0; padding: 0; }
+.coldx-shell .uV2eYG_trailing { align-items: center; gap: 6px; margin-inline-start: auto; min-width: 0; max-width: 100%; }
+.coldx-shell .uV2eYG_modes { gap: 6px; flex: 0 0 auto; flex-wrap: nowrap; }
+.coldx-shell .cx-coding-mode-root { flex: 0 0 auto; }
+.coldx-shell .cx-coding-mode-bar { align-items: center; gap: 6px; flex-wrap: nowrap; }
+.coldx-shell .cx-coding-mode-trigger { white-space: nowrap; }
+.coldx-shell .cx-coding-mode-chips { display: inline-flex; align-items: center; gap: 4px; flex: 0 0 auto; }
+.coldx-shell .cx-coding-mode-chips:empty { display: none; }
+.coldx-shell .cx-coding-mode-chip-wrap { display: inline-flex; align-items: center; gap: 4px; }
+.coldx-shell .cx-coding-mode-chip { flex: none; white-space: nowrap; }
+.coldx-shell .cx-mode-command-receipt { font-size: 13px; color: var(--cx-wb-muted); }
+.coldx-shell .cx-mode-command-receipt p { margin-block: 4px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.coldx-shell .cx-mode-command-receipt[data-state="error"] { color: var(--dsw-alias-state-error-primary); }
+.coldx-shell .uV2eYG_add,
+.coldx-shell .cx-attachment-trigger,
+.coldx-shell .Sh0Q9G_trigger,
+.coldx-shell .cx-coding-mode-trigger,
+.coldx-shell ._7KE1Ra_trigger,
+.coldx-shell .uV2eYG_primary { min-height: 32px; height: 32px; }
+.coldx-shell .uV2eYG_add,
+.coldx-shell .cx-attachment-trigger,
+.coldx-shell .uV2eYG_primary { min-width: 32px; width: 32px; padding: 0; }
+.coldx-shell ._7KE1Ra_trigger { max-width: 160px; min-width: 0; }
+.coldx-shell ._7KE1Ra_trigger > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@container coldx-composer (max-width: 640px) {
+  .coldx-shell .uV2eYG_tools { flex-basis: 100%; flex-wrap: wrap; }
+  .coldx-shell .uV2eYG_trailing { justify-content: flex-end; }
+  .coldx-shell ._7KE1Ra_trigger { max-width: 240px; }
+}
+@container coldx-composer (max-width: 380px) {
+  .coldx-shell ._7KE1Ra_trigger { max-width: 180px; }
+}
+@media (pointer: coarse) {
+  .coldx-shell .uV2eYG_add,
+  .coldx-shell .cx-attachment-trigger,
+  .coldx-shell .Sh0Q9G_trigger,
+  .coldx-shell .cx-coding-mode-trigger,
+  .coldx-shell ._7KE1Ra_trigger,
+  .coldx-shell .uV2eYG_primary,
+  .coldx-shell .cx-terminal-collapse,
+  .coldx-shell .cx-activity-trigger,
+  .coldx-shell .cx-activity-close { min-height: 44px; height: 44px; min-width: 44px; }
+  .coldx-shell .wSkVaW_headerUtilities :is(.nL4_yW_sessionLogButton, .cx-file-trigger, .cx-activity-trigger) { min-height: 44px; height: 44px; min-width: 44px; }
+  .coldx-shell .cx-terminal-panel-header { min-height: 56px; height: 56px; }
+  .coldx-shell .cx-terminal-panel[data-collapsed="true"] { max-height: 58px; }
+}

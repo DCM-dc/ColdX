@@ -1,0 +1,152 @@
+/* Composer presentation. Native DSH owns the textarea, IME/mirror layers,
+   attachments, commands, submission and automatic height measurement. */
+.coldx-shell [data-composer-card],
+.coldx-shell [data-composer-card]:has(.cx-coding-mode-menu, ._3e4SsG_menu, ._7KE1Ra_menu) {
+  border: 1px solid var(--cx-wb-line);
+  border-radius: 24px;
+  background: var(--dsw-specific-input-major, var(--cx-wb-surface));
+  padding-block-start: 12px;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 4%);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.coldx-shell [data-composer-card]:focus-within {
+  border-color: color-mix(in srgb, var(--cx-wb-text) 26%, var(--cx-wb-surface));
+  box-shadow: 0 2px 8px rgb(0 0 0 / 4%);
+}
+/* All three layers must have identical metrics, including referenced files
+   and IME composition, or the visible caret will diverge from the text. */
+.coldx-shell .uV2eYG_card { font-size: 16px; line-height: 26px; }
+.coldx-shell :is(.uV2eYG_input, .uV2eYG_mirror, .uV2eYG_backdrop) {
+  padding: 4px 20px 8px;
+  font: inherit;
+  letter-spacing: normal;
+}
+.coldx-shell .uV2eYG_mirror { min-height: 60px; }
+.coldx-shell .uV2eYG_input::placeholder { color: var(--cx-wb-muted); opacity: .8; }
+.coldx-shell .uV2eYG_scroll { scrollbar-width: thin; }
+.coldx-shell .uV2eYG_row { gap: 6px; padding: 4px 10px 10px; }
+.coldx-shell .uV2eYG_tools,
+.coldx-shell .uV2eYG_trailing,
+.coldx-shell .uV2eYG_modes,
+.coldx-shell .cx-coding-mode-bar { gap: 4px; }
+.coldx-shell .uV2eYG_trailing { flex: 0 1 auto; }
+.coldx-shell .uV2eYG_tools { flex-basis: auto; flex-wrap: wrap; max-width: 100%; }
+.coldx-shell .uV2eYG_modes { min-width: 0; flex: 0 1 auto; flex-wrap: wrap; }
+.coldx-shell .uV2eYG_trailing ._7KE1Ra_root { min-width: 0; flex: 1; }
+.coldx-shell :is(.uV2eYG_add, .cx-attachment-trigger, .Sh0Q9G_trigger, .cx-coding-mode-trigger, ._7KE1Ra_trigger) {
+  min-height: 36px;
+  height: 36px;
+  border: 1px solid transparent;
+  border-radius: 18px;
+  background: transparent;
+  color: var(--cx-wb-muted);
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: none;
+}
+.coldx-shell :is(.uV2eYG_add, .cx-attachment-trigger) { width: 36px; min-width: 36px; }
+.coldx-shell .uV2eYG_add { color: var(--cx-wb-text); }
+.coldx-shell .uV2eYG_add svg { width: 18px; height: 18px; }
+.coldx-shell .Sh0Q9G_trigger { padding-inline: 6px; }
+.coldx-shell .cx-coding-mode-trigger { padding-inline: 8px; color: var(--cx-wb-text); }
+.coldx-shell ._7KE1Ra_trigger { padding-inline: 10px 6px; max-width: min(240px, 100%); background: var(--cx-wb-raised); }
+.coldx-shell ._7KE1Ra_triggerLabel { min-width: 0; }
+.coldx-shell ._7KE1Ra_triggerEffort { flex: none; color: var(--cx-wb-muted); }
+.coldx-shell :is(.uV2eYG_add, .cx-attachment-trigger, .Sh0Q9G_trigger, .cx-coding-mode-trigger, ._7KE1Ra_trigger):is(:hover, [aria-expanded="true"]):not(:disabled) {
+  background: var(--cx-wb-hover);
+  color: var(--cx-wb-text);
+  border-color: transparent;
+}
+.coldx-shell .uV2eYG_primary {
+  flex: none;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  min-height: 36px;
+  border-radius: 50%;
+  box-shadow: none;
+}
+.coldx-shell :is(.uV2eYG_add, .cx-attachment-trigger, .Sh0Q9G_trigger, .cx-coding-mode-trigger, ._7KE1Ra_trigger, .uV2eYG_primary):focus-visible {
+  outline: 2px solid var(--cx-wb-accent);
+  outline-offset: 2px;
+}
+.coldx-shell .cx-coding-mode-chips { gap: 4px; }
+.coldx-shell .cx-coding-mode-chip { border-radius: 14px; }
+.coldx-shell .cx-coding-mode-cache { font-size: 11px; }
+.coldx-shell .wSkVaW_heroWorkspaceRow { margin-top: 0; padding-left: 16px; opacity: 1; }
+/* One full-width addition menu, anchored to the input card. */
+.coldx-shell .cx-composer-add { position: static; }
+.coldx-shell .cx-composer-add .cx-attachment-trigger { color: var(--cx-wb-text); }
+.coldx-shell .cx-composer-menu {
+  position: absolute; inset: auto 0 calc(100% + 10px); width: auto;
+  max-width: none; max-height: var(--cx-add-menu-max-height, 400px);
+  min-height: 0; overflow: auto; overscroll-behavior: contain;
+  padding: 6px; border-radius: 20px;
+  color: var(--cx-wb-text); background: var(--cx-wb-surface);
+  box-shadow: var(--cx-wb-shadow-popup); scrollbar-width: thin;
+}
+.coldx-shell .cx-composer-menu[data-side="below"] { inset: calc(100% + 10px) 0 auto; }
+.coldx-shell .cx-composer-menu-heading { margin: 0; padding: 5px 8px 4px; font-size: 14px; font-weight: 400; color: var(--cx-wb-muted); line-height: 22px; }
+.coldx-shell .cx-composer-menu-heading:not(:first-child) { padding-top: 12px; }
+.coldx-shell .cx-composer-menu :is(.cx-composer-menu-item, .cx-coding-mode-choice) {
+  display: flex; align-items: center; gap: 8px; width: 100%; min-height: 36px;
+  padding: 5px 10px; margin: 0; border: 0; border-radius: 18px;
+  background: transparent; color: var(--cx-wb-text); text-align: left;
+  font-size: 15px; font-weight: 400; line-height: 24px; box-shadow: none;
+}
+.coldx-shell .cx-composer-menu :is(.cx-composer-menu-item, .cx-coding-mode-choice):hover:not(:disabled),
+.coldx-shell .cx-composer-menu .cx-coding-mode-choice[aria-checked="true"] { background: var(--cx-wb-hover); }
+.coldx-shell .cx-composer-menu :is(.cx-composer-menu-item, .cx-coding-mode-choice) > svg { flex: none; color: var(--cx-wb-muted); }
+.coldx-shell .cx-composer-menu-check { flex: none; margin-inline-start: auto; width: 18px; text-align: center; }
+.coldx-shell .cx-composer-menu-hint { color: var(--cx-wb-muted); font-size: 12px; }
+.coldx-shell .cx-composer-menu .cx-coding-mode-copy { display: flex; flex: 1; flex-wrap: wrap; align-items: baseline; gap: 0 10px; min-width: 0; }
+.coldx-shell .cx-composer-menu .cx-coding-mode-name { font-size: 15px; font-weight: 400; }
+.coldx-shell .cx-composer-menu .cx-coding-mode-description { color: var(--cx-wb-muted); font-size: 15px; line-height: 24px; opacity: .75; }
+.coldx-shell .cx-composer-menu [aria-disabled="true"] { opacity: .5; cursor: default; }
+.coldx-shell .cx-composer-menu button:focus-visible { outline: none; background: var(--cx-wb-hover); }
+.coldx-shell .cx-composer-menu [role="menuitem"]:focus { background: var(--cx-wb-hover); }
+.coldx-shell .cx-composer-menu input:focus-visible { outline: 2px solid var(--cx-wb-accent); outline-offset: -2px; }
+.coldx-shell .cx-composer-plugin-copy { display: flex; gap: 10px; min-width: 0; align-items: baseline; }
+.coldx-shell .cx-composer-plugin-name { flex: none; font-size: 15px; font-weight: 400; }
+.coldx-shell .cx-composer-plugin-description { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--cx-wb-muted); opacity: .75; font-size: 15px; }
+.coldx-shell .cx-composer-plugin-icon { display: grid; place-items: center; flex: none; width: 18px; height: 18px; color: #9683dc; }
+.coldx-shell .cx-composer-catalog-state { margin: 0; padding: 5px 10px 10px; font-size: 13px; color: var(--cx-wb-muted); line-height: 22px; }
+.coldx-shell .cx-composer-catalog-state button { margin-left: 8px; border: 0; background: transparent; color: var(--cx-wb-text); font: inherit; text-decoration: underline; cursor: pointer; }
+.coldx-shell .cx-composer-menu .cx-attachment-menu-heading { position: relative; padding: 8px 10px 12px 44px; }
+.coldx-shell .cx-composer-menu-back { position: absolute; left: 0; top: 4px; display: grid; place-items: center; width: 36px; height: 36px; min-height: 36px; padding: 0; border: 0; background: transparent; }
+.coldx-shell .cx-composer-menu .cx-attachment-choice { grid-template-columns: 20px minmax(0, 1fr) auto; gap: 10px; min-height: 54px; }
+.coldx-shell .cx-composer-menu .cx-attachment-choice-icon { width: 20px; height: 20px; border: 0; border-radius: 0; background: transparent; color: var(--cx-wb-muted); }
+.coldx-shell .cx-composer-menu .cx-attachment-choice-copy strong { font-size: 14px; font-weight: 500; }
+.coldx-shell .cx-composer-menu .cx-attachment-choice-copy span { font-size: 12px; }
+.coldx-shell .cx-composer-menu .cx-attachment-choice-key { border: 0; padding: 0; font-size: 11px; }
+@container coldx-composer (max-width: 420px) {
+  .coldx-shell .cx-composer-menu-hint { display: none; }
+  .coldx-shell .cx-composer-menu .cx-coding-mode-copy { display: grid; gap: 0; }
+}
+@container coldx-composer (max-width: 640px) {
+  .coldx-shell .uV2eYG_tools { row-gap: 4px; }
+  .coldx-shell ._7KE1Ra_trigger { max-width: min(180px, 100%); }
+}
+@container coldx-composer (max-width: 380px) {
+  .coldx-shell ._7KE1Ra_trigger { max-width: min(110px, 100%); }
+  .coldx-shell .Sh0Q9G_trigger { padding-inline: 4px; }
+}
+@media (max-width: 520px) {
+  .coldx-shell [data-composer-card] { border-radius: 20px; }
+  .coldx-shell :is(.uV2eYG_input, .uV2eYG_mirror, .uV2eYG_backdrop) { padding-inline: 16px; }
+}
+@media (pointer: coarse) {
+  .coldx-shell :is(.uV2eYG_add, .cx-attachment-trigger, .Sh0Q9G_trigger, .cx-coding-mode-trigger, ._7KE1Ra_trigger, .uV2eYG_primary) {
+    height: 44px; min-height: 44px; min-width: 44px;
+  }
+  .coldx-shell :is(.uV2eYG_add, .cx-attachment-trigger, .uV2eYG_primary) { width: 44px; }
+  .coldx-shell .cx-coding-mode-chip { min-height: 44px; }
+  .coldx-shell .JObwrW_trigger { width: 44px; height: 44px; min-width: 44px; min-height: 44px; }
+  .coldx-shell .cx-composer-menu :is(.cx-composer-menu-item, .cx-coding-mode-choice, .cx-attachment-back, .cx-composer-menu-back) { min-height: 44px; }
+}
+@media (forced-colors: active) {
+  .coldx-shell [data-composer-card] { border-color: CanvasText; background: Canvas; box-shadow: none; }
+  .coldx-shell [data-composer-card]:focus-within { border-color: Highlight; box-shadow: none; }
+}

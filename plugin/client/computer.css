@@ -1,0 +1,17 @@
+.coldx-shell .cx-computer-controls { display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid var(--cx-wb-line); }
+.coldx-shell .cx-computer-controls > div { flex:1; min-width:180px; display:grid; gap:4px; }
+.coldx-shell .cx-computer-controls strong { font-size:13px; }
+.coldx-shell .cx-computer-controls small,.coldx-shell .cx-computer-preview figcaption { color:var(--cx-wb-muted); font-size:11px; }
+.coldx-shell .cx-computer-controls button { min-height:32px; padding:0 10px; border-radius:8px; border:1px solid var(--cx-wb-line); background:var(--cx-wb-surface); color:inherit; font:inherit; font-size:12px; cursor:pointer; }
+.coldx-shell .cx-computer-controls button:disabled { opacity:.5; cursor:wait; }
+.coldx-shell .cx-computer-controls p { flex-basis:100%; margin:0; font-size:12px; }
+.coldx-shell .cx-computer-preview { width:100%; min-width:0; margin:8px 0 0; }
+.coldx-shell .cx-computer-image-viewport { width:100%; max-height:min(55vh,520px); box-sizing:border-box; overflow:auto; overscroll-behavior:contain; border:1px solid var(--cx-wb-line); border-radius:8px; background:var(--cx-wb-surface); }
+.coldx-shell .cx-computer-preview img { width:100%; height:auto; max-height:360px; object-fit:contain; display:block; }
+.coldx-shell .cx-computer-preview[data-zoom="actual"] img { width:auto; height:auto; max-width:none; max-height:none; }
+.coldx-shell .cx-computer-preview figcaption { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:6px; margin:0 0 5px; }
+.coldx-shell .cx-computer-preview button { min-height:32px; padding:0 8px; border-radius:7px; border:1px solid var(--cx-wb-line); background:var(--cx-wb-surface); color:inherit; font:inherit; cursor:pointer; }
+.coldx-shell .cx-computer-preview button:focus-visible,.coldx-shell .cx-computer-image-viewport:focus-visible { outline:2px solid var(--cx-wb-accent,#0a84ff); outline-offset:2px; }
+.coldx-shell .cx-computer-image-hint { display:block; margin-top:5px; color:var(--cx-wb-muted); font-size:11px; }
+.coldx-shell .cx-computer-older-preview { font-size:12px; width:100%; }
+.coldx-shell .cx-computer-older-preview summary { cursor:pointer; padding:6px 0; }
