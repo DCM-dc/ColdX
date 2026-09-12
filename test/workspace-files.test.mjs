@@ -43,6 +43,20 @@ test('file operations reject traversal, directories as files, malformed requests
   catch (error) { if (error.code === 'EPERM') return t.diagnostic('Symlink permission unavailable'); throw error; }
   await assert.rejects(readWorkspaceFile(root, { path: 'escape/secret.txt' }), /workspace/);
 });
+test('absolute workspace aliases and canonical paths share the same bounded preview root', async t => {
+  const root = await fixture();
+  const alias = join(await mkdtemp(join(tmpdir(), 'coldx-workspace-alias-')), 'workspace');
+  try { await symlink(root, alias, 'junction'); }
+  catch (error) { if (error.code === 'EPERM') return t.skip('Directory links unavailable'); throw error; }
+  for (const path of [join(alias, 'nested', '报告.md'), join(root, 'nested', '报告.md'), 'nested/报告.md']) {
+    const file = await readWorkspaceFile(alias, { path });
+    assert.equal(file.path, 'nested/报告.md');
+    assert.equal(file.text, '# Report\nreal contents');
+  }
+  const outside = join(await mkdtemp(join(tmpdir(), 'coldx-alias-outside-')), 'private.md');
+  await writeFile(outside, 'outside');
+  await assert.rejects(readWorkspaceFile(alias, { path: outside }), /workspace/);
+});
 test('preview bounds large content and reports cancellation', async () => {
   const root = await fixture();
   await writeFile(join(root, 'large.txt'), 'x'.repeat(3 * 1024 * 1024));

@@ -4,16 +4,23 @@ import { resolve, relative, isAbsolute, sep, extname, basename } from 'node:path
 const TEXT_LIMIT = 2 * 1024 * 1024;
 const BINARY_LIMIT = 8 * 1024 * 1024;
 const MIME = { '.png':'image/png', '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.gif':'image/gif', '.webp':'image/webp', '.avif':'image/avif', '.pdf':'application/pdf', '.svg':'image/svg+xml', '.html':'text/html', '.htm':'text/html', '.md':'text/markdown', '.txt':'text/plain', '.csv':'text/csv', '.json':'application/json' };
-function inside(root, target) {
+function contains(root, target) {
   const part = relative(root, target);
-  if (isAbsolute(part) || part === '..' || part.startsWith(`..${sep}`)) throw new Error('File path escapes the Agent workspace.');
+  return !isAbsolute(part) && part !== '..' && !part.startsWith(`..${sep}`);
+}
+function inside(root, target) {
+  if (!contains(root, target)) throw new Error('File path escapes the Agent workspace.');
 }
 async function locate(workspace, request, signal) {
   signal?.throwIfAborted();
   if (!request || typeof request !== 'object' || Array.isArray(request) || Object.keys(request).length !== 1 || typeof request.path !== 'string' || /[\u0000-\u001f]/u.test(request.path)) throw new Error('Invalid workspace file request.');
-  const root = await realpath(workspace);
-  const candidate = resolve(root, request.path || '.');
-  inside(root, candidate);
+  const declaredRoot = resolve(workspace);
+  const root = await realpath(declaredRoot);
+  const candidate = resolve(declaredRoot, request.path || '.');
+  // Windows short names and selected directory aliases are valid workspace
+  // spellings. Admit only a lexical child of either spelling, then enforce the
+  // canonical root again after resolving any links in the requested path.
+  if (!contains(declaredRoot, candidate)) inside(root, candidate);
   const target = await realpath(candidate);
   inside(root, target);
   signal?.throwIfAborted();
