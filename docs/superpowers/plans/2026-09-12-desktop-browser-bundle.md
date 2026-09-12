@@ -25,7 +25,7 @@
 ## Real packaged acceptance
 
 - [x] Add `scripts/desktop/browser-smoke.mjs` using the shipped Node and MCP driver against a disposable local fixture. Assert successful navigation, button click, changed page state, screenshot bytes and closure. No model requests.
-- [ ] Build the patch Windows installer and run the browser smoke outside the checkout with the bundled directory, independent of the global cache.
+- [x] Build the patch Windows installer and run the browser smoke outside the checkout with the bundled directory, independent of the global cache.
 - [x] Run source tests: 526 pass, 0 fail, 1 opt-in titlebar browser test skipped. Desktop package acceptance is recorded separately below.
 - [ ] Publish the checked source and versioned patch installer; keep previous released files unchanged and report actual verification boundaries.
 
@@ -36,3 +36,7 @@ Do not read or publish private sessions, credentials, `codex-archive/`, or the c
 ## Verified package evidence
 
 Windows x64, Node 24.16.0, Playwright MCP 0.0.80, SDK 1.30.0 and Chromium headless shell revision 1243 passed the relocated-runtime browser smoke. The local fixture was navigated, clicked and observed through MCP; its returned PNG was 1280 by 720 pixels and 28,131 bytes. The driver exited and the disposable directory was removed. No build-machine `.links` metadata was present. The separate relocated desktop smoke passed renderer readiness, bundled pnpm and backend shutdown checks. Unix timeout cleanup was reviewed but not executed on this Windows host.
+
+The locally built `ColdX-0.1.2-win-x64.exe` contains 283,715,976 bytes; SHA256 is `ec8253ff88f795d4cb41b7dcd2ed591301f4c946455344d88fa1fec9abb75bed`. The embedded archive passed 7-Zip integrity verification. Its extracted browser executable, manifest and browser preset hashes match the tested unpacked runtime. This patch was validated through packaged runtime execution and installer payload checks, without upgrading the user's active installation during verification.
+
+The public installer is attached directly from the successful Windows CI run rather than uploaded from this local build. Its artifact and release asset digests are verified during the manual attachment workflow; that workflow does not publish drafts or replace conflicting files.

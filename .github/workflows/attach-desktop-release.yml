@@ -1,0 +1,48 @@
+name: Attach verified desktop release
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_run_id:
+        description: Successful Build ColdX desktop run ID
+        required: true
+      release_tag:
+        description: Existing version tag (for example v0.1.2)
+        required: true
+      release_commit:
+        description: Full commit SHA matched by the tag and build
+        required: true
+      draft_release_id:
+        description: Existing unpublished draft release ID
+        required: true
+
+# This manual operation attaches artifacts to a verified draft. Publication is
+# a separate explicit step; the build workflow keeps read-only permissions.
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: coldx-release-attachment-${{ inputs.release_tag }}
+  cancel-in-progress: false
+
+jobs:
+  attach:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24.16.0
+          package-manager-cache: false
+      - name: Verify build, tag, archive and draft before attaching assets
+        run: node .github/scripts/attach-desktop-release.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COLDX_BUILD_RUN_ID: ${{ inputs.build_run_id }}
+          COLDX_RELEASE_TAG: ${{ inputs.release_tag }}
+          COLDX_RELEASE_COMMIT: ${{ inputs.release_commit }}
+          COLDX_DRAFT_RELEASE_ID: ${{ inputs.draft_release_id }}
