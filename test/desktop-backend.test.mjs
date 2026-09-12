@@ -147,6 +147,25 @@ test('desktop backend reports a child that exits before HTTP readiness', { timeo
   });
 });
 
+test('packaged backend overrides a foreign Playwright cache while development preserves it', { timeout: 10_000 }, async t => {
+  const original = process.env.PLAYWRIGHT_BROWSERS_PATH;
+  t.after(() => { if (original === undefined) delete process.env.PLAYWRIGHT_BROWSERS_PATH; else process.env.PLAYWRIGHT_BROWSERS_PATH = original; });
+  process.env.PLAYWRIGHT_BROWSERS_PATH = 'foreign-browser-cache';
+  const runtime = await fixtureRuntime(t, `
+    import { createServer } from 'node:http';
+    const server = createServer((_request, response) => response.end(process.env.PLAYWRIGHT_BROWSERS_PATH ?? 'unset'));
+    server.listen(0, '127.0.0.1', () => console.log('dsh web: http://127.0.0.1:' + server.address().port + '/'));
+    process.on('SIGINT', () => server.close(() => process.exit(0)));
+  `);
+  const browsersPath = join(runtime.temp, 'bundled browsers');
+  const packaged = await startBackend({ nodePath: process.execPath, ...runtime, browsersPath, timeoutMs: 3000 });
+  try { assert.equal((await fetchText(packaged.url)).body, browsersPath); }
+  finally { await packaged.stop(); }
+  const development = await startBackend({ nodePath: process.execPath, ...runtime, timeoutMs: 3000 });
+  try { assert.equal((await fetchText(development.url)).body, 'foreign-browser-cache'); }
+  finally { await development.stop(); }
+});
+
 test('desktop opens the DSH app even when a plugin logs another ready local server first', { timeout: 10_000 }, async t => {
   const runtime=await fixtureRuntime(t,`
     import {createServer} from 'node:http';

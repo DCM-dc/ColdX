@@ -43,11 +43,13 @@ test('packaged runtime resolves outside asar while data and workspace remain use
   const paths = policy.desktopPaths({ packaged: true, resourcesPath: resolve('bundle/resources'), appPath: resolve('bundle/resources/app.asar'), userData: resolve('user/ColdX'), documents: resolve('user/Documents'), platform: 'win32' });
   assert.equal(paths.runtimeRoot, resolve('bundle/resources/runtime/app'));
   assert.equal(paths.nodePath, resolve('bundle/resources/runtime/node.exe'));
+  assert.equal(paths.browsersPath, resolve('bundle/resources/runtime/browsers'));
   assert.equal(paths.dataHome, resolve('user/ColdX/dsh'));
   assert.equal(paths.workspace, resolve('user/Documents/ColdX'));
   const dev = policy.desktopPaths({ packaged: false, appPath: resolve('desktop'), userData: resolve('user/ColdX'), documents: resolve('docs'), platform: 'linux', execPath: '/opt/node/bin/node' });
   assert.equal(dev.runtimeRoot, resolve('.'));
   assert.equal(dev.nodePath, '/opt/node/bin/node');
+  assert.equal(dev.browsersPath, undefined, 'development keeps Playwright default browser discovery');
 });
 
 test('desktop Electron launch removes inherited run-as-node flags instead of assigning an empty value', async () => {

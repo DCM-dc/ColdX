@@ -1,6 +1,6 @@
 import { createRequire } from 'node:module';
 import { existsSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { mkdir, lstat } from 'node:fs/promises';
@@ -14,7 +14,12 @@ export function browserRuntime() {
   const require = createRequire(import.meta.url);
   const packagePath = require.resolve('@playwright/mcp/package.json');
   const driverRequire = createRequire(packagePath);
-  const executable = driverRequire('playwright').chromium.executablePath();
+  // The pinned driver launches headless shell, not full Chrome. Playwright's
+  // public chromium.executablePath() reports the headed binary even when only
+  // shell is installed. Keep this pinned registry lookup aligned with launch.
+  const { registry } = driverRequire('playwright-core/lib/coreBundle').registry;
+  const executable = registry.findExecutable('chromium-headless-shell')?.executablePath();
+  if (!executable) throw new Error('The installed Playwright version does not expose its Chromium headless shell.');
   return { executable, available: existsSync(executable), cli: join(dirname(packagePath), 'cli.js'),
     installer: join(dirname(driverRequire.resolve('playwright/package.json')), 'cli.js') };
 }
@@ -24,9 +29,18 @@ export function browserPreset(agent, driverArgs) {
   if (!driverArgs && !runtime.available) throw new Error('浏览器组件尚未安装。请运行 pnpm computer:install，然后重试。');
   const sessionKey = createHash('sha256').update(agent.id).digest('hex').slice(0, 20);
   const outputDirectory = join(agent.session.header.cwd, '.coldx', 'browser', sessionKey);
+  const configuredBrowsersPath = process.env.PLAYWRIGHT_BROWSERS_PATH;
+  // Playwright resolves a relative cache against INIT_CWD or the Host cwd.
+  // Freeze that directory before MCP changes cwd; '0' means package-local.
+  const browsersPath = configuredBrowsersPath && configuredBrowsersPath !== '0' && !isAbsolute(configuredBrowsersPath)
+    ? resolve(process.env.INIT_CWD || process.cwd(), configuredBrowsersPath)
+    : configuredBrowsersPath;
   return { transport: 'stdio', serverName: 'coldx_browser', command: process.execPath,
     args: driverArgs ?? [fileURLToPath(new URL('./browser-driver.mjs', import.meta.url)), outputDirectory],
-    env: {}, cwd: outputDirectory, toolCallTimeoutMs: 40_000, failOnStartupError: true,
+    // MCP stdio's default environment does not forward arbitrary variables.
+    // Preserve the desktop's bundled directory explicitly in its child.
+    env: browsersPath ? { PLAYWRIGHT_BROWSERS_PATH: browsersPath } : {},
+    cwd: outputDirectory, toolCallTimeoutMs: 40_000, failOnStartupError: true,
     allowedTools: [...COMPUTER_TOOLS], reconnect: { enabled: false } };
 }
 

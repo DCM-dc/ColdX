@@ -4,6 +4,7 @@ import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { createConnection } from '@playwright/mcp';
 import { dshRequire } from './page-native.mjs';
+import { browserRuntime } from './computer-preset.mjs';
 
 const driverRequire = createRequire(import.meta.resolve('@playwright/mcp'));
 const sdkRequire = createRequire(dshRequire.resolve('@deepseek-ai/dsh-mcp-client'));
@@ -24,7 +25,7 @@ const connection = await createConnection({
   if (closing) throw new Error('Browser driver is closing.');
   if (context && browser?.isConnected()) return context;
   if (!opening) opening = (async () => {
-    browser = await chromium.launch({ headless: true });
+    browser = await chromium.launch({ headless: true, executablePath: browserRuntime().executable });
     context = await browser.newContext({ viewport: { width: 1280, height: 720 }, serviceWorkers: 'block' });
     const ownedBrowser = browser;
     context.on('close', () => { context = undefined; void ownedBrowser.close().catch(() => {}); });

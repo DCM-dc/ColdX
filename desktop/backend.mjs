@@ -33,13 +33,17 @@ function validAbortSignal(signal) {
     && typeof signal.addEventListener === 'function' && typeof signal.removeEventListener === 'function');
 }
 
-function backendEnvironment(executable) {
+function backendEnvironment(executable, browsersPath) {
   const environment = { ...process.env };
   const pathKeys = Object.keys(environment).filter(key => key.toLowerCase() === 'path');
   const pathKey = pathKeys[0] ?? 'PATH';
   const inheritedPath = pathKeys.map(key => environment[key]).find(Boolean);
   for (const key of pathKeys.slice(1)) delete environment[key];
   environment[pathKey] = [dirname(executable), inheritedPath].filter(Boolean).join(delimiter);
+  if (browsersPath !== undefined) {
+    for (const key of Object.keys(environment)) if (key.toUpperCase() === 'PLAYWRIGHT_BROWSERS_PATH') delete environment[key];
+    environment.PLAYWRIGHT_BROWSERS_PATH = browsersPath;
+  }
   return environment;
 }
 
@@ -122,6 +126,7 @@ export async function startBackend({
   runtimeRoot,
   dataHome,
   workspace,
+  browsersPath,
   onLog,
   signal,
   timeoutMs = DEFAULT_TIMEOUT_MS,
@@ -130,6 +135,7 @@ export async function startBackend({
   const runtime = requiredPath('runtimeRoot', runtimeRoot);
   const home = requiredPath('dataHome', dataHome);
   const cwd = requiredPath('workspace', workspace);
+  const browserDirectory = browsersPath === undefined ? undefined : requiredPath('browsersPath', browsersPath);
   const timeout = positiveTimeout(timeoutMs);
   if (onLog !== undefined && typeof onLog !== 'function') throw new TypeError('onLog must be a function');
   if (!validAbortSignal(signal)) throw new TypeError('signal must be an AbortSignal');
@@ -144,7 +150,7 @@ export async function startBackend({
     '--no-open',
   ], {
     cwd,
-    env: backendEnvironment(executable),
+    env: backendEnvironment(executable, browserDirectory),
     windowsHide: true,
     stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
   });

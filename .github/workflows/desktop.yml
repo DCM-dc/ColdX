@@ -34,6 +34,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
       - run: pnpm desktop:dist
+      - name: Smoke test the packaged browser over MCP
+        run: node scripts/desktop/browser-smoke.mjs
       - name: Exercise the actual NSIS long-path uninstall hook
         if: runner.os == 'Windows'
         run: node --test test/desktop-installer.test.mjs

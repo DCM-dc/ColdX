@@ -87,6 +87,71 @@ test('dependency executable links must point into the copied dependency graph', 
   await assert.rejects(assertNoLinks(join(directory, 'node_modules')), /points outside/i);
 });
 
+async function browserFixture(t, runtimeDirectory) {
+  if (!runtimeDirectory) {
+    runtimeDirectory = await mkdtemp(join(tmpdir(), 'coldx bundled browser 中文 '));
+    t.after(() => rm(runtimeDirectory, { recursive: true, force: true }));
+  }
+  const app = join(runtimeDirectory, 'app');
+  const mcp = join(app, 'node_modules/@playwright/mcp');
+  const playwright = join(app, 'node_modules/playwright');
+  const core = join(app, 'node_modules/playwright-core');
+  for (const directory of [join(app, 'plugin'), mcp, playwright, core]) await mkdir(directory, { recursive: true });
+  await writeFile(join(app, 'package.json'), JSON.stringify({ type: 'module', dependencies: { '@playwright/mcp': '0.0.80' } }));
+  await writeFile(join(mcp, 'package.json'), JSON.stringify({ name: '@playwright/mcp', version: '0.0.80', dependencies: { playwright: '1.63.0-alpha-2026-08-31', 'playwright-core': '1.63.0-alpha-2026-08-31' } }));
+  for (const [directory, name] of [[playwright, 'playwright'], [core, 'playwright-core']]) await writeFile(join(directory, 'package.json'), JSON.stringify({ name, version: '1.63.0-alpha-2026-08-31' }));
+  const binary = 'chromium_headless_shell-1234/chrome-headless-shell/headless_shell.exe';
+  await writeFile(join(app, 'plugin/computer-preset.mjs'), `
+    import {existsSync} from 'node:fs'; import {join} from 'node:path'; import {fileURLToPath} from 'node:url';
+    export function browserRuntime() {
+      const executable=join(process.env.PLAYWRIGHT_BROWSERS_PATH ?? 'global-cache',${JSON.stringify(binary)});
+      return {executable, available:existsSync(executable), installer:fileURLToPath(new URL('../node_modules/playwright/cli.js',import.meta.url))};
+    }
+  `);
+  // Only the external download is synthetic: the production staging function
+  // launches a real Node process, and the CLI requires the exact flags/path.
+  await writeFile(join(playwright, 'cli.js'), `
+    const {mkdirSync,writeFileSync}=require('node:fs'); const {isAbsolute,join,dirname}=require('node:path');
+    if(JSON.stringify(process.argv.slice(2))!==JSON.stringify(['install','--only-shell','chromium']))process.exit(71);
+    const root=process.env.PLAYWRIGHT_BROWSERS_PATH;if(!root || !isAbsolute(root))process.exit(72);
+    const binary=join(root,${JSON.stringify(binary)});mkdirSync(dirname(binary),{recursive:true});writeFileSync(binary,'fixture browser');
+  `);
+  return { runtimeDirectory, app, binary, executable: join(runtimeDirectory, 'browsers', binary) };
+}
+
+test('desktop stages its pinned headless browser with a clean bundle and a foreign global cache', async t => {
+  const api = await import('../scripts/desktop/browser-bundle.mjs').catch(() => ({}));
+  assert.equal(typeof api.stageBrowserBundle, 'function', 'desktop staging must install its own browser bundle');
+  const fixture = await browserFixture(t);
+  const original = process.env.PLAYWRIGHT_BROWSERS_PATH;
+  t.after(() => { if (original === undefined) delete process.env.PLAYWRIGHT_BROWSERS_PATH; else process.env.PLAYWRIGHT_BROWSERS_PATH = original; });
+  process.env.PLAYWRIGHT_BROWSERS_PATH = join(fixture.runtimeDirectory, 'foreign-cache');
+  const browser = await api.stageBrowserBundle({ runtimeDirectory: fixture.runtimeDirectory, nodePath: process.execPath });
+  assert.equal(await readFile(fixture.executable, 'utf8'), 'fixture browser');
+  assert.equal(browser.name, 'chromium-headless-shell');
+  assert.equal(browser.directory, 'browsers');
+  assert.equal(browser.executable, `browsers/${fixture.binary}`);
+  assert.equal(browser.mcpVersion, '0.0.80');
+  assert.equal(browser.playwrightVersion, '1.63.0-alpha-2026-08-31');
+  assert.equal(browser.playwrightCoreVersion, '1.63.0-alpha-2026-08-31');
+  assert.deepEqual(await api.verifyBrowserBundle({ runtimeDirectory: fixture.runtimeDirectory, nodePath: process.execPath, browser }), browser);
+  await assert.rejects(api.verifyBrowserBundle({ runtimeDirectory: fixture.runtimeDirectory, nodePath: process.execPath, browser: { ...browser, playwrightVersion: '0.0.0' } }), /version|manifest|match/i);
+  await assert.rejects(api.verifyBrowserBundle({ runtimeDirectory: fixture.runtimeDirectory, nodePath: process.execPath, browser: { ...browser, executable: '../outside.exe' } }), /escape|path|manifest/i);
+  await rm(fixture.executable);
+  await assert.rejects(api.verifyBrowserBundle({ runtimeDirectory: fixture.runtimeDirectory, nodePath: process.execPath, browser }), /browser|ENOENT/i);
+});
+
+test('browser staging refuses redirected bundle roots before invoking its installer', async t => {
+  const api = await import('../scripts/desktop/browser-bundle.mjs').catch(() => ({}));
+  assert.equal(typeof api.stageBrowserBundle, 'function');
+  const fixture = await browserFixture(t);
+  const outside = await mkdtemp(join(tmpdir(), 'coldx browser outside '));
+  t.after(() => rm(outside, { recursive: true, force: true }));
+  await symlink(outside, join(fixture.runtimeDirectory, 'browsers'), process.platform === 'win32' ? 'junction' : 'dir');
+  await assert.rejects(api.stageBrowserBundle({ runtimeDirectory: fixture.runtimeDirectory, nodePath: process.execPath }), /link|redirect/i);
+  assert.deepEqual(await readdir(outside), []);
+});
+
 test('packaging gate rejects incomplete tools, wrong architectures and leftover runtime files', async t => {
   const { verifyStagedRuntime } = await import('../scripts/desktop/stage.mjs');
   const { PNPM_VERSION } = await import('../scripts/desktop/package-manager.mjs');
@@ -102,7 +167,15 @@ test('packaging gate rejects incomplete tools, wrong architectures and leftover 
   await writeFile(join(runtime, 'app/desktop/native-patches.json'), JSON.stringify({ version: 1, patches: [] }));
   const manifest = { node: process.versions.node, platform: process.platform, arch: process.arch, packageManager: { version: PNPM_VERSION, entry }, nativePatches: [] };
   await writeFile(join(runtime, 'manifest.json'), JSON.stringify(manifest));
+  await assert.rejects(verifyStagedRuntime(project), /browser/i, 'a runtime without a bundled browser must not ship');
+  const { stageBrowserBundle } = await import('../scripts/desktop/browser-bundle.mjs');
+  await browserFixture(t, runtime);
+  await copyFile(process.execPath, join(runtime, node));
+  manifest.browser = await stageBrowserBundle({ runtimeDirectory: runtime, nodePath: join(runtime, node) });
+  await writeFile(join(runtime, 'manifest.json'), JSON.stringify(manifest));
   assert.equal((await verifyStagedRuntime(project)).packageManager.version, PNPM_VERSION);
+  const builder = createRequire(import.meta.url)('../desktop/electron-builder.cjs');
+  assert.ok(builder.extraResources.some(resource => resource.to === 'runtime' && resource.filter.includes('browsers/**/*')), 'electron-builder must copy the verified browser directory');
   await assert.rejects(verifyStagedRuntime(project, { arch: 'wrong' }), /OS and CPU/i);
   await writeFile(join(runtime, 'user-data.json'), 'private');
   await assert.rejects(verifyStagedRuntime(project), /Unexpected file/i);

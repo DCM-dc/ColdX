@@ -157,6 +157,7 @@ export function desktopPaths({ packaged, resourcesPath, appPath, userData, docum
   return {
     runtimeRoot,
     nodePath: packaged ? join(resourcesPath, 'runtime', platform === 'win32' ? 'node.exe' : 'node') : execPath,
+    ...(packaged ? { browsersPath: join(resourcesPath, 'runtime', 'browsers') } : {}),
     dataHome: join(userData, 'dsh'),
     workspace: join(documents, 'ColdX'),
   };

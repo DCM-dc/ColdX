@@ -5,6 +5,7 @@ import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stageNativePatches, applyStagedNativePatches } from './native-patches.mjs';
 import { PNPM_VERSION, stagePackageManager } from './package-manager.mjs';
+import { stageBrowserBundle, verifyBrowserBundle } from './browser-bundle.mjs';
 export { applyStagedNativePatches } from './native-patches.mjs';
 
 const sourceDirectories = ['bin', 'lib', 'plugin'];
@@ -76,7 +77,7 @@ export async function verifyStagedRuntime(projectRoot, { platform = process.plat
   if (Number(manifest.node?.split('.')[0]) !== 24 || manifest.packageManager?.version !== PNPM_VERSION) throw new Error('Incomplete desktop Node/pnpm runtime. Run desktop:stage again.');
   const node = platform === 'win32' ? 'node.exe' : 'node';
   const launcher = platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
-  const allowed = new Set(['app', 'tools', node, launcher, 'NODE-LICENSE', 'PNPM-LICENSE', 'manifest.json']);
+  const allowed = new Set(['app', 'tools', 'browsers', node, launcher, 'NODE-LICENSE', 'PNPM-LICENSE', 'manifest.json']);
   for (const name of await readdir(runtimeDirectory)) if (!allowed.has(name)) throw new Error(`Unexpected file in desktop runtime: ${name}`);
   const entry = manifest.packageManager.entry;
   if (typeof entry !== 'string' || !/^tools\/node_modules\/pnpm\/bin\/[a-z.]+$/u.test(entry)) throw new Error('Invalid staged package manager entry.');
@@ -90,6 +91,7 @@ export async function verifyStagedRuntime(projectRoot, { platform = process.plat
     const hash = createHash('sha256').update(await readFile(join(runtimeDirectory, 'app', patch.path))).digest('hex');
     if (hash !== patch.sha256) throw new Error('Staged native patch digest mismatch.');
   }
+  await verifyBrowserBundle({ runtimeDirectory, nodePath: join(runtimeDirectory, node), browser: manifest.browser });
   return manifest;
 }
 
@@ -113,11 +115,12 @@ export async function stageDesktop(projectRoot) {
   const nodePath = join(runtimeDirectory, process.platform === 'win32' ? 'node.exe' : 'node');
   await copyFile(process.execPath, nodePath);
   if (process.platform !== 'win32') await chmod(nodePath, 0o755);
+  const browser = await stageBrowserBundle({ runtimeDirectory, nodePath });
   const license = await fetch(`https://raw.githubusercontent.com/nodejs/node/v${process.versions.node}/LICENSE`, { signal: AbortSignal.timeout(30_000) });
   if (!license.ok) throw new Error('Could not retrieve the bundled Node license');
   await writeFile(join(runtimeDirectory, 'NODE-LICENSE'), await license.text());
   const runtimePackage = JSON.parse(await readFile(join(runtimeRoot, 'package.json'), 'utf8'));
-  await writeFile(join(runtimeDirectory, 'manifest.json'), JSON.stringify({ node: process.versions.node, platform: process.platform, arch: process.arch, dsh: runtimePackage.dependencies['@deepseek-ai/dsh'], packageManager, nativePatches }, null, 2) + '\n');
+  await writeFile(join(runtimeDirectory, 'manifest.json'), JSON.stringify({ node: process.versions.node, platform: process.platform, arch: process.arch, dsh: runtimePackage.dependencies['@deepseek-ai/dsh'], packageManager, browser, nativePatches }, null, 2) + '\n');
   await verifyStagedRuntime(project);
   console.log(`ColdX runtime staged for ${process.platform}/${process.arch}: ${runtimeDirectory}`);
 }
