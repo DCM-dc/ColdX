@@ -4,6 +4,7 @@ node_modules/
 .runtime-ui/
 loom-eng-ws/
 outputs/
+/deploys/
 /DeepSeek-V4.1-Flash-中英对译.html
 /DeepSeek-V4.1-Flash-中英对译.md
 /LOOM_技术文档.md

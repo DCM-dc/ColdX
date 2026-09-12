@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, readdir, writeFile, symlink, mkdir } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, writeFile, symlink, mkdir, realpath } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
@@ -89,7 +89,8 @@ test('cancellation after staging starts publishes no version and a retry uses a 
   const run = await lab.create({ ownerId: 'a', requestId: 'create' });
   await mkdir(outputRoot);
   const controller = new AbortController();
-  const observer = watch(outputRoot, { recursive: true }, (_event, path) => {
+  // Windows TEMP may use an 8.3 alias; libuv compares events against the long path.
+  const observer = watch(await realpath(outputRoot), { recursive: true }, (_event, path) => {
     if (path?.includes('.pending-')) controller.abort('cancel while staging');
   });
   const args = { ownerId: 'a', runId: run.runId, requestId: 'cancel-retry', planId: 'mixed' };

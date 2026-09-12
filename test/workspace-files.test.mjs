@@ -48,7 +48,8 @@ test('absolute workspace aliases and canonical paths share the same bounded prev
   const alias = join(await mkdtemp(join(tmpdir(), 'coldx-workspace-alias-')), 'workspace');
   try { await symlink(root, alias, 'junction'); }
   catch (error) { if (error.code === 'EPERM') return t.skip('Directory links unavailable'); throw error; }
-  for (const path of [join(alias, 'nested', '报告.md'), join(root, 'nested', '报告.md'), 'nested/报告.md']) {
+  const canonicalRoot = await fs.realpath(root);
+  for (const path of [join(alias, 'nested', '报告.md'), join(canonicalRoot, 'nested', '报告.md'), 'nested/报告.md']) {
     const file = await readWorkspaceFile(alias, { path });
     assert.equal(file.path, 'nested/报告.md');
     assert.equal(file.text, '# Report\nreal contents');
