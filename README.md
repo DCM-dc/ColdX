@@ -152,6 +152,7 @@ ColdX 精确锁定 **DSH 0.1.1-rc.2**，原生兼容补丁由 `pnpm-workspace.ya
 
 下列文档保留研究日期和当时的实现记录；其中的后续建议不代表已经交付：
 
+- [DeepSeek V4.1 生成质量、任务成本与民间方法核查](docs/research/deepseek-v41-performance-token-efficiency-2026-09-12.md)（含实验矩阵与离线复现）
 - [DeepSeek 质量、工具与上下文治理研究](docs/deepseek-quality-foundations.md)
 - [DeepSeek Agent Harness 研究](docs/deepseek-agent-harness-research.md)
 - [附件与多模态集成](docs/deepseek-attachment-integration.md)

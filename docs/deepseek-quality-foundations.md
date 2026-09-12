@@ -1,5 +1,7 @@
 > 这是 2026-09-12 的研究阶段快照。文中的“当前配置”和“未修改代码”指研究取样时点；后续已落地内容与本机网关限制见 [集成记录](deepseek-attachment-integration.md)。
 
+> 后续核查：[V4.1 生成质量、任务成本与民间方法研究](research/deepseek-v41-performance-token-efficiency-2026-09-12.md)补充当前源码默认路由、协议边界和离线行为；保留本文原取样结论，不把历史默认值视作当前会话配置。
+
 # ColdX × DeepSeek：生成质量底层研究与 Agent Harness 方案
 
 **研究日期：** 2026-09-12  

@@ -1,0 +1,613 @@
+{
+  "schemaVersion": 1,
+  "artifactType": "research_experiment_specification",
+  "date": "2026-09-12",
+  "report": "deepseek-v41-performance-token-efficiency-2026-09-12.md",
+  "scope": {
+    "target": "DeepSeek-V4.1-Flash in native DSH/ColdX",
+    "qualityFirst": true,
+    "productionConfigurationChanged": false,
+    "actualModelRequestsPerformed": 0,
+    "limitation": "This is a specification, not an executable benchmark runner. Proposed task fixtures must be built and frozen before model runs. Offline host observations live in the separate probe JSON."
+  },
+  "baseline": {
+    "coldxCommit": "2818efdedfe5b28c36f6e56628671ca82c7dc68f",
+    "dsh": "0.1.1-rc.2",
+    "sourceDefaultRoute": "deepseek-official/deepseek-flash",
+    "thinking": "enabled",
+    "reasoningEffort": "high",
+    "contextBudget": 1000000,
+    "maxOutputTokens": 384000,
+    "activeUserConfigurationRead": false
+  },
+  "design": {
+    "fixtureStatus": "to_build",
+    "taskCount": 24,
+    "taskFamilies": 8,
+    "smoke": {
+      "tasks": 6,
+      "repeatsPerArm": 2,
+      "purpose": "Detect contract failures, not establish superiority"
+    },
+    "holdoutStartingPoint": {
+      "tasks": 24,
+      "repeatsPerArm": 3,
+      "expandWhenInconclusive": true
+    },
+    "comparison": "paired by task; randomized interleaving; one variable at a time; analyze each task family",
+    "cacheConditions": [
+      "cold_observed",
+      "warm_observed",
+      "unknown"
+    ],
+    "coldWarmAssignment": "Separate controlled cohorts and report actual provider cache usage; elapsed time or flags alone do not prove cache state.",
+    "fixedFields": [
+      "provider",
+      "endpoint",
+      "requested_model",
+      "reported_model",
+      "date",
+      "client_version",
+      "task_fixture_hash",
+      "environment_snapshot",
+      "tool_registry_hash",
+      "permission_contract",
+      "prompt_hash",
+      "budget"
+    ],
+    "runBudget": {
+      "maxTaskCost": null,
+      "maxTaskWallTime": null,
+      "maxTaskModelCalls": null,
+      "note": "Unset; must be explicitly configured before model execution. This file does not initiate paid runs."
+    },
+    "qualityGate": {
+      "hardAcceptanceRequired": true,
+      "newSevereRegressionsAllowed": 0,
+      "nonInferiorityMarginPercentagePoints": 0,
+      "statisticalUnit": "task; cluster repeated runs within task",
+      "method": "pre-register paired cluster confidence intervals; retain baseline when intervals do not support noninferiority",
+      "note": "Engineering choice, not a proven statistical power calculation. Small smoke/holdout samples may remain inconclusive."
+    }
+  },
+  "requestLedgerFields": [
+    "task_id",
+    "attempt_id",
+    "request_id",
+    "parent_request_id",
+    "agent_id",
+    "purpose",
+    "provider",
+    "endpoint",
+    "requested_model",
+    "reported_model",
+    "reasoning_effort",
+    "thinking",
+    "prompt_hash",
+    "tool_registry_hash",
+    "input_tokens",
+    "cache_hit_tokens",
+    "cache_miss_tokens",
+    "output_tokens",
+    "reasoning_tokens_if_reported",
+    "final_tokens_if_reported",
+    "usage_reported_fields",
+    "usage_source",
+    "finish_reason",
+    "latency_ms",
+    "http_attempt_count_if_known",
+    "cost_currency",
+    "request_cost_if_known"
+  ],
+  "metrics": {
+    "primary": [
+      "artifact_acceptance_by_task_family",
+      "severe_regressions",
+      "unsupported_completion",
+      "constraint_violations"
+    ],
+    "secondary": [
+      "total_task_tokens",
+      "total_task_cost",
+      "cost_per_accepted_task",
+      "cache_hit_tokens",
+      "cache_miss_tokens",
+      "reasoning_and_final_if_reported",
+      "usage_coverage",
+      "retry_count",
+      "repeated_tool_calls",
+      "reread_count",
+      "total_task_time_ms",
+      "p50_and_p95_with_sample_count"
+    ],
+    "totalTokens": "Sum input_tokens + output_tokens for all requests; never add reasoning again when already included in output.",
+    "cost": "Sum all attempts including failed main/child/summary/optimizer/judge calls plus tool/compute costs; do not double-count subledgers.",
+    "missingUsage": "Keep null/unknown, report coverage; never convert unreported cache fields to zero.",
+    "zeroAccepted": "Cost per accepted task is undefined/infinite, never zero.",
+    "successComparison": "Same completed acceptance scope; exclude no failures from totals."
+  },
+  "officialPriceSnapshot": {
+    "source": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/",
+    "date": "2026-09-12",
+    "unit": "per million tokens",
+    "peakBeijing": "weekdays 09:00-12:00 and 14:00-18:00",
+    "usd": {
+      "peak": {
+        "hit": 0.006,
+        "miss": 0.3,
+        "output": 1.2
+      },
+      "offpeak": {
+        "hit": 0.003,
+        "miss": 0.15,
+        "output": 0.6
+      }
+    },
+    "cny": {
+      "peak": {
+        "hit": 0.04,
+        "miss": 2,
+        "output": 8
+      },
+      "offpeak": {
+        "hit": 0.02,
+        "miss": 1,
+        "output": 4
+      }
+    },
+    "limitation": "Official snapshot only; not a third-party gateway price or guarantee."
+  },
+  "hypotheticalCacheRewrite": {
+    "notMeasured": true,
+    "retainedTokensLosingWarmCache": 200000,
+    "removedPreviouslyCachedTokensPerFutureRequest": 80000,
+    "extraRebuildCostUsd": 0.0588,
+    "savingPerFutureRequestUsd": 0.00048,
+    "breakEvenFutureRequests": 122.5,
+    "minimumWholeFutureRequests": 123,
+    "excluded": [
+      "summary costs",
+      "quality effects",
+      "latency effects",
+      "actual dynamic caching"
+    ]
+  },
+  "tasks": [
+    {
+      "id": "ui/theme-and-form",
+      "family": "ui",
+      "task": "创建带筛选和编辑表单的任务页面",
+      "acceptance": "创建、筛选、编辑可操作；浅色/深色与375/1280宽度均可读；无运行错误",
+      "fixtureStatus": "to_build",
+      "data": "public_or_synthetic_only",
+      "status": "not_run"
+    },
+    {
+      "id": "ui/follow-up-layout",
+      "family": "ui",
+      "task": "对已有页面重排布局并保留交互",
+      "acceptance": "原交互继续有效；新增布局要求满足；没有重复产物覆盖错误",
+      "fixtureStatus": "to_build",
+      "data": "public_or_synthetic_only",
+      "status": "not_run"
+    },
+    {
+      "id": "ui/artifact-navigation",
+      "family": "ui",
+      "task": "生成含文件产物链接的结果页",
+      "acceptance": "链接打开正确文件；缺失文件显示真实错误；相对路径按工作区解析",
+      "fixtureStatus": "to_build",
+      "data": "public_or_synthetic_only",
+      "status": "not_run"
+    },
+    {
+      "id": "bugfix/async-race",
+      "family": "bugfix",
+      "task": "修复提供的异步状态竞态",
+      "acceptance": "固定失败用例转绿；取消和后续输入仍正常",
+      "fixtureStatus": "to_build",
+      "data": "public_or_synthetic_only",
+      "status": "not_run"
+    },
+    {
+      "id": "bugfix/pdf-resize",
+      "family": "bugfix",
+      "task": "修复合成PDF预览反复缩放",
+      "acceptance": "尺寸变化稳定；翻页有效；不出现持续重渲染",
+      "fixtureStatus": "to_build",
+      "data": "public_or_synthetic_only",
+      "status": "not_run"
+    },
+    {
+      "id": "bugfix/usage-unknown",
+      "family": "bugfix",
+      "task": "保留缺失用量与真实零的差别",
+      "acceptance": "已知零、未知、部分用量分别显示；不伪造费用",
+      "fixtureStatus": "to_build",
+      "data": "public_or_synthetic_only",
+      "status": "not_run"
+    },
+    {
+      "id": "repository/symbol-edit",
+      "family": "repository",
+      "task": "查找跨文件符号并实施定点修改",
+      "acceptance": "修改正确符号；调用方一致；无无关文件变动",
+      "fixtureStatus": "to_build",
+      "data": "public_or_synthetic_only",
+      "status": "not_run"
+    },
+    {
+      "id": "repository/nested-rules",
+      "family": "repository",
+      "task": "在有根与子目录约束的夹具中执行修改",
+      "acceptance": "遵守两级有效约束；shell与文件工具路线同等正确",
+      "fixtureStatus": "to_build",
+      "data": "public_or_synthetic_only",
+      "status": "not_run"
+    },
+    {
+      "id": "repository/evidence-read",
+      "family": "repository",
+      "task": "从包含无关日志的仓库定位关键事实",
+      "acceptance": "保留关键中部证据；引用文件和位置正确",
+      "fixtureStatus": "to_build",
+      "data": "public_or_synthetic_only",
+      "status": "not_run"
+    },
+    {
+      "id": "multimodal/small-text",
+      "family": "multimodal",
+      "task": "读取截图小字并判断目标控件",
+      "acceptance": "文本、位置和实际目标一致；不凭压缩图猜测",
+      "fixtureStatus": "to_build",
+      "data": "public_or_synthetic_only",
+      "status": "not_run"
+    },
+    {
+      "id": "multimodal/cross-page-table",
+      "family": "multimodal",
+      "task": "读取跨页PDF表格并计算合计",
+      "acceptance": "页码和单元格来源正确；续表归属及计算通过",
+      "fixtureStatus": "to_build",
+      "data": "public_or_synthetic_only",
+      "status": "not_run"
+    },
+    {
+      "id": "multimodal/layout-relation",
+      "family": "multimodal",
+      "task": "判断整页中多个区域的关系",
+      "acceptance": "全局关系正确；裁剪不丢上下文",
+      "fixtureStatus": "to_build",
+      "data": "public_or_synthetic_only",
+      "status": "not_run"
+    },
+    {
+      "id": "artifact/document",
+      "family": "artifact",
+      "task": "生成可打开的结构化说明文档",
+      "acceptance": "章节与需求齐全；文件有效；正文事实可追溯",
+      "fixtureStatus": "to_build",
+      "data": "public_or_synthetic_only",
+      "status": "not_run"
+    },
+    {
+      "id": "artifact/data-export",
+      "family": "artifact",
+      "task": "从合成数据生成CSV与汇总",
+      "acceptance": "全量记录、转义、空值和汇总正确",
+      "fixtureStatus": "to_build",
+      "data": "public_or_synthetic_only",
+      "status": "not_run"
+    },
+    {
+      "id": "artifact/strict-structure",
+      "family": "artifact",
+      "task": "按给定schema输出机器可读结果",
+      "acceptance": "本地schema验证通过；无额外字段；类型准确",
+      "fixtureStatus": "to_build",
+      "data": "public_or_synthetic_only",
+      "status": "not_run"
+    },
+    {
+      "id": "batch/bulk-read",
+      "family": "batch",
+      "task": "汇总多文件中指定字段",
+      "acceptance": "逐文件全覆盖；缺失/异常单独说明；最终汇总正确",
+      "fixtureStatus": "to_build",
+      "data": "public_or_synthetic_only",
+      "status": "not_run"
+    },
+    {
+      "id": "batch/partial-failure",
+      "family": "batch",
+      "task": "批处理遇到部分失败后恢复",
+      "acceptance": "成功项不重复写；失败项可重试；最终状态准确",
+      "fixtureStatus": "to_build",
+      "data": "public_or_synthetic_only",
+      "status": "not_run"
+    },
+    {
+      "id": "batch/persistent-state",
+      "family": "batch",
+      "task": "多步聚合后修正输入并重算",
+      "acceptance": "旧变量不污染结果；取消后不会重复副作用",
+      "fixtureStatus": "to_build",
+      "data": "public_or_synthetic_only",
+      "status": "not_run"
+    },
+    {
+      "id": "long-context/user-correction",
+      "family": "long-context",
+      "task": "执行中改变一项需求并继续",
+      "acceptance": "新要求生效；其余原要求保留；已完成结果正确复用",
+      "fixtureStatus": "to_build",
+      "data": "public_or_synthetic_only",
+      "status": "not_run"
+    },
+    {
+      "id": "long-context/checkpoint",
+      "family": "long-context",
+      "task": "压缩后继续未完成任务",
+      "acceptance": "约束、失败证据、产物、待办完整；工具协议不破坏",
+      "fixtureStatus": "to_build",
+      "data": "public_or_synthetic_only",
+      "status": "not_run"
+    },
+    {
+      "id": "long-context/stuck-recovery",
+      "family": "long-context",
+      "task": "连续出现相同失败的任务",
+      "acceptance": "获取新证据后改变策略；无无效无限循环；结果通过",
+      "fixtureStatus": "to_build",
+      "data": "public_or_synthetic_only",
+      "status": "not_run"
+    },
+    {
+      "id": "delegation/independent-research",
+      "family": "delegation",
+      "task": "并行核查两个独立事实并汇总",
+      "acceptance": "各自来源有效；相反证据保留；不粘贴整段子会话",
+      "fixtureStatus": "to_build",
+      "data": "public_or_synthetic_only",
+      "status": "not_run"
+    },
+    {
+      "id": "delegation/split-files",
+      "family": "delegation",
+      "task": "独立修改互不依赖的两个模块",
+      "acceptance": "两个模块与集成检查通过；归属和变动范围准确",
+      "fixtureStatus": "to_build",
+      "data": "public_or_synthetic_only",
+      "status": "not_run"
+    },
+    {
+      "id": "delegation/independent-review",
+      "family": "delegation",
+      "task": "生成产物后交给独立检查任务",
+      "acceptance": "检查发现预置缺陷；主任务修复后复验；子调用全计费",
+      "fixtureStatus": "to_build",
+      "data": "public_or_synthetic_only",
+      "status": "not_run"
+    }
+  ],
+  "experiments": [
+    {
+      "id": "P01",
+      "priority": "P0",
+      "kind": "offline",
+      "label": "stream-contract",
+      "variable": "final_content_chunk_with_usage",
+      "description": "Synthetic streams: final content+usage, usage-only, missing usage, explicit zero, interrupted stream; per-provider fixture, never an HTTP model call.",
+      "taskFamilies": [
+        "all"
+      ],
+      "status": "not_run",
+      "results": null
+    },
+    {
+      "id": "P02",
+      "priority": "P0",
+      "kind": "offline",
+      "label": "completion-contract",
+      "variable": "terminal_outcome_semantics",
+      "description": "Separate ordinary visible stop, legitimate control-only response, reasoning-only no-result, tool output completion and max-token truncation; preserve existing no-forced-output behavior.",
+      "taskFamilies": [
+        "all"
+      ],
+      "status": "not_run",
+      "results": null
+    },
+    {
+      "id": "P03",
+      "priority": "P0",
+      "kind": "offline",
+      "label": "context-contract",
+      "variable": "compaction_step_order",
+      "description": "Synthetic pre-step compaction and max-tokens continuation must consume current state; preserve reasoning and tool call/result pairing.",
+      "taskFamilies": [
+        "long-context"
+      ],
+      "status": "not_run",
+      "results": null
+    },
+    {
+      "id": "R01",
+      "priority": "P1",
+      "kind": "paired_model",
+      "label": "effort",
+      "variable": "reasoning_effort",
+      "description": "Baseline high; compare max on hard tasks and low/none only on mechanical tasks in separate trials. Do not change output cap at the same time.",
+      "taskFamilies": [
+        "bugfix",
+        "repository",
+        "artifact"
+      ],
+      "status": "not_run",
+      "results": null
+    },
+    {
+      "id": "R02",
+      "priority": "P1",
+      "kind": "paired_model",
+      "label": "final-answer",
+      "variable": "final_answer_length_instruction",
+      "description": "Baseline vs concise final answer only, preserving artifacts, evidence and material limitations; no additional CoD instruction.",
+      "taskFamilies": [
+        "all"
+      ],
+      "status": "not_run",
+      "results": null
+    },
+    {
+      "id": "R03",
+      "priority": "P1",
+      "kind": "paired_model",
+      "label": "observation",
+      "variable": "first_append_result_representation",
+      "description": "Baseline result vs task-focused bounded preview and retrievable full artifact. Include middle-evidence traps and errors.",
+      "taskFamilies": [
+        "repository",
+        "batch",
+        "long-context"
+      ],
+      "status": "not_run",
+      "results": null
+    },
+    {
+      "id": "R04",
+      "priority": "P2",
+      "kind": "paired_model",
+      "label": "ptc",
+      "variable": "persistent_ptc_state",
+      "description": "Existing PTC baseline vs persistent state, same tool surface and permission contract. Test direct-tool vs PTC separately, not in same comparison.",
+      "taskFamilies": [
+        "batch"
+      ],
+      "status": "not_run",
+      "results": null
+    },
+    {
+      "id": "R05",
+      "priority": "P2",
+      "kind": "paired_model",
+      "label": "history",
+      "variable": "context_management_policy",
+      "description": "Current strategy vs bounded observation masking or hybrid phase summary, one candidate at a time; include summary cost, rereads and cache reconstruction.",
+      "taskFamilies": [
+        "long-context"
+      ],
+      "status": "not_run",
+      "results": null
+    },
+    {
+      "id": "R06",
+      "priority": "P2",
+      "kind": "paired_model",
+      "label": "memory",
+      "variable": "task_relevant_memory_retrieval",
+      "description": "No memory vs verified retrieved entries from a training split; held-out task facts and answers must not leak.",
+      "taskFamilies": [
+        "repository",
+        "long-context"
+      ],
+      "status": "not_run",
+      "results": null
+    },
+    {
+      "id": "R07",
+      "priority": "P2",
+      "kind": "paired_model",
+      "label": "task-capsule",
+      "variable": "equivalent_information_structure",
+      "description": "Original request vs structured goal/facts/scope/constraints/acceptance/delivery, with human or deterministic semantic-equivalence check.",
+      "taskFamilies": [
+        "ui",
+        "bugfix",
+        "artifact"
+      ],
+      "status": "not_run",
+      "results": null
+    },
+    {
+      "id": "F01",
+      "priority": "exploratory",
+      "kind": "paired_model",
+      "label": "prompt-repeat",
+      "variable": "complete_short_prompt_repetition",
+      "description": "One copy vs two copies for short non-thinking classification/extraction only; count increased input and all output.",
+      "taskFamilies": [
+        "artifact"
+      ],
+      "status": "not_run",
+      "results": null
+    },
+    {
+      "id": "F02",
+      "priority": "exploratory",
+      "kind": "paired_model",
+      "label": "short-draft",
+      "variable": "draft_brevity_instruction",
+      "description": "Baseline vs short draft on isolated short reasoning cases. Do not enforce tiny output cap; reject accuracy loss.",
+      "taskFamilies": [
+        "artifact"
+      ],
+      "status": "not_run",
+      "results": null
+    },
+    {
+      "id": "F03",
+      "priority": "exploratory",
+      "kind": "paired_model",
+      "label": "prompt-ablation",
+      "variable": "irrelevant_prompt_removal",
+      "description": "Remove only irrelevant/conflicting role text; keep task, tools, protocol and permissions identical. Never select samples by reasoning wording.",
+      "taskFamilies": [
+        "ui",
+        "bugfix"
+      ],
+      "status": "not_run",
+      "results": null
+    },
+    {
+      "id": "M01",
+      "priority": "P1",
+      "kind": "paired_model",
+      "label": "vision",
+      "variable": "image_preprocessing",
+      "description": "Original vs moderate resize vs relevant crop in separate arms; retain same question, verify small text and whole-page relations, sum all image costs.",
+      "taskFamilies": [
+        "multimodal"
+      ],
+      "status": "not_run",
+      "results": null
+    },
+    {
+      "id": "A01",
+      "priority": "P2",
+      "kind": "paired_model",
+      "label": "agents",
+      "variable": "delegation_policy",
+      "description": "Single-agent baseline vs bounded independent subtask delegation; include spawn overhead, child requests, failed children, merge and review.",
+      "taskFamilies": [
+        "delegation"
+      ],
+      "status": "not_run",
+      "results": null
+    },
+    {
+      "id": "O01",
+      "priority": "P3",
+      "kind": "offline_prompt_search_then_holdout",
+      "label": "prompt-search",
+      "variable": "candidate_prompt_version",
+      "description": "GEPA-style narrow search with fixed weights; separate train/validation/held-out task families. Include optimizer/reflector/judge costs and amortization.",
+      "taskFamilies": [
+        "ui",
+        "bugfix",
+        "repository"
+      ],
+      "status": "not_run",
+      "results": null
+    }
+  ]
+}
