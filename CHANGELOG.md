@@ -7,7 +7,7 @@ ColdX 首次发布，基于 DeepSeek Harness 0.1.1-rc.2。
 ### 桌面应用
 
 - Windows x64 独立安装包，内置 Node、pnpm 与锁定的原生运行时。
-- 移除 Windows/Linux 顶部应用菜单，保留系统标题栏、原生窗口按钮和 F11 全屏。
+- Windows/Linux 使用约 40px 一体标题栏，包含导航与菜单，跟随 ColdX 深浅主题；保留原生窗口按钮和 F11 全屏。
 - 应用资料与安装目录分离；Windows 长路径安装和卸载保留数据边界。
 - Windows x64 完成实际安装、启动、退出与卸载检查；其他平台尚未实机验收。
 

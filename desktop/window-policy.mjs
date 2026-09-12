@@ -21,7 +21,7 @@ export function desktopElectronEnvironment(source = process.env) {
   return environment;
 }
 
-/** Keep the OS titlebar and native caption buttons; there is no hidden Alt menu. */
+/** Keep native caption controls and shortcuts without a hidden Alt menu. */
 export function configureDesktopWindowChrome(window, { platform = process.platform, openWorkspace, onError = () => {} } = {}) {
   if (platform === 'darwin') return () => {};
   const contents = window.webContents;

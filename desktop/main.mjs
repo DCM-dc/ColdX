@@ -1,8 +1,9 @@
-import { app, BrowserWindow, dialog, Menu, shell } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, shell } from 'electron';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { startBackend } from './backend.mjs';
+import { createDesktopTitlebarHost, defaultChromeTheme, desktopTitlebarOptions, normalizeChromeTheme } from './titlebar-host.mjs';
 import {
   classifyNavigation,
   configureDesktopWindowChrome,
@@ -19,7 +20,10 @@ const smoke = process.argv.includes('--smoke-test');
 const smokeReport = process.env.COLDX_SMOKE_REPORT;
 const ownDirectory = dirname(fileURLToPath(import.meta.url));
 const loadingPages = new WeakMap();
+const titlebars = new WeakMap();
 let window, paths, workspace, lifecycle, startup;
+let appearance;
+let appearanceWrite = Promise.resolve();
 let quitting = false;
 let stopped = false;
 let choosingWorkspace = false;
@@ -35,13 +39,28 @@ function currentBackend() {
 function makeWindow() {
   const next = new BrowserWindow({
     title: 'ColdX', width: 1400, height: 960, minWidth: 820, minHeight: 620,
-    // Native chrome reserves its own space outside the renderer, including
-    // fullscreen and theme changes. No extra toolbar or overlay obscures DSH.
-    frame: true, titleBarStyle: 'default', autoHideMenuBar: false,
-    backgroundColor: '#f8fafb', show: !smoke, icon: join(ownDirectory, 'assets/icon.png'),
-    webPreferences: { nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true, webviewTag: false },
+    ...desktopTitlebarOptions({ theme: appearance }),
+    show: !smoke, icon: join(ownDirectory, 'assets/icon.png'),
+    webPreferences: { preload: join(ownDirectory, 'titlebar-preload.cjs'), nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true, webviewTag: false },
   });
   const disposeChrome = configureDesktopWindowChrome(next, { openWorkspace: chooseWorkspace, onError: showStartupError });
+  const host = createDesktopTitlebarHost({
+    window: next, ipcMain, Menu, initialTheme: appearance,
+    getBackendUrl: () => currentBackend()?.url,
+    loadingUrl: pathToFileURL(join(ownDirectory, 'loading.html')).href,
+    openWorkspace: chooseWorkspace,
+    openDataDirectory: () => shell.openPath(app.getPath('userData')),
+    openExternal: url => shell.openExternal(url),
+    showAbout: () => dialog.showMessageBox(next, { type: 'info', title: '关于 ColdX', message: `ColdX ${app.getVersion()}`, detail: '基于原生 DeepSeek Harness 的生成式工作空间。' }),
+    development: !app.isPackaged,
+    onError: error => { console.error('ColdX titlebar:', error?.message ?? error); },
+    onTheme: theme => {
+      appearance = theme;
+      appearanceWrite = appearanceWrite.catch(() => {}).then(() => writeFile(join(app.getPath('userData'), 'desktop-appearance.json'), JSON.stringify(theme) + '\n'));
+      return appearanceWrite;
+    },
+  });
+  titlebars.set(next, host);
   next.webContents.setWindowOpenHandler(({ url }) => {
     const active = currentBackend();
     const external = active && externalUrlForNavigation(url, active.url, 'new-window');
@@ -55,7 +74,7 @@ function makeWindow() {
   });
   next.webContents.session.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
   next.webContents.session.setPermissionCheckHandler(() => false);
-  next.on('closed', () => { disposeChrome(); if (window === next) window = undefined; });
+  next.on('closed', () => { host.dispose(); disposeChrome(); if (window === next) window = undefined; });
   const loading = { error: undefined };
   loading.done = next.loadFile(join(ownDirectory, 'loading.html')).catch(error => { loading.error = error; });
   loadingPages.set(next, loading);
@@ -150,6 +169,12 @@ async function smokeSnapshot() {
       coldxShell: document.documentElement.classList.contains('coldx-shell'),
       uiText: document.body?.innerText ?? '',
       rendererGlobals: { require: typeof globalThis.require, process: typeof globalThis.process },
+      titlebar: (() => {
+        const bar = document.querySelector('[data-coldx-desktop-titlebar]');
+        const root = document.querySelector('#root');
+        return { present: Boolean(bar), height: bar?.getBoundingClientRect().height ?? 0,
+          contentTop: root?.getBoundingClientRect().top ?? document.body?.getBoundingClientRect().top ?? 0 };
+      })(),
     };
   })()`);
 }
@@ -162,7 +187,7 @@ async function waitForSmoke(instance) {
     if (!lifecycle.isCurrent(instance)) throw new Error('Desktop backend changed before renderer readiness.');
     try {
       snapshot = await smokeSnapshot();
-      if (isSmokeReady(snapshot, instance.url)) return snapshot;
+      if (isSmokeReady(snapshot, instance.url) && snapshot.titlebar?.present && Math.abs(snapshot.titlebar.height - 40) < 1 && snapshot.titlebar.contentTop >= 39) return snapshot;
       lastError = undefined;
     } catch (error) { lastError = error; }
     await new Promise(resolve => setTimeout(resolve, 250));
@@ -194,6 +219,8 @@ async function boot() {
   });
   trace('backend lifecycle created');
   await mkdir(app.getPath('userData'), { recursive: true });
+  try { appearance = normalizeChromeTheme(JSON.parse(await readFile(join(app.getPath('userData'), 'desktop-appearance.json'), 'utf8'))); } catch {}
+  appearance ??= defaultChromeTheme(nativeTheme.shouldUseDarkColors);
   let saved = {};
   try { saved = JSON.parse(await readFile(join(app.getPath('userData'), 'desktop.json'), 'utf8')); } catch {}
   workspace = process.env.COLDX_DESKTOP_WORKSPACE || saved.workspace || paths.workspace;
@@ -207,8 +234,16 @@ async function boot() {
   if (!instance || !lifecycle.isCurrent(instance)) throw new Error('Desktop backend was not current after startup.');
   const snapshot = await waitForSmoke(instance);
   const preferences = window.webContents.getLastWebPreferences();
+  const titlebar = titlebars.get(window);
+  const verification = process.env.COLDX_CHROME_VERIFY === '1'
+    ? await (await import('./titlebar-smoke.mjs')).runTitlebarSmoke({ window, host: titlebar, reportPath: smokeReport, nativeTheme })
+    : undefined;
   const chrome = {
-    kind: 'native-titlebar',
+    kind: 'window-controls-overlay',
+    titlebar: snapshot.titlebar,
+    state: titlebar.snapshot(),
+    nativeThemeSource: nativeTheme.themeSource,
+    verification,
     applicationMenuPresent: Boolean(Menu.getApplicationMenu()),
     menuBarVisible: process.platform === 'darwin' ? false : window.isMenuBarVisible(),
     menuBarAutoHide: process.platform === 'darwin' ? false : window.isMenuBarAutoHide(),
@@ -258,7 +293,8 @@ else {
     event.preventDefault();
     if (quitting) return;
     quitting = true;
-    void (lifecycle?.quit() ?? Promise.resolve()).then(() => {
+    void (lifecycle?.quit() ?? Promise.resolve()).then(async () => {
+      await appearanceWrite.catch(() => {});
       trace('backend shutdown complete; exiting desktop');
       stopped = true;
       app.exit(process.exitCode || 0);

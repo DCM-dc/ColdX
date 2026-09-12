@@ -2,7 +2,7 @@ module.exports = {
   appId: 'app.coldx.desktop',
   productName: 'ColdX',
   directories: { app: 'desktop', output: 'dist/desktop' },
-  files: ['package.json', 'main.mjs', 'window-policy.mjs', 'backend.mjs', 'backend-entry.mjs', 'loading.html', 'assets/icon.png', '!node_modules{,/**/*}'],
+  files: ['package.json', 'main.mjs', 'window-policy.mjs', 'titlebar-host.mjs', 'titlebar-preload.cjs', 'titlebar-smoke.mjs', 'backend.mjs', 'backend-entry.mjs', 'loading.html', 'assets/icon.png', '!node_modules{,/**/*}'],
   icon: 'desktop/assets/icon.png',
   extraResources: [{ from: '.desktop-stage/runtime', to: 'runtime', filter: ['app/**/*', 'tools/**/*', 'node', 'node.exe', 'pnpm', 'pnpm.cmd', 'manifest.json', 'NODE-LICENSE', 'PNPM-LICENSE'] }],
   asar: true,
