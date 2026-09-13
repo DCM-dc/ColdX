@@ -1,0 +1,300 @@
+{
+  "schema": "coldx-public-pilot-results-v1",
+  "generated_at": "2026-09-13T07:57:50.151038+00:00",
+  "evidence_kind": "local_measured",
+  "scope": "pilot",
+  "status": "complete",
+  "benchmark": "DeepSWE v1.1",
+  "model": "DeepSeek-V4.1-Flash",
+  "wire_model": "deepseek-flash",
+  "tasks_per_language": 1,
+  "repetitions": 1,
+  "tasks": [
+    {
+      "task_id": "abs-module-cache-flags",
+      "display_name": "Go：模块缓存与路径",
+      "language": "Go",
+      "score": 1,
+      "category": "scored_pass",
+      "native_status": "completed",
+      "started_at": "2026-09-13T06:56:48.681438Z",
+      "finished_at": "2026-09-13T07:08:30.357487Z",
+      "trial_duration_seconds": 701.676,
+      "duration_display": "11 分 42 秒",
+      "verifier": {
+        "reward": 1,
+        "f2p_total": 20,
+        "f2p_passed": 20,
+        "p2p_total": 3,
+        "p2p_passed": 3
+      },
+      "forwarded_requests": 175,
+      "tokens": {
+        "promptTokens": 18780265,
+        "cachedInputTokens": 18674688,
+        "uncachedInputTokens": 105577,
+        "completionTokens": 81884,
+        "reasoningTokens": 28690
+      },
+      "response_coverage": {
+        "observedRequests": 175,
+        "accountedRequests": 175,
+        "missingUsageRequests": 0,
+        "pendingRequests": 0,
+        "incompleteResponseRequests": 1,
+        "oversizedEvents": 0,
+        "malformedEvents": 0,
+        "complete": false
+      },
+      "cache_fraction": 0.994378300838673,
+      "cost_coverage_complete": false,
+      "tariffs": {
+        "offpeak": {
+          "components_cny": {
+            "cachedInputTokens": 0.37349376,
+            "uncachedInputTokens": 0.105577,
+            "completionTokens": 0.327536
+          },
+          "reported_component_sum_cny": 0.80660676,
+          "complete_estimate_cny": null
+        },
+        "peak": {
+          "components_cny": {
+            "cachedInputTokens": 0.74698752,
+            "uncachedInputTokens": 0.211154,
+            "completionTokens": 0.655072
+          },
+          "reported_component_sum_cny": 1.61321352,
+          "complete_estimate_cny": null
+        }
+      },
+      "transport_error_counts": {
+        "timedOutRequests": 0,
+        "transportErrors": 0,
+        "upstreamHttpErrors": 0,
+        "refusedRedirects": 0
+      },
+      "raw_result_sha256": "8643d8609afb6568e01e1b55514a407ec58e284068bb03a2aaacb8ecf45439c7",
+      "transport_report_sha256": "522ff36266073f243a67c00d28c9c7fe45243e8f36c4e195402db632ad86e35f",
+      "input_display": "18.78 M",
+      "cache_display": "99.44%",
+      "output_display": "81.9 K",
+      "cost_display": "约 ¥0.807"
+    },
+    {
+      "task_id": "adaptix-name-mapping-aliases",
+      "display_name": "Python：字段命名与别名",
+      "language": "Python",
+      "score": 1,
+      "category": "scored_pass",
+      "native_status": "completed",
+      "started_at": "2026-09-13T07:08:32.321036Z",
+      "finished_at": "2026-09-13T07:24:54.399794Z",
+      "trial_duration_seconds": 982.079,
+      "duration_display": "16 分 22 秒",
+      "verifier": {
+        "reward": 1,
+        "f2p_total": 44,
+        "f2p_passed": 44,
+        "p2p_total": 2738,
+        "p2p_passed": 2738
+      },
+      "forwarded_requests": 174,
+      "tokens": {
+        "promptTokens": 27030810,
+        "cachedInputTokens": 26902784,
+        "uncachedInputTokens": 128026,
+        "completionTokens": 131479,
+        "reasoningTokens": 81859
+      },
+      "response_coverage": {
+        "observedRequests": 174,
+        "accountedRequests": 174,
+        "missingUsageRequests": 0,
+        "pendingRequests": 0,
+        "incompleteResponseRequests": 3,
+        "oversizedEvents": 0,
+        "malformedEvents": 0,
+        "complete": false
+      },
+      "cache_fraction": 0.9952637009397794,
+      "cost_coverage_complete": false,
+      "tariffs": {
+        "offpeak": {
+          "components_cny": {
+            "cachedInputTokens": 0.53805568,
+            "uncachedInputTokens": 0.128026,
+            "completionTokens": 0.525916
+          },
+          "reported_component_sum_cny": 1.19199768,
+          "complete_estimate_cny": null
+        },
+        "peak": {
+          "components_cny": {
+            "cachedInputTokens": 1.07611136,
+            "uncachedInputTokens": 0.256052,
+            "completionTokens": 1.051832
+          },
+          "reported_component_sum_cny": 2.38399536,
+          "complete_estimate_cny": null
+        }
+      },
+      "transport_error_counts": {
+        "timedOutRequests": 0,
+        "transportErrors": 0,
+        "upstreamHttpErrors": 0,
+        "refusedRedirects": 0
+      },
+      "raw_result_sha256": "0bcb85a7a80e601ca7c877fb273c9b5c48451b4e5a631871c0efc28a49481267",
+      "transport_report_sha256": "d64242c6b70400189d8d9315ef8e6c43db480d92430639ef3b55f7e265b8d685",
+      "input_display": "27.03 M",
+      "cache_display": "99.53%",
+      "output_display": "131.5 K",
+      "cost_display": "约 ¥1.192"
+    },
+    {
+      "task_id": "arktype-json-schema-refs-dependencies",
+      "display_name": "TypeScript：JSON Schema 引用",
+      "language": "TypeScript",
+      "score": 0,
+      "category": "scored_task_failure",
+      "native_status": "completed",
+      "started_at": "2026-09-13T07:24:56.573451Z",
+      "finished_at": "2026-09-13T07:54:33.641007Z",
+      "trial_duration_seconds": 1777.068,
+      "duration_display": "29 分 37 秒",
+      "verifier": {
+        "reward": 0,
+        "f2p_total": 25,
+        "f2p_passed": 23,
+        "p2p_total": 1679,
+        "p2p_passed": 1679
+      },
+      "forwarded_requests": 184,
+      "tokens": {
+        "promptTokens": 31317124,
+        "cachedInputTokens": 31180800,
+        "uncachedInputTokens": 136324,
+        "completionTokens": 148571,
+        "reasoningTokens": 97800
+      },
+      "response_coverage": {
+        "observedRequests": 184,
+        "accountedRequests": 184,
+        "missingUsageRequests": 0,
+        "pendingRequests": 0,
+        "incompleteResponseRequests": 1,
+        "oversizedEvents": 0,
+        "malformedEvents": 0,
+        "complete": false
+      },
+      "cache_fraction": 0.9956469821430601,
+      "cost_coverage_complete": false,
+      "tariffs": {
+        "offpeak": {
+          "components_cny": {
+            "cachedInputTokens": 0.623616,
+            "uncachedInputTokens": 0.136324,
+            "completionTokens": 0.594284
+          },
+          "reported_component_sum_cny": 1.354224,
+          "complete_estimate_cny": null
+        },
+        "peak": {
+          "components_cny": {
+            "cachedInputTokens": 1.247232,
+            "uncachedInputTokens": 0.272648,
+            "completionTokens": 1.188568
+          },
+          "reported_component_sum_cny": 2.708448,
+          "complete_estimate_cny": null
+        }
+      },
+      "transport_error_counts": {
+        "timedOutRequests": 0,
+        "transportErrors": 0,
+        "upstreamHttpErrors": 0,
+        "refusedRedirects": 0
+      },
+      "raw_result_sha256": "922c13d136fcc07e849663b77ab6b2d678ab4c9d11bf68ecb1dcdd926e90ebeb",
+      "transport_report_sha256": "d728756a4af6113d72ab55f4a04b9c1d7cc3ba1a550b0c90c7e6901cd6760d05",
+      "input_display": "31.32 M",
+      "cache_display": "99.56%",
+      "output_display": "148.6 K",
+      "cost_display": "约 ¥1.354"
+    }
+  ],
+  "full_deepswe_run_completed": false,
+  "terminal_bench_run_completed": false,
+  "official_other_agents_rerun_here": false,
+  "research_url": "https://github.com/DCM-dc/ColdX/blob/main/docs/research/deepseek-v41-agent-benchmark-2026-09-13.md",
+  "efficiency_url": "https://github.com/DCM-dc/ColdX/blob/main/docs/research/deepseek-v41-performance-token-efficiency-2026-09-12.md",
+  "foundations_url": "https://github.com/DCM-dc/ColdX/blob/main/docs/deepseek-quality-foundations.md",
+  "protocol_url": "https://github.com/DCM-dc/ColdX/blob/main/docs/research/benchmarks/2026-09-13/protocol.md",
+  "official_url": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash/blob/dba1be0a40aa45a94ad051997016db3960a90277/README.md",
+  "source": {
+    "coldx_git_commit": "7d5b6b80a106f770f1127a7294c77cb196e6bace",
+    "policy_sha256": "c0bbc521d0ed1ace478b9d2d0f64f46c009a48de4299981fbe345de6cf1170c3",
+    "runtime_digest": "6544a8ee873fb315f7bc2d84e37d34039164ee442babee392ec4961d7ea6d640",
+    "pier_commit": "0c802fc067a425345b24d1c69411aa98acf61a1d",
+    "benchmark_revision": "0b9fabbb63b9104d678fe965e1632f2dd9eaa2ea",
+    "aggregate_sha256": "779deff83c76483a1ce864bdff993ce92431a03e4b909d55a3cd44eab3597b6e",
+    "cost_report_sha256": "b4fb65a734599834f4f3877345c3b807292e73dacb12dc445bc57ff294ee0cc9"
+  },
+  "billing_reconciliation": {
+    "provider_invoice_verified": false,
+    "status": "published token-based price estimate; raw billing exports remain private"
+  },
+  "headline": "本轮固定三题中，2 题通过官方验证。结果只描述这三次运行，不是全量 benchmark 成绩。",
+  "reported_pilot_cost_cny": 3.35282844,
+  "complete_pilot_cost_cny": null,
+  "cost_note": "本轮三题已报告用量的价目估算合计约 ¥3.353。HTTP 收尾与 usage 覆盖分别记录；部分连接被客户端取消，计量完整性仍保持保守标记。它不是供应商最终账单。",
+  "transport_close_diagnosis": {
+    "kind": "code-and-counter-supported inference, not per-request proof",
+    "finding": "Pinned DSH waits for SSE DONE and yields usage/finish, then aborts its stream consumer during cleanup. The relay requires both SSE DONE and a naturally completed HTTP pipeline. A post-DONE close race can therefore mark an accounted response incomplete.",
+    "limitation": "The existing aggregate ledger does not expose per-request DONE versus HTTP-completed flags, so cost completeness is not upgraded and no frozen runtime was changed during the run."
+  },
+  "cancelled_prior_attempt": {
+    "reason": "user interrupted an earlier trial to arrange separate per-task billing; archived before this fresh fixed three-task run",
+    "included_in_scores": false,
+    "reported_cost_cny": 0.49661272,
+    "complete_cost_cny": null
+  },
+  "cost_scenarios": {
+    "kind": "Conditional repeat-the-observed-usage scenarios; not a confidence interval or validated cost forecast",
+    "observed_pilot_tasks": 3,
+    "pre_registered_pilot_tasks": 3,
+    "missing_pilot_tasks_are_not_zero_filled": true,
+    "deepswe": {
+      "full_trials": 904,
+      "tariffs": {
+        "offpeak": {
+          "mean_reported_components_per_observed_trial_cny": 1.11760948,
+          "reported_usage_projection_cny": 1010.3189699200001,
+          "complete_usage_projection_cny": null
+        },
+        "peak": {
+          "mean_reported_components_per_observed_trial_cny": 2.23521896,
+          "reported_usage_projection_cny": 2020.6379398400002,
+          "complete_usage_projection_cny": null
+        }
+      },
+      "repeat_mean_proxy_lifetime_serial_hours": 290.20065703703705
+    },
+    "terminal_bench": {
+      "full_trials": 267,
+      "measured_cost_cny": null,
+      "assumed_cost_ratio_scenarios": [],
+      "measured_duration_seconds": null
+    },
+    "limitations": [
+      "The small fixed language sample is not random or representative enough to produce confidence claims.",
+      "Reported-component projections retain incomplete usage; they do not become complete bills or rigorous upper/lower bounds.",
+      "DeepSWE costs and durations are not Terminal-Bench measurements. TB numbers require an explicit hypothetical ratio.",
+      "All-offpeak and all-peak are tariff scenarios. Aggregate usage cannot identify each request's billing period.",
+      "Serial hours repeat observed proxy lifetime; actual concurrency, task variation, retries and verification can change elapsed time."
+    ]
+  },
+  "budget_note": "若 904 次都重复本轮三题的已报告平均用量，DeepSWE 谷时情景约 ¥1,010，按代理平均生命周期串行约 290 小时。这是条件算术，不是可靠预算预测。本轮未启动这笔全量作业；Terminal-Bench 尚无实测成本。",
+  "publication_scope": "No API credentials, per-key bills, native chats, raw tool logs, private host configuration or personal workspace files are included."
+}

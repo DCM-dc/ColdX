@@ -1,0 +1,249 @@
+{
+  "schema": "coldx-public-benchmark-copy-v1",
+  "prepared_date": "2026-09-13",
+  "scope": "Public script copy and documentation only; no model calls, raw sessions, provider credentials, bills, task contents or runtime binaries",
+  "source_identifier": "operator evaluation workspace/coldx-eval; original local absolute path intentionally omitted",
+  "script_count": 26,
+  "all_scripts_byte_identical": true,
+  "copied_files": [
+    {
+      "path": "coldx-eval/coldx_pier_agent.py",
+      "source_sha256": "fee94a4c8e9f9ee7f7cbbab296a5a8c7425825b85ddd834dbb2765442c4497c2",
+      "published_sha256": "fee94a4c8e9f9ee7f7cbbab296a5a8c7425825b85ddd834dbb2765442c4497c2",
+      "byte_identical": true
+    },
+    {
+      "path": "coldx-eval/run-session.mjs",
+      "source_sha256": "e23e09571e531b1973526366c0f7d44369e38c6e4107e874155c4822b4b89612",
+      "published_sha256": "e23e09571e531b1973526366c0f7d44369e38c6e4107e874155c4822b4b89612",
+      "byte_identical": true
+    },
+    {
+      "path": "coldx-eval/run-native.mjs",
+      "source_sha256": "5ef2ff1d093e2a4f5cc9ba55a78c32c80c2c95df8a4c5c612f1e957e899c8374",
+      "published_sha256": "5ef2ff1d093e2a4f5cc9ba55a78c32c80c2c95df8a4c5c612f1e957e899c8374",
+      "byte_identical": true
+    },
+    {
+      "path": "coldx-eval/native-driver.mjs",
+      "source_sha256": "eb865362b34fb21eb33e59192040fdb1b45e534dbc5f36666ca184b3a689f4e7",
+      "published_sha256": "eb865362b34fb21eb33e59192040fdb1b45e534dbc5f36666ca184b3a689f4e7",
+      "byte_identical": true
+    },
+    {
+      "path": "coldx-eval/execution-environment.mjs",
+      "source_sha256": "ca36e2e675fd324209e204b9fb925ac186e521b674f5cbedbaf5937b4f695a69",
+      "published_sha256": "ca36e2e675fd324209e204b9fb925ac186e521b674f5cbedbaf5937b4f695a69",
+      "byte_identical": true
+    },
+    {
+      "path": "coldx-eval/linux-process-group.mjs",
+      "source_sha256": "005309eb2a4fc157661dac5737795b17e1e70a4a2620c338a6c76407cf3f2f39",
+      "published_sha256": "005309eb2a4fc157661dac5737795b17e1e70a4a2620c338a6c76407cf3f2f39",
+      "byte_identical": true
+    },
+    {
+      "path": "coldx-eval/stop-owned-process.mjs",
+      "source_sha256": "2b8c2ba59bbe4c97ab10cea0b37405b9686bd87a13ca3e946635a6f995f306b4",
+      "published_sha256": "2b8c2ba59bbe4c97ab10cea0b37405b9686bd87a13ca3e946635a6f995f306b4",
+      "byte_identical": true
+    },
+    {
+      "path": "coldx-eval/evaluation-proxy.mjs",
+      "source_sha256": "957420c976cb1d86b86b626742e2377f437cdc8c7eacf08a53fe6ef9b09f84f9",
+      "published_sha256": "957420c976cb1d86b86b626742e2377f437cdc8c7eacf08a53fe6ef9b09f84f9",
+      "byte_identical": true
+    },
+    {
+      "path": "coldx-eval/evaluation-dispatcher.mjs",
+      "source_sha256": "8142cb9da04377792711eff054992ef26e8c1d4dc3a7666ee10f65d181d277b6",
+      "published_sha256": "8142cb9da04377792711eff054992ef26e8c1d4dc3a7666ee10f65d181d277b6",
+      "byte_identical": true
+    },
+    {
+      "path": "coldx-eval/start-external-proxy.mjs",
+      "source_sha256": "fb0e4fdc56527904473d038d1c1296410689ddb64b03d8df8d03c1c7c95d60a9",
+      "published_sha256": "fb0e4fdc56527904473d038d1c1296410689ddb64b03d8df8d03c1c7c95d60a9",
+      "byte_identical": true
+    },
+    {
+      "path": "coldx-eval/prepare-source.mjs",
+      "source_sha256": "7be6ef2696122182f8015eecf9dc8a226a55dbe8b6cd24300649a535e47eddaa",
+      "published_sha256": "7be6ef2696122182f8015eecf9dc8a226a55dbe8b6cd24300649a535e47eddaa",
+      "byte_identical": true
+    },
+    {
+      "path": "coldx-eval/native-driver.test.mjs",
+      "source_sha256": "752a29d1042c80129438d80823ad0fb791941d902e3f276a4912f4d646407933",
+      "published_sha256": "752a29d1042c80129438d80823ad0fb791941d902e3f276a4912f4d646407933",
+      "byte_identical": true
+    },
+    {
+      "path": "coldx-eval/run-session.test.mjs",
+      "source_sha256": "edd15d1b3f8d7bbf4d14a32482dd58c7ecc15d985a4a73223db738b71f30cf6c",
+      "published_sha256": "edd15d1b3f8d7bbf4d14a32482dd58c7ecc15d985a4a73223db738b71f30cf6c",
+      "byte_identical": true
+    },
+    {
+      "path": "coldx-eval/linux-process-group.test.mjs",
+      "source_sha256": "6ad000b1031e531289e100424477375265d9f141a96e8441031a75859812a2b6",
+      "published_sha256": "6ad000b1031e531289e100424477375265d9f141a96e8441031a75859812a2b6",
+      "byte_identical": true
+    },
+    {
+      "path": "coldx-eval/evaluation-proxy.test.mjs",
+      "source_sha256": "d7baba7b315455079c9df8f0035e2a496dd4fd19d3bcec4ee52028e32db9e9fd",
+      "published_sha256": "d7baba7b315455079c9df8f0035e2a496dd4fd19d3bcec4ee52028e32db9e9fd",
+      "byte_identical": true
+    },
+    {
+      "path": "coldx-eval/evaluation-dispatcher.test.mjs",
+      "source_sha256": "cac8fa6b5255861424d15c8ce6c9d4105db2354488179a41b9271c21b7616933",
+      "published_sha256": "cac8fa6b5255861424d15c8ce6c9d4105db2354488179a41b9271c21b7616933",
+      "byte_identical": true
+    },
+    {
+      "path": "coldx-eval/start-external-proxy.test.mjs",
+      "source_sha256": "b966ead9f9305f00702f7de4829ea91c5ab6af26232a99fd1a69638192119d84",
+      "published_sha256": "b966ead9f9305f00702f7de4829ea91c5ab6af26232a99fd1a69638192119d84",
+      "byte_identical": true
+    },
+    {
+      "path": "coldx-eval/test_pier_adapter.py",
+      "source_sha256": "7644a8c022326d9d86c036c84a65649e29b144e168051fb3410e1ce21a46e996",
+      "published_sha256": "7644a8c022326d9d86c036c84a65649e29b144e168051fb3410e1ce21a46e996",
+      "byte_identical": true
+    },
+    {
+      "path": "coldx-eval/aggregate.py",
+      "source_sha256": "511506ebb761d7127abd5ac0567079cfa3329d0622826f7a02f2752e7e951913",
+      "published_sha256": "511506ebb761d7127abd5ac0567079cfa3329d0622826f7a02f2752e7e951913",
+      "byte_identical": true
+    },
+    {
+      "path": "coldx-eval/plot.py",
+      "source_sha256": "f4321fb9ca4b3dd0fadcbfc03fbe2b24baedbd0dccc513d99259e6fb68fe9b40",
+      "published_sha256": "f4321fb9ca4b3dd0fadcbfc03fbe2b24baedbd0dccc513d99259e6fb68fe9b40",
+      "byte_identical": true
+    },
+    {
+      "path": "coldx-eval/test_results.py",
+      "source_sha256": "6d9e27e2daebe1b24970fbc3038503b2c32c237d581d16d80e672be83c064846",
+      "published_sha256": "6d9e27e2daebe1b24970fbc3038503b2c32c237d581d16d80e672be83c064846",
+      "byte_identical": true
+    },
+    {
+      "path": "coldx-eval/docker-egress-smoke.py",
+      "source_sha256": "07b43e9eeda60dad64118fc15e2e69a4d36cd2ba9100066dc388ae91eecb7b3b",
+      "published_sha256": "07b43e9eeda60dad64118fc15e2e69a4d36cd2ba9100066dc388ae91eecb7b3b",
+      "byte_identical": true
+    },
+    {
+      "path": "coldx-eval/docker-egress-smoke-client.mjs",
+      "source_sha256": "d33e8819cd9812f3151f00eab247982dbef6e9f49ebbb4130304aa1b08b61491",
+      "published_sha256": "d33e8819cd9812f3151f00eab247982dbef6e9f49ebbb4130304aa1b08b61491",
+      "byte_identical": true
+    },
+    {
+      "path": "coldx-eval/docker-egress-smoke-relay.mjs",
+      "source_sha256": "97bf3117dd2a804b27622f65ed1fa473234154eecc04ac46c052ae64c4cbb38c",
+      "published_sha256": "97bf3117dd2a804b27622f65ed1fa473234154eecc04ac46c052ae64c4cbb38c",
+      "byte_identical": true
+    },
+    {
+      "path": "coldx-eval/pilot/pier-official-environment.patch",
+      "source_sha256": "363189840b3c7b8cc94c6e5f55798def86ae10a206530c98a1ee48170dac9906",
+      "published_sha256": "363189840b3c7b8cc94c6e5f55798def86ae10a206530c98a1ee48170dac9906",
+      "byte_identical": true
+    },
+    {
+      "path": "data.json",
+      "source_sha256": "bb7d0a6afb60b45b1ecbe370bda20b02aa96c3521ed51de4d773daa820936198",
+      "published_sha256": "bb7d0a6afb60b45b1ecbe370bda20b02aa96c3521ed51de4d773daa820936198",
+      "byte_identical": true
+    },
+    {
+      "path": "coldx-eval/cost_estimate.py",
+      "source_sha256": "d1483eee42592f9a6f0fe66bdd771d5ae0e678465d8d2dc13560e047fa4421fc",
+      "published_sha256": "d1483eee42592f9a6f0fe66bdd771d5ae0e678465d8d2dc13560e047fa4421fc",
+      "byte_identical": true
+    },
+    {
+      "path": "coldx-eval/test_cost_estimate.py",
+      "source_sha256": "aae00803c6f82592e338f96b7815b222b86a9c0448b169533b188d2960381634",
+      "published_sha256": "aae00803c6f82592e338f96b7815b222b86a9c0448b169533b188d2960381634",
+      "byte_identical": true
+    }
+  ],
+  "derived_files": [
+    {
+      "path": "coldx-eval/deepswe-inventory.json",
+      "source_sha256": "642187d91bf9a7f7a40beb871ad9e31ed1412a9754843d6c0e50e3c673b166e5",
+      "published_sha256": "f589dec8ebe281dcf14ead8e2b6b0673de9238bc88fda960f3bcaa0e630ec266",
+      "transformations": [
+        "Remove hash_contract.migration containing local backup/history metadata",
+        "Serialize UTF-8 JSON with LF newline"
+      ],
+      "all_task_metadata_retained": true,
+      "task_count": 113
+    }
+  ],
+  "upstream": {
+    "pier_commit": "0c802fc067a425345b24d1c69411aa98acf61a1d",
+    "deepswe_commit": "0b9fabbb63b9104d678fe965e1632f2dd9eaa2ea",
+    "environment_patch_source": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash/raw/dba1be0a40aa45a94ad051997016db3960a90277/evaluation/dsh-minimal.patch",
+    "original_full_patch_sha256": "11f934726bdffb2111072c7dc121fe4734f5948311dad1ab9aa4b76e2ae2f24c",
+    "patch_scope": "Only the reviewed environment subset is distributed; do not overlay the original full DSH agent patch"
+  },
+  "documentation": [
+    {
+      "path": "coldx-eval/README-native.md",
+      "source_sha256": "c3ddaf9382013271d8efc7d0c079e29840af5d8e308e0ec32329844921948bba",
+      "published_sha256": "8513943bb4c8b1990d28d3671eb93fcd1b19434cbffb79d62221980e7b61c39c",
+      "byte_identical": false,
+      "change": "Update deployment paths and status; document external prerequisites and public artifact boundary"
+    },
+    {
+      "path": "coldx-eval/README-pier.md",
+      "source_sha256": "36ce9b195d1d533755b5a0a09edfd914a3e686de6db9c5673e40229ad22e548f",
+      "published_sha256": "964ab4bd7e26805076d98567bfb944bf64b824103f7fbb7aeaa388884e4c65c0",
+      "byte_identical": false,
+      "change": "Update deployment paths and status; document external prerequisites and public artifact boundary"
+    },
+    {
+      "path": "coldx-eval/README-results.md",
+      "source_sha256": "afa0a04a47889c6d42badbb078bb08d2776e4fead79c401ddf5e72970296d6b8",
+      "published_sha256": "74dabc049e92e8d3bb73339e33718f28ea33e0f6d8cfcae4e8627242b81b558b",
+      "byte_identical": false,
+      "change": "Update deployment paths and status; document external prerequisites and public artifact boundary"
+    },
+    {
+      "path": "coldx-eval/EVALUATION-PROXY.md",
+      "source_sha256": "9904eaf032dd6754741edaf99d8d747f3370161fd79baab7c928c9473cff5465",
+      "published_sha256": "7d9bff0abd5b13e1ff6ea87599f3f08df47b44750583fadbbed9aab3048ca9ba",
+      "byte_identical": false,
+      "change": "Update deployment paths and status; document external prerequisites and public artifact boundary"
+    },
+    {
+      "path": "coldx-eval/EXTERNAL-PROXY.md",
+      "source_sha256": "f6dcd9977a8529acd4ce8abab22f3e92a0d86eb0bf2e312bdb8cd8d89d2db474",
+      "published_sha256": "ee04a8706e709ba5b43a8859b0ed52e253edb7609589ac3165576604260550e0",
+      "byte_identical": false,
+      "change": "Update deployment paths and status; document external prerequisites and public artifact boundary"
+    },
+    {
+      "path": "coldx-eval/README-docker-egress-smoke.md",
+      "source_sha256": "9f10f62597630706b329c544e0ddd8c3de6981bbde1a0887fb41d6b2409c967f",
+      "published_sha256": "7961d663ca5c74fa80d33c48507678295be4332a20256cc15277cfefda2f107b",
+      "byte_identical": false,
+      "change": "Update deployment paths and status; document external prerequisites and public artifact boundary"
+    },
+    {
+      "path": "coldx-eval/COST-ESTIMATES.md",
+      "source_sha256": "cb59e4bdaa0e5e274b2b73c1fbe746986dc1fb7a87c0889a220578587b08a365",
+      "published_sha256": "025145a31e8b0a8b0f5425c3c03fab75cf634594679480a7c0c096cd719d32a3",
+      "byte_identical": false,
+      "change": "Generalize local input/output paths; omit live per-key monetary examples and temporary-run state; document local-only cost outputs and fixed pilot labels"
+    }
+  ]
+}

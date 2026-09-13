@@ -1,0 +1,4 @@
+# Preserve the audited bytes and SHA-256 receipts across platform checkouts.
+* -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+# Unified diff context lines intentionally retain their leading single space.
+coldx-eval/pilot/*.patch -whitespace

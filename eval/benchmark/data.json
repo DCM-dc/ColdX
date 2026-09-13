@@ -1,0 +1,47 @@
+{
+  "model": "DeepSeek-V4.1-Flash",
+  "source": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash#performance-across-agent-scaffolds-deepswe-v11-and-terminal-bench-21-max-reasoning-effort",
+  "retrieved": "2026-09-13",
+  "redrawn": true,
+  "agents": [
+    "Claude Code",
+    "Codex",
+    "OpenCode",
+    "Pi",
+    "mini-SWE",
+    "DSH Minimal",
+    "DSH Standard",
+    "DSH PTC"
+  ],
+  "DeepSWE v1.1 (Resolved)": [
+    69.8,
+    65.6,
+    65.5,
+    66.2,
+    74.2,
+    72.6,
+    70.5,
+    67.6
+  ],
+  "Terminal-Bench 2.1 (Pass@1)": [
+    88.0,
+    84.1,
+    85.0,
+    86.1,
+    90.3,
+    90.6,
+    85.8,
+    85.8
+  ],
+  "settings": {
+    "reasoning_effort": 100,
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "context_limit": "1M",
+    "max_steps": 500,
+    "DeepSWE_samples_per_task": 8,
+    "Terminal_Bench_samples_per_task": 3,
+    "platform": "Linux containers",
+    "terminal_network": false
+  }
+}

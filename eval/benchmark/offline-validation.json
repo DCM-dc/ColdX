@@ -1,0 +1,51 @@
+{
+  "schema": "coldx-public-benchmark-offline-validation-v1",
+  "date": "2026-09-13",
+  "mock_only": true,
+  "paid_model_calls": 0,
+  "node": {
+    "version": "24.16.0",
+    "undici": "7.29.1",
+    "command": "node --test --test-timeout=10000 evaluation-proxy.test.mjs start-external-proxy.test.mjs evaluation-dispatcher.test.mjs",
+    "tests": 27,
+    "passed": 27,
+    "failed": 0,
+    "skipped": 0,
+    "working_copy": "public staging scripts",
+    "upstream": "loopback fixtures only"
+  },
+  "python": {
+    "version": "3.12.14",
+    "matplotlib": "3.11.2",
+    "command": "python -m unittest -v test_results",
+    "tests": 34,
+    "passed": 33,
+    "failed": 0,
+    "skipped": 1,
+    "skip": "Windows account cannot create the symlink used by test_symlink_trial_cannot_import_outside_data",
+    "working_copy": "byte-identical public script copies in a separate directory beside the existing pinned upstream checkout",
+    "task_data_copied": false,
+    "data_reference_byte_identical": true
+  },
+  "setup_observations": [
+    "An initial junction-based checkout was correctly rejected by the canonical real-path guard; validation was relocated beside the real checkout without changing source",
+    "The existing local plotting wheels target Python 3.12; the complete run used the matching existing Python 3.12 interpreter"
+  ],
+  "not_exercised_in_this_public_copy_check": [
+    "ColdX native runtime or real Chromium",
+    "Docker/Pier task execution or verifier",
+    "Live model quality or paid requests"
+  ],
+  "scope_note": "These tests validate transport and scoring logic using synthetic fixtures. They are not ColdX benchmark rewards or a full environment reproduction.",
+  "cost_estimate": {
+    "python_version": "3.12.14",
+    "command": "python -B -m unittest -v test_cost_estimate",
+    "tests": 5,
+    "passed": 5,
+    "failed": 0,
+    "skipped": 0,
+    "working_copy": "public staging scripts",
+    "inputs": "unit test numerical fixtures only; no real ledger file read",
+    "paid_model_calls": 0
+  }
+}

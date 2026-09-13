@@ -1,0 +1,92 @@
+{
+  "job_name": "REPLACE_WITH_NEW_JOB_ID",
+  "jobs_dir": "<ABSOLUTE_PRIVATE_JOBS_DIR>",
+  "n_attempts": 1,
+  "n_concurrent_trials": 1,
+  "timeout_multiplier": 1.0,
+  "debug": false,
+  "retry": {
+    "max_retries": 0
+  },
+  "metrics": [
+    {
+      "type": "mean"
+    }
+  ],
+  "environment": {
+    "type": "docker",
+    "delete": true,
+    "cpu_enforcement_policy": "limit",
+    "memory_enforcement_policy": "limit",
+    "mounts": [
+      {
+        "type": "bind",
+        "source": "<ABSOLUTE_COLDX_APP>",
+        "target": "/opt/coldx-app",
+        "read_only": true,
+        "bind": {
+          "create_host_path": false
+        }
+      },
+      {
+        "type": "bind",
+        "source": "<ABSOLUTE_RUNTIME_MODULES>",
+        "target": "/opt/coldx-eval",
+        "read_only": true,
+        "bind": {
+          "create_host_path": false
+        }
+      },
+      {
+        "type": "bind",
+        "source": "<ABSOLUTE_LINUX_NODE_ROOT>",
+        "target": "/opt/coldx-node",
+        "read_only": true,
+        "bind": {
+          "create_host_path": false
+        }
+      },
+      {
+        "type": "bind",
+        "source": "<ABSOLUTE_BROWSER_CACHE>",
+        "target": "/opt/coldx-browsers",
+        "read_only": true,
+        "bind": {
+          "create_host_path": false
+        }
+      }
+    ]
+  },
+  "verifier": {
+    "disable": false
+  },
+  "agents": [
+    {
+      "import_path": "coldx_pier_agent:ColdXMountedAgent",
+      "model_name": "deepseek-flash",
+      "kwargs": {
+        "version": "REPLACE_WITH_VERIFIED_COLDX_VERSION_AND_SOURCE_HASH",
+        "source": "/opt/coldx-app",
+        "harness": "/opt/coldx-eval",
+        "node": "/opt/coldx-node/bin/node",
+        "workspace": "/app",
+        "browsers_path": "/opt/coldx-browsers",
+        "max_steps": 500,
+        "max_requests": 5000,
+        "timeout_ms": 10800000,
+        "request_timeout_ms": 10800000
+      },
+      "env": {
+        "COLDX_EVAL_UPSTREAM_BASE_URL": "${COLDX_EVAL_UPSTREAM_BASE_URL}",
+        "COLDX_EVAL_UPSTREAM_API_KEY": "${COLDX_EVAL_UPSTREAM_API_KEY}",
+        "COLDX_EVAL_UPSTREAM_CREDENTIAL_KIND": "relay-token"
+      }
+    }
+  ],
+  "tasks": [
+    {
+      "path": "<ABSOLUTE_PINNED_DEEPSWE_TASK_DIRECTORY>",
+      "source": "adhoc"
+    }
+  ]
+}
