@@ -1,6 +1,6 @@
 {
   "name": "coldx-desktop-tools",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "private": true,
   "dependencies": {
     "pnpm": "11.19.0"

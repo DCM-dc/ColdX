@@ -3,6 +3,8 @@ $ErrorActionPreference = 'Stop'
 [Console]::InputEncoding = New-Object System.Text.UTF8Encoding($false)
 [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
 Add-Type -Path (Join-Path $PSScriptRoot 'computer-native.cs') -ReferencedAssemblies @('System.Drawing','System.Windows.Forms','System.Web.Extensions','UIAutomationClient','UIAutomationTypes','WindowsBase')
+[Console]::WriteLine('{"type":"ready","protocol":"coldx-desktop","version":1}')
+[Console]::Out.Flush()
 try {
   while ($null -ne ($line = [Console]::ReadLine())) {
     if (Test-Path -LiteralPath $CancelPath) { break }

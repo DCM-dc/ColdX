@@ -7,8 +7,8 @@ import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { WindowsDesktopWorker, DesktopController } from '../plugin/desktop-control.mjs';
 
-test('Windows helper compiles and answers a data-only capability probe', {skip:process.platform!=='win32',timeout:20000},async()=>{
-  const worker=new WindowsDesktopWorker();try{const result=await worker.request({action:'probe'});assert.equal(result.available,true);assert.equal(result.backend,'windows-native');assert.ok([4,8].includes(result.pointerSize));}finally{await worker.stop();}
+test('Windows helper compiles and answers a data-only capability probe', {skip:process.platform!=='win32',timeout:80000},async t=>{
+  const worker=new WindowsDesktopWorker();try{const result=await worker.request({action:'probe'});assert.equal(result.available,true);assert.equal(result.backend,'windows-native');assert.ok([4,8].includes(result.pointerSize));assert.equal(worker.readyComplete,true);t.diagnostic(`Compiled helper ready after ${worker.startupMs}ms; action deadline remains 15000ms.`);}finally{await worker.stop();}
 });
 
 test('owned desktop window receives real click, Chinese typing, key and drag input', {skip:process.env.COLDX_DESKTOP_SMOKE!=='1'||process.platform!=='win32',timeout:40000},async()=>{

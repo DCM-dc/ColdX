@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,mkdir,writeFile,readFile,readdir,cp} from 'node:fs/promises';
+import {mkdtemp,mkdir,writeFile,readFile,readdir,cp,symlink,rmdir} from 'node:fs/promises';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {createHash} from 'node:crypto';
+import {spawn} from 'node:child_process';
 import {SuperpowersStore} from '../plugin/superpowers-store.mjs';
 
 const sha=value=>createHash('sha256').update(value).digest('hex');
@@ -11,7 +12,7 @@ const blob=value=>createHash('sha1').update(`blob ${Buffer.byteLength(value)}\0`
 const old='a'.repeat(40),next='b'.repeat(40);
 const license='MIT License\nCopyright (c) 2025 Jesse Vincent\nPermission is hereby granted';
 const body='---\nname: test-driven-development\ndescription: Use when implementing a feature\n---\nWrite a failing test first.';
-async function fixture(t,{treeExtra=[],corrupt=false}={}) {
+async function fixture(t,{treeExtra=[],corrupt=false,alias=false}={}) {
   const root=await mkdtemp(join(tmpdir(),'coldx-skills-test-')),bundledDir=join(root,'bundled');
   const texts={'LICENSE':license,'skills/test-driven-development/SKILL.md':body};
   for(const [path,text] of Object.entries(texts)){await mkdir(join(bundledDir,path,'..'),{recursive:true});await writeFile(join(bundledDir,path),text);}
@@ -24,6 +25,7 @@ async function fixture(t,{treeExtra=[],corrupt=false}={}) {
     else {const relative=path.split('/').slice(4).join('/');if(!Object.hasOwn(texts,relative))throw Error('Unexpected URL '+url);return new Response(corrupt?'bad bytes':texts[relative]);}
     return new Response(JSON.stringify(data));
   };
+  if(alias){await mkdir(join(root,'state-real'));await symlink(join(root,'state-real'),join(root,'state'),'junction');}
   const store=new SuperpowersStore({root:join(root,'state'),bundledDir,fetchImpl});await store.ready;t.after(()=>store.dispose());
   return{store,root,bundledDir,get calls(){return calls;}};
 }
@@ -42,9 +44,39 @@ test('malicious tree paths and corrupted content never become active',async t=>{
   for(const options of [{treeExtra:[{path:'skills/../../outside.md',type:'blob',mode:'100644',size:5,sha:'c'.repeat(40)}]},{corrupt:true}]) {
     const f=await fixture(t,options);await f.store.check();await assert.rejects(f.store.stage({candidateId:next}));
     assert.equal(f.store.state().active.commit,old);assert.equal(f.store.state().candidate.status,'failed');
-    assert.deepEqual(await readdir(join(f.root,'state','staging')).catch(error=>{if(error.code==='ENOENT')return[];throw error;}),[],'failed candidate bytes do not accumulate');
+    assert.deepEqual(await readdir(join(f.root,'state','staging')).catch(error=>{if(error.code==='ENOENT')return[];throw error;}),[],'failed candidate bytes do not accumulate; '+(f.store.state().notice??''));
     await assert.rejects(f.store.activate({candidateId:next,expectedActiveCommit:old}));
   }
+});
+
+test('failed downloads clean up through a canonicalized profile junction',async t=>{
+  const f=await fixture(t,{corrupt:true,alias:true});await f.store.check();
+  await assert.rejects(f.store.stage({candidateId:next}),/integrity/);
+  assert.deepEqual(await readdir(join(f.root,'state','staging')),[],f.store.state().notice??'Aliased profile cleanup must finish before stage settles.');
+  assert.equal(f.store.state().active.commit,old);
+});
+
+test('Windows cleanup waits out a transient exclusive file lock', {skip:process.platform!=='win32',timeout:15_000},async t=>{
+  const f=await fixture(t,{corrupt:true}),fetch=f.store.fetch;let child,locked=false;
+  t.after(()=>{if(child?.exitCode===null)child.kill();});
+  f.store.fetch=async(url,options)=>{
+    if(url.endsWith('/LICENSE')&&!locked){
+      locked=true;const [directory]=await readdir(join(f.root,'state','staging')),file=join(f.root,'state','staging',directory,'scanner-held.txt');await writeFile(file,'Temporary scanner lock');
+      child=spawn('powershell.exe',['-NoProfile','-NonInteractive','-Command',"$stream = [System.IO.File]::Open($env:COLDX_TEST_LOCK_PATH, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::None); try { [Console]::Out.WriteLine('locked'); [Console]::Out.Flush(); Start-Sleep -Milliseconds 450 } finally { $stream.Dispose() }"],{windowsHide:true,stdio:['ignore','pipe','pipe'],env:{...process.env,COLDX_TEST_LOCK_PATH:file}});
+      await new Promise((resolve,reject)=>{let output='',errors='';child.stdout.on('data',bytes=>{output+=bytes.toString();if(output.includes('locked'))resolve();});child.stderr.on('data',bytes=>{errors+=bytes.toString();});child.once('error',reject);child.once('exit',code=>{if(!output.includes('locked'))reject(Error('Lock helper failed '+code+': '+errors));});});
+    }
+    return fetch(url,options);
+  };
+  await f.store.check();await assert.rejects(f.store.stage({candidateId:next}),/integrity/);
+  assert.deepEqual(await readdir(join(f.root,'state','staging')),[],f.store.state().notice??'Cleanup must wait for bounded Windows sharing retries.');
+  assert.equal(f.store.state().active.commit,old);
+});
+
+test('cleanup never follows a replaced candidate junction outside the staging root',async t=>{
+  const f=await fixture(t,{corrupt:true}),fetch=f.store.fetch,outside=join(f.root,'outside');await mkdir(outside);await writeFile(join(outside,'keep.txt'),'Preserve this file');
+  f.store.fetch=async(url,options)=>{if(url.endsWith('/LICENSE')){const [directory]=await readdir(join(f.root,'state','staging')),target=join(f.root,'state','staging',directory);await rmdir(target);await symlink(outside,target,'junction');}return fetch(url,options);};
+  await f.store.check();await assert.rejects(f.store.stage({candidateId:next}),/integrity/);
+  assert.equal(await readFile(join(outside,'keep.txt'),'utf8'),'Preserve this file');assert.match(f.store.state().notice,/directory type/);
 });
 
 test('an existing candidate directory must match the exact downloaded upstream contents',async t=>{

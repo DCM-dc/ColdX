@@ -1,6 +1,6 @@
 {
   "name": "coldx-web",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "private": true,
   "type": "module",
   "description": "ColdX generative workspace built on the native DeepSeek Harness Web client",

@@ -26,7 +26,7 @@
 
 现有 desktop stage 递归带入 plugin 目录，因此 helper 和 `plugin/computer-guides/*.md` 一同交付，无需下载额外桌面驱动。浏览器沿用锁定版本的 Playwright MCP 与打包的 Chromium headless shell。企业受限 PowerShell、UAC 安全桌面、提升权限的软件以及部分不响应标准键盘输入的软件可能拒绝操作，界面保留真实错误，不尝试绕过系统权限。
 
-当前桌面互斥范围是单个 ColdX 后端进程。不要同时从多个独立 ColdX 后端控制同一物理桌面。UI Automation 提供者发生阻塞时，宿主在 15 秒后停止自有 helper；长时间输入和拖动检查取消信号并在 finally 中释放所按的键或鼠标按钮。
+当前桌面互斥范围是单个 ColdX 后端进程。不要同时从多个独立 ColdX 后端控制同一物理桌面。首次 PowerShell 启动和 Add-Type 编译有独立的 60 秒上限；收到编译完成握手后才发送动作。每个动作仍有 15 秒上限，超时停止自有 helper；启动过程中也能立即取消，不等待握手。编译错误保留诊断，探针测试报告实际启动耗时。长时间输入和拖动检查取消信号并在 finally 中释放所按的键或鼠标按钮。
 
 ## API
 

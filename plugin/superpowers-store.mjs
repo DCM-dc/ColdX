@@ -16,6 +16,18 @@ function safePath(path) {
 }
 function contains(root,path){const part=relative(root,path);if(isAbsolute(part)||part==='..'||part.startsWith('..'+sep))throw Error('Skill path escaped snapshot.');}
 async function writeJson(path,value){await mkdir(dirname(path),{recursive:true});const temp=path+'.'+randomUUID()+'.tmp';await writeFile(temp,JSON.stringify(value,null,2)+'\n');await rename(temp,path);}
+async function removeStaging(root,path){
+  const stagingRoot=resolve(root,'staging'),target=resolve(path);
+  contains(stagingRoot,target);if(dirname(target)!==stagingRoot)throw Error('Invalid staging cleanup target.');
+  const stat=await lstat(target);if(!stat.isDirectory()||stat.isSymbolicLink())throw Error('Invalid staging directory type.');
+  // Windows TEMP may use an 8.3 alias; profiles may also live behind a junction.
+  // Compare canonical paths on both sides while retaining the lexical guard.
+  const [realRoot,realTarget]=await Promise.all([realpath(stagingRoot),realpath(target)]);
+  contains(realRoot,realTarget);if(dirname(realTarget)!==realRoot)throw Error('Invalid canonical staging cleanup target.');
+  // Defender/indexers may briefly hold a just-written file. Await bounded
+  // native retries before settling stage(), rather than leaking failed bytes.
+  await rm(realTarget,{recursive:true,force:true,maxRetries:6,retryDelay:100});
+}
 
 /** Immutable snapshots; staged GitHub data is inert until explicit activation. */
 export class SuperpowersStore {
@@ -68,7 +80,7 @@ export class SuperpowersStore {
       const target=join(this.root,'versions',candidate.commit);await mkdir(dirname(target),{recursive:true});try{await rename(staging,target);}catch(error){if(!['EEXIST','ENOTEMPTY','EPERM'].includes(error.code))throw error;const existing=await this.readSnapshot(target);if(existing.commit!==candidate.commit||existing.release!==manifest.release||existing.files.length!==files.length||!files.every(row=>existing.files.some(item=>item.path===row.path&&item.bytes===row.bytes&&item.sha256===row.sha256)))throw Error('Existing candidate does not match upstream / 完整性校验失败。');}
       const previous=await this.snapshot(this.data.active.commit);candidate.changedSkills=files.filter(row=>row.path.startsWith('skills/')&&!previous.files.some(old=>old.path===row.path&&old.sha256===row.sha256)).map(row=>row.path);candidate.status='ready';await this.persist();return this.state();
     }catch(error){candidate.status='failed';candidate.message=String(error.message).slice(0,300);await this.persist();throw error;}
-    finally{if(staging)try{const stagingRoot=resolve(this.root,'staging'),target=resolve(staging);contains(stagingRoot,target);const stat=await lstat(target);if(stat.isDirectory()&&!stat.isSymbolicLink()){contains(stagingRoot,await realpath(target));await rm(target,{recursive:true,force:true});}}catch(error){if(error.code!=='ENOENT'){this.data.notice='临时技能下载尚未清理：'+String(error.message).slice(0,180);this.notify();}}}
+    finally{if(staging)try{await removeStaging(this.root,staging);}catch(error){if(error.code!=='ENOENT'){this.data.notice='临时技能下载尚未清理：'+String(error.message).slice(0,180);this.notify();}}}
   });}
   async activate({candidateId,expectedActiveCommit}={}) {return this.queue(async()=>{await this.ready;const candidate=this.data.candidate;if(this.data.active.commit!==expectedActiveCommit)throw Error('Active version changed / 当前版本已变化。');if(!candidate||candidate.id!==candidateId||candidate.status!=='ready')throw Error('Candidate is not ready for activation.');this.controller.signal.throwIfAborted();const snapshot=await this.readSnapshot(join(this.root,'versions',candidate.commit));if(snapshot.commit!==candidate.commit)throw Error('Candidate identity mismatch.');const previous=clone(this.data);this.data.active=info(snapshot);this.data.candidate=null;this.data.revision++;this.cache.set(snapshot.commit,snapshot);try{await this.persist();}catch(error){this.data=previous;throw error;}return this.state();});}
   async dispose(){this.controller.abort(new Error('Superpowers store closed.'));await this.tail;this.listeners.clear();}

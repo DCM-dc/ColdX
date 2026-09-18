@@ -30,44 +30,67 @@ function validate(request) {
 
 /** JSON-only worker; user data is never interpolated into a shell program. */
 export class WindowsDesktopWorker {
-  constructor() { this.pending=new Map(); this.sequence=0; this.stopped=false; this.ready=this.start(); }
+  constructor({spawnProcess=spawn,startupTimeoutMs=60_000,actionTimeoutMs=15_000}={}) {
+    if(!Number.isInteger(startupTimeoutMs)||startupTimeoutMs<1||startupTimeoutMs>60_000||!Number.isInteger(actionTimeoutMs)||actionTimeoutMs<1||actionTimeoutMs>15_000)throw new Error('Desktop timeouts must remain within bounded startup/action limits.');
+    this.spawnProcess=spawnProcess;this.startupTimeoutMs=startupTimeoutMs;this.actionTimeoutMs=actionTimeoutMs;this.pending=new Map();this.sequence=0;this.stopped=false;
+    this.ready=new Promise((resolve,reject)=>{this.resolveReady=resolve;this.rejectReady=reject;});
+    // Enabling the controller may start a helper before its first request.
+    this.ready.catch(()=>{});
+    this.launching=this.start().catch(error=>{void this.stop(error);});
+  }
+  fail(error) {
+    this.failure??=error;clearTimeout(this.startupTimer);this.rejectReady(this.failure);
+    for(const entry of this.pending.values()){entry.cleanup();entry.reject(this.failure);}this.pending.clear();
+  }
   async start() {
     this.directory=await mkdtemp(join(tmpdir(),'coldx-computer-'));
     this.cancelPath=join(this.directory,'cancel');
     if(this.stopped) return;
-    this.child=spawn(psPath(),['-NoLogo','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',fileURLToPath(new URL('./windows/computer-worker.ps1',import.meta.url)),this.cancelPath],{windowsHide:true,stdio:['pipe','pipe','pipe']});
+    const startedAt=Date.now();
+    this.child=this.spawnProcess(psPath(),['-NoLogo','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',fileURLToPath(new URL('./windows/computer-worker.ps1',import.meta.url)),this.cancelPath],{windowsHide:true,stdio:['pipe','pipe','pipe']});
     this.child.stdin.on('error',()=>{});
     this.stderr='';this.child.stderr.on('data',chunk=>{this.stderr=(this.stderr+chunk.toString()).slice(-1500);});
     this.lines=createInterface({input:this.child.stdout});
     this.lines.on('line',line=>{
-      if(line.length>16*1024*1024) {void this.stop();return;}
-      try {const result=JSON.parse(line);const pending=this.pending.get(result.id);if(!pending)return;this.pending.delete(result.id);pending.cleanup(); result.ok ? pending.resolve(result.value) : pending.reject(new Error(result.error || 'Desktop action failed.'));} catch { /* Non-protocol startup diagnostics are never treated as results. */ }
+      if(line.length>16*1024*1024) {void this.stop(new Error('Desktop helper protocol response is too large.'));return;}
+      try {
+        const result=JSON.parse(line);
+        if(result.type==='ready'&&result.protocol==='coldx-desktop'&&result.version===1){
+          if(this.stopped||this.readyComplete)return;
+          clearTimeout(this.startupTimer);this.readyComplete=true;this.startupMs=Date.now()-startedAt;this.resolveReady();return;
+        }
+        const pending=this.pending.get(result.id);if(!pending)return;this.pending.delete(result.id);pending.cleanup();result.ok?pending.resolve(result.value):pending.reject(new Error(result.error||'Desktop action failed.'));
+      } catch { /* Non-protocol startup diagnostics are never treated as results. */ }
     });
-    this.exited=new Promise(resolve=>this.child.once('exit',resolve));
-    const fail=()=>{for(const entry of this.pending.values()){entry.cleanup();entry.reject(new Error(this.stopped?'Desktop stopped.':`Desktop helper unavailable. ${this.stderr}`));}this.pending.clear();};
-    this.child.once('error',fail);this.child.once('exit',fail);
+    const exitedError=()=>new Error(`Desktop helper ${this.readyComplete?'exited':'startup failed'}. ${this.stderr}`);
+    this.exited=new Promise(resolve=>this.child.once('close',()=>{resolve();if(!this.stopped)void this.stop(exitedError());}));
+    this.child.once('error',error=>{void this.stop(new Error(`Desktop helper startup failed: ${error.message}`));});
+    this.startupTimer=setTimeout(()=>{void this.stop(new Error(`Desktop helper startup timed out after ${this.startupTimeoutMs}ms while loading or compiling. ${this.stderr}`));},this.startupTimeoutMs);
   }
   async request(request,signal) {
-    await this.ready; signal?.throwIfAborted(); if(this.stopped || !this.child) throw new Error('Desktop stopped.');
-    const id=++this.sequence;
-    return new Promise((resolve,reject)=>{
-      const abort=()=>{void this.stop();};
-      const timer=setTimeout(()=>{void this.stop();},15_000);
-      const cleanup=()=>{clearTimeout(timer);signal?.removeEventListener('abort',abort);};
-      this.pending.set(id,{resolve,reject,cleanup});signal?.addEventListener('abort',abort,{once:true});
-      this.child.stdin.write(JSON.stringify({id,...request})+'\n',error=>{if(error){this.pending.delete(id);cleanup();reject(error);}});
-    });
+    const abort=()=>{void this.stop(signal?.reason instanceof Error?signal.reason:new Error('Desktop request cancelled.'));};
+    signal?.addEventListener('abort',abort,{once:true});if(signal?.aborted)abort();
+    try {
+      await this.ready;signal?.throwIfAborted();if(this.stopped||this.failure||!this.child)throw this.failure||new Error('Desktop stopped.');
+      const id=++this.sequence;
+      return await new Promise((resolve,reject)=>{
+        const timer=setTimeout(()=>{void this.stop(new Error(`Desktop action ${request.action} timed out after ${this.actionTimeoutMs}ms.`));},this.actionTimeoutMs);
+        const cleanup=()=>{clearTimeout(timer);};this.pending.set(id,{resolve,reject,cleanup});
+        this.child.stdin.write(JSON.stringify({id,...request})+'\n',error=>{if(error){this.pending.delete(id);cleanup();reject(error);}});
+      });
+    }finally{signal?.removeEventListener('abort',abort);}
   }
-  async stop() {
+  async stop(reason=new Error('Desktop stopped.')) {
     if(this.stopping) return this.stopping;
-    this.stopped=true;
+    this.stopped=true;this.fail(reason);
     this.stopping=(async()=>{
-      await this.ready;
+      // Do not await readiness here: stop must also work during Add-Type.
+      await this.launching;
       if(this.cancelPath) await writeFile(this.cancelPath,'stop');
       this.child?.stdin.end();
       const timer=setTimeout(()=>this.child?.kill(),1500);
       await this.exited; clearTimeout(timer); this.lines?.close();
-      if(this.directory) await rm(this.directory,{recursive:true,force:true});
+      if(this.directory) await rm(this.directory,{recursive:true,force:true,maxRetries:5,retryDelay:100});
     })();return this.stopping;
   }
 }
