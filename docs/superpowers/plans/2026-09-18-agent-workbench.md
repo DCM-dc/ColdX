@@ -61,6 +61,12 @@ Own `plugin/client/activity-source.mjs`, activity/layout/workbench CSS, `workben
 
 - [x] Run complete unit/native tests once integration is stable; fix real regressions and add only necessary tests.
 - [x] Run browser UI scenarios, screenshots light/dark/compact, real controls and no-op/empty states.
-- [ ] Build and verify desktop stage/helper assets; create updated installation artifact only after required checks pass.
+- [x] Build and verify desktop stage/helper assets; create updated installation artifact only after required checks pass.
 - [x] Review diffs and credential/path exposure; document capability and validation limits.
-- [ ] Publish authorized code to GitHub and report exact verified result; preserve private data and original checkout changes.
+- [x] Publish authorized code to GitHub and report exact verified result; preserve private data and original checkout changes.
+
+## Delivery evidence
+
+Published [ColdX 0.1.4](https://github.com/DCM-dc/ColdX/releases/tag/v0.1.4) from application commit `cce7fae97b42a8348ee20788d534f0049bbadec6`. Check run `35370249236`, Windows build and packaged smoke run `35370257393`, and verified attachment run `35371200983` all succeeded against this commit. The Windows installer contains 283,950,239 bytes; SHA-256 is `f108da747450a90a083e693ded68dd5de5f6d658b9a54f02a9541b69e2a61985`. Public installer and checksum URLs resolve, checksum content matches asset metadata, and the actual update selector recognizes it from 0.1.2/0.1.3 while treating 0.1.4 as current.
+
+Local source verification: 645 passed, 0 failed, 2 conditional skips; browser interactions: 40 passed. The GUI fixture and actual NSIS cleanup fixture were also explicitly exercised. Local relocated app and browser smoke passed with isolated profile/PATH; 162 runtime source files, 70 installed client files and 40 public skill files were independently matched to source. The published installer comes from successful CI rather than the redundant local compression job. The user's running installation and original dirty checkout were preserved.

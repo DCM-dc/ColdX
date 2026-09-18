@@ -52,7 +52,13 @@
 | 实际 WebUI 操作 | 原生插件加载、右侧面板、真实网页导航、适宽/原尺寸、接管、深色哑铃开关、设置和用量页通过 |
 | 发布内容检查 | 新增文本未发现明显凭据或私人会话；40 个上游技能文件的 Git blob 和 SHA-256 匹配，许可证保留 |
 
-安装包的脱离源码启动与内置浏览器验证结果另记于本版发行说明。
+## 已发布安装包
+
+[ColdX 0.1.4](https://github.com/DCM-dc/ColdX/releases/tag/v0.1.4) 已发布，应用源码固定在 `cce7fae97b42a8348ee20788d534f0049bbadec6`。[Windows 检查](https://github.com/DCM-dc/ColdX/actions/runs/35370249236)、[安装包构建及脱离源码验收](https://github.com/DCM-dc/ColdX/actions/runs/35370257393)、[附件来源和完整性核验](https://github.com/DCM-dc/ColdX/actions/runs/35371200983)均通过。
+
+Windows x64 安装包为 283,950,239 字节，SHA-256 为 `f108da747450a90a083e693ded68dd5de5f6d658b9a54f02a9541b69e2a61985`，随附 `.sha256` 文件。公开下载与校验文件已回读核验；应用更新选择器能够从 0.1.2/0.1.3 识别此版本，对 0.1.4 返回已是最新版。该检查验证新版本的更新实现，并不表示旧版已经具备同样的自动更新入口。
+
+安装包内置 Node、pnpm、DSH、Chromium headless shell、Windows 控制模块和公开技能。应用与浏览器分别移出源码目录，以隔离数据和 PATH 验证启动、原生界面、退出清理、网页导航、点击及截图。Windows helper、14 个技能/40 份上游文件和实际 NSIS 长路径清理夹具验收通过。安装包当前未代码签名；本轮没有替换用户正在运行的旧版，需要安装新版才能使用这些功能。
 
 相关实现说明：
 
