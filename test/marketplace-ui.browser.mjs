@@ -49,13 +49,14 @@ test('marketplace keeps discovery, installation truth and accessibility in one n
         }
         if(method==='install'){
           if(window.failInstall)throw new Error('包下载失败，请重试');
-          const record={...request,version:'1.2.3',status:'installing',message:'正在下载插件',updatedAt:window.installTime};
+          const record={...request,jobId:'fixture-job',ownerSessionId:request.sessionId,version:'1.2.3',status:'installing',message:'正在下载插件',updatedAt:window.installTime};
           window.marketState.installs=[record];return structuredClone(record);
         }
         if(method==='setting'){window.marketState.agentInstallEnabled=request.agentInstallEnabled;return structuredClone(window.marketState);}
+        if(method==='repair'){const record=window.marketState.installs.find(item=>item.jobId===request.jobId);if(record)record.repairs=[{id:'fixture-repair',status:'queued'}];return{ownerSessionId:request.sessionId,repairId:'fixture-repair'};}
         throw new Error('Unexpected RPC '+method);
       };
-      const {MarketplaceEntry}=new Function('return ('+factory+')')()(React,{},api);
+      const {MarketplaceEntry}=new Function('return ('+factory+')')()(React,{},api,{getSessionId:()=>window.currentSession,openSession:id=>{window.openedSession=id;window.currentSession=id;}});
       modules['react-dom/client'].createRoot(document.getElementById('fixture')).render(h('div',{className:'hHd-Xa_footArea'},h('div',{className:'hHd-Xa_footerActions'},h(MarketplaceEntry,{wide:true})),h('button',{type:'button'},'设置')));
     },createMarketplaceComponents.toString());
 
@@ -103,6 +104,27 @@ test('marketplace keeps discovery, installation truth and accessibility in one n
       await page.evaluate(()=>{window.releaseState();window.releaseState=undefined;});
       await page.waitForTimeout(100);
       assert.equal(await page.getByRole('checkbox',{name:'允许 AI 按需安装插件',exact:true}).isChecked(),false,'old polling snapshot does not reverse a saved preference');
+    });
+
+    await t.test('AI repair requires a real current task and preserves failed installation ownership',async()=>{
+      await page.getByRole('checkbox',{name:'允许 AI 按需安装插件',exact:true}).check();
+      await page.getByRole('tab',{name:'发现',exact:true}).click();await page.getByRole('searchbox',{name:'搜索插件'}).fill('');
+      await page.getByRole('button',{name:'查看 Unverified Tools',exact:true}).click();
+      await page.getByRole('button',{name:'让 AI 安装',exact:true}).click();await page.getByRole('alert').filter({hasText:'请先打开一个会话'}).waitFor();
+      assert.equal(await page.evaluate(()=>window.requests.filter(row=>row.method==='repair').length),0);
+      await page.evaluate(()=>{window.currentSession='root-task';});await page.getByRole('button',{name:'让 AI 安装',exact:true}).click();
+      await page.waitForFunction(()=>window.requests.some(row=>row.method==='repair'));
+      const request=await page.evaluate(()=>window.requests.find(row=>row.method==='repair').request);assert.equal(request.sessionId,'root-task');assert.equal(request.id,'sample/unverified');assert.equal(typeof request.requestId,'string');
+      await page.evaluate(()=>{window.currentSession='another-task';window.marketState.installs[0].ownerSessionId='child-task';window.marketState.installs[0].rootSessionId='root-task';});
+      await page.getByRole('button',{name:'查看 Workspace Skills',exact:true}).click();
+      await page.getByRole('button',{name:'打开原任务',exact:true}).waitFor();await page.getByRole('button',{name:'让 AI 修复安装',exact:true}).click();await page.getByRole('alert').filter({hasText:'请回到原任务'}).waitFor();
+      assert.equal(await page.evaluate(()=>window.requests.filter(row=>row.method==='repair').length),1);
+      await page.getByRole('button',{name:'打开原任务',exact:true}).click();assert.equal(await page.evaluate(()=>window.openedSession),'root-task');
+      await page.getByRole('button',{name:'插件市场',exact:true}).click();await page.getByRole('button',{name:'查看 Workspace Skills',exact:true}).click();
+      await page.getByRole('button',{name:'让 AI 修复安装',exact:true}).click();await page.getByText('AI 修复已排入原任务',{exact:true}).waitFor();
+      assert.equal(await page.getByRole('button',{name:'让 AI 修复安装',exact:true}).isDisabled(),true);assert.equal(await page.evaluate(()=>window.requests.filter(row=>row.method==='repair').length),2);
+      assert.equal((await page.evaluate(()=>window.requests.filter(row=>row.method==='repair').at(-1).request)).jobId,'fixture-job');
+      assert.equal(await page.evaluate(()=>window.marketState.installs[0].ownerSessionId),'child-task','UI routes repair to parent without rewriting child attribution');
     });
 
     await t.test('dialog is responsive, theme-aware and Escape restores focus without losing admitted jobs',async()=>{

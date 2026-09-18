@@ -35,6 +35,7 @@ function validAbortSignal(signal) {
 
 function backendEnvironment(executable, browsersPath) {
   const environment = { ...process.env };
+  environment.COLDX_DESKTOP_RUNTIME = '1';
   const pathKeys = Object.keys(environment).filter(key => key.toLowerCase() === 'path');
   const pathKey = pathKeys[0] ?? 'PATH';
   const inheritedPath = pathKeys.map(key => environment[key]).find(Boolean);

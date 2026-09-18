@@ -622,10 +622,28 @@ export function createActivityComponents(React, frost = {}, motionSource) {
     }, h('span', { className: 'cx-activity-trigger-icon' }, glyph('activity')), h('span', { className: 'cx-activity-trigger-label' }, '工作面板'), active && h('span', { className: 'cx-activity-trigger-dot', 'aria-hidden': true }));
   }
 
-  function NowStrip({ now, timeline = [] }) {
+  function readableNow(now, timeline = []) {
+    if (now.status === 'failed' && /no API key|MISSING_CREDENTIAL/i.test(now.text)) return '尚未配置模型 API Key';
     const record = flattenRecords(timeline).find(item => item.key === now.key);
     const command = record?.presentation?.callView?.card === 'terminal' || record?.presentation?.resultView?.card === 'terminal';
-    const text = command ? now.status === 'running' ? '正在运行命令' : now.status === 'failed' ? '命令执行失败' : '命令执行已结束' : now.text;
+    return command ? now.status === 'running' ? '正在运行命令' : now.status === 'failed' ? '命令执行失败' : '命令执行已结束' : now.text;
+  }
+
+  function ActivityPinnedSummary({model, onOpen}) {
+    if (!model.visible) return null;
+    const {now, counts} = model;
+    return h('div', {className:'cx-activity-pinned', 'aria-label':'行动摘要'},
+      h('button', {type:'button', className:'cx-activity-pinned-current', onClick:event=>onOpen('timeline',event.currentTarget), 'aria-label':`查看进度：${readableNow(now,model.timeline)}`},
+        h('span', {className:'cx-activity-live-mark', 'data-status':now.status, 'aria-hidden':true}),
+        h('span', {className:'cx-activity-pinned-text', role:'status', 'aria-live':'polite'}, readableNow(now,model.timeline))),
+      h('div', {className:'cx-activity-pinned-links'},
+        counts.subagents > 0 && h('button', {type:'button', onClick:event=>onOpen('timeline',event.currentTarget), 'aria-label':`查看 ${counts.subagents} 个子智能体`}, glyph('agent'), counts.runningSubagents ? `${counts.runningSubagents} 运行中` : `${counts.subagents} 子任务`),
+        counts.outputs > 0 && h('button', {type:'button', onClick:event=>onOpen('evidence',event.currentTarget), 'aria-label':`查看 ${counts.outputs} 个成果`}, glyph('output'), `${counts.outputs} 成果`),
+        counts.sources > 0 && h('button', {type:'button', onClick:event=>onOpen('evidence',event.currentTarget), 'aria-label':`查看 ${counts.sources} 个来源`}, glyph('source'), `${counts.sources} 来源`)));
+  }
+
+  function NowStrip({ now, timeline = [] }) {
+    const text = readableNow(now,timeline);
     return h('div', { className: 'cx-activity-now', 'data-tone': now.tone, role: 'status', 'aria-live': 'polite', 'aria-atomic': 'true' },
       h('span', { className: 'cx-activity-live-mark', 'data-status': now.status, 'data-latest': ['running', 'stopping'].includes(now.status) ? 'true' : undefined, 'aria-hidden': true }),
       h('div', null, h('span', { className: 'cx-activity-now-label' }, now.status === 'waiting' ? '需要你处理' : ['running', 'stopping'].includes(now.status) ? '当前进度' : '最近更新'), h('strong', {title:now.text}, text)));
@@ -955,13 +973,18 @@ export function createActivityComponents(React, frost = {}, motionSource) {
 
     if (!model.visible && !pane) return null;
     const toggle = () => {
-      const next = !ui.open;
+      const next = pane ? !pane.get(currentSessionId).active : !ui.open;
       if (pane) {
-        if (next) pane.open(currentSessionId,ui.tab,triggerRef.current); else pane.close(currentSessionId,ui.tab);
+        if (next) pane.open(currentSessionId,ui.tab,triggerRef.current); else pane.close(currentSessionId);
         onOpenChange?.(next); return;
       }
       setState(value => value.sessionId === currentSessionId ? { ...value, open: next, present: next || value.present, unseen: next ? value.unseen : 0 } : value);
       onOpenChange?.(next);
+    };
+    const openView = (tab, origin) => {
+      if (pane) pane.open(currentSessionId,tab,origin);
+      else setState(value => value.sessionId === currentSessionId ? {...value,open:true,present:true,tab} : value);
+      onOpenChange?.(true);
     };
     const close = () => { if (ui.open) toggle(); if (!pane) triggerRef.current?.focus?.(); };
     const onScroll = event => {
@@ -974,7 +997,8 @@ export function createActivityComponents(React, frost = {}, motionSource) {
       setState(value => value.sessionId === currentSessionId ? { ...value, follow: true, unseen: 0 } : value);
     };
     return h('div', { className: 'cx-activity-lens', 'data-session-id': currentSessionId },
-      h(ActivityUtilityTrigger, { model, open: ui.open, onToggle: toggle, triggerRef, runtime }),
+      h(ActivityPinnedSummary, {model,onOpen:openView}),
+      h(ActivityUtilityTrigger, { model, open: pane ? Boolean(paneState.active) : ui.open, onToggle: toggle, triggerRef, runtime }),
       ui.present && h(ActivityInspector, {
         pane, panelEvents,
         model, panelRef, bodyRef, open: ui.open, selectedTab: ui.tab, onSelectTab: tab => setState(value => value.sessionId === currentSessionId ? { ...value, tab } : value),
@@ -984,7 +1008,7 @@ export function createActivityComponents(React, frost = {}, motionSource) {
   }
 
   return {
-    ActivityLens, ActivityDock: ActivityLens, ActivityUtilityTrigger, ActivityInspector, NowStrip, ActivityTimeline,
+    ActivityLens, ActivityDock: ActivityLens, ActivityUtilityTrigger, ActivityInspector, ActivityPinnedSummary, NowStrip, ActivityTimeline,
     ActivityRow, BackgroundLane, EvidenceShelf, OutputGroup, SubagentGroup, ComputerUseGroup, SourceGroup,
     TerminalGroup, ReturnToLive, selectActivityModel, selectActivitySources, selectActivityOutputs,
     selectConversationActivity, selectSubagentActivity, selectBackgroundActivity, selectComputerActivity,

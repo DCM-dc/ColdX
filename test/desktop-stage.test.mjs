@@ -11,11 +11,11 @@ test('runtime staging copies only executable sources and cannot include user cre
   assert.equal(typeof module.stageSources, 'function');
   const projectRoot = await mkdtemp(join(tmpdir(), 'coldx-stage-'));
   try {
-    for (const dir of ['bin', 'lib', 'plugin/client', 'plugin/.runtime', 'plugin/uploads', 'scripts', 'desktop/runtime', '.runtime', 'work', '.git', '.desktop-stage/runtime']) await mkdir(join(projectRoot, dir), { recursive: true });
+    for (const dir of ['bin', 'lib', 'plugin/client', 'plugin/.runtime', 'plugin/uploads', 'scripts', 'desktop/runtime', '.runtime', 'work', '.git', '.desktop-stage/runtime', 'vendor/superpowers']) await mkdir(join(projectRoot, dir), { recursive: true });
     for (const file of ['bin/coldx-web.mjs', 'lib/profile.mjs', 'plugin/client/client.js', 'scripts/install-browser.mjs', 'desktop/backend-entry.mjs', 'desktop/runtime/package.json', 'desktop/runtime/package-lock.json', '.runtime/.credentials.yaml', '.env', 'work/private.txt', 'plugin/.env.local', 'plugin/.runtime/private.json', 'plugin/uploads/private.pdf', 'lib/private.pem', 'lib/credentials.yaml', '.desktop-stage/runtime/stale-user-file']) await writeFile(join(projectRoot, file), '{}');
     const root = await module.stageSources({ projectRoot });
     const files = (await readdir(root)).sort();
-    assert.deepEqual(files, ['bin', 'desktop', 'lib', 'package-lock.json', 'package.json', 'plugin', 'scripts']);
+    assert.deepEqual(files, ['bin', 'desktop', 'lib', 'package-lock.json', 'package.json', 'plugin', 'scripts', 'vendor']);
     assert.deepEqual(await readdir(join(root, 'scripts')), ['install-browser.mjs']);
     assert.equal(await readFile(join(root, 'bin/coldx-web.mjs'), 'utf8'), '{}');
     assert.deepEqual(await readdir(join(root, 'plugin')), ['client']);
@@ -160,7 +160,7 @@ test('packaging gate rejects incomplete tools, wrong architectures and leftover 
   const node = process.platform === 'win32' ? 'node.exe' : 'node';
   const launcher = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
   const entry = 'tools/node_modules/pnpm/bin/pnpm.mjs';
-  for (const file of [node, launcher, 'NODE-LICENSE', 'PNPM-LICENSE', entry, 'app/bin/coldx-web.mjs', 'app/desktop/backend-entry.mjs', 'app/plugin/client/client.js', 'app/node_modules/@deepseek-ai/dsh/lib/bin.js']) {
+  for (const file of [node, launcher, 'NODE-LICENSE', 'PNPM-LICENSE', entry, 'app/bin/coldx-web.mjs', 'app/desktop/backend-entry.mjs', 'app/plugin/client/client.js', 'app/node_modules/@deepseek-ai/dsh/lib/bin.js', 'app/vendor/superpowers/manifest.json', 'app/vendor/superpowers/LICENSE', 'app/plugin/windows/computer-worker.ps1', 'app/plugin/windows/computer-native.cs']) {
     await mkdir(dirname(join(runtime, file)), { recursive: true }); await writeFile(join(runtime, file), 'fixture');
   }
   await writeFile(join(runtime, 'tools/node_modules/pnpm/package.json'), JSON.stringify({ name: 'pnpm', version: PNPM_VERSION }));
@@ -186,7 +186,7 @@ test('packaging gate rejects incomplete tools, wrong architectures and leftover 
 
 async function patchFixture() {
   const projectRoot = await mkdtemp(join(tmpdir(), 'coldx-stage-patches-'));
-  for (const dir of ['bin', 'lib', 'plugin/client', 'desktop/runtime', 'patches']) await mkdir(join(projectRoot, dir), { recursive: true });
+  for (const dir of ['bin', 'lib', 'plugin/client', 'desktop/runtime', 'patches', 'vendor/superpowers']) await mkdir(join(projectRoot, dir), { recursive: true });
   for (const file of ['desktop/backend-entry.mjs', 'desktop/runtime/package.json', 'desktop/runtime/package-lock.json']) await writeFile(join(projectRoot, file), '{}');
   await writeFile(join(projectRoot, 'pnpm-workspace.yaml'), "patchedDependencies:\n  '@fixture/native@1.2.3': patches/native.patch\n");
   await writeFile(join(projectRoot, 'patches/native.patch'), 'diff --git a/lib/index.js b/lib/index.js\n--- a/lib/index.js\n+++ b/lib/index.js\n@@ -1,3 +1,3 @@\n first\n-old route\n+current route\n last\n');

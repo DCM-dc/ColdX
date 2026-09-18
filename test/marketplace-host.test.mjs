@@ -89,3 +89,66 @@ test('runtime inspection does not erase an unresolved persistence failure or mis
   service.installer.listInstalled=async()=>{throw Error('Loader unavailable');};service.lastInspection=0;
   const unknown=await f.rpc('state');assert.match(unknown.value.notice,/核实插件加载状态/);assert.equal(unknown.value.installs[0].status,'installed');
 });
+
+test('repair admits once into the original live native agent and retains its failed job',async t=>{
+  const f=await fixture(t);f.ctx.coldxMarketplace.installer.install=async()=>{throw Error('Registry unavailable');};
+  const accepted=await f.rpc('install',{id:'owner/plugin',packageId:'dsh-fixture',sessionId:f.agent.id});
+  assert.equal(accepted.ok,true);await f.ctx.coldxMarketplace.jobs.wait(accepted.value.jobId);
+  const seen=[];f.agent.ctx.on('agent/pre-step',async({messages})=>{seen.push(...messages);return{kind:'reject'};});
+  const input={jobId:accepted.value.jobId,sessionId:f.agent.id,requestId:'repair-click-1'};
+  const [first,again]=await Promise.all([f.rpc('repair',input),f.rpc('repair',input)]);
+  assert.equal(first.ok,true);assert.equal(again.ok,true);assert.equal(first.value.repairId,again.value.repairId);
+  await f.agent.whenIdle();assert.equal(seen.length,1);assert.match(seen[0].content[0].text,/owner\/plugin/);
+  assert.match(seen[0].content[0].text,/Registry unavailable/);assert.equal(first.value.ownerSessionId,f.agent.id);
+  assert.equal((await f.rpc('state')).value.installs[0].status,'failed');assert.equal(f.ctx.agents.list().length,1);
+});
+
+test('repair cannot create a missing session or cross a failed job owner and respects AI opt-out',async t=>{
+  const f=await fixture(t);f.ctx.coldxMarketplace.installer.install=async()=>{throw Error('Failed');};
+  const record=await f.ctx.coldxMarketplace.jobs.start({id:'owner/plugin',packageId:'dsh-fixture'},{version:'1.0.0'},{ownerSessionId:'another-task'});await f.ctx.coldxMarketplace.jobs.wait(record.jobId);
+  assert.equal((await f.rpc('repair',{jobId:record.jobId,sessionId:f.agent.id,requestId:'repair-foreign'})).ok,false);
+  assert.equal((await f.rpc('repair',{jobId:record.jobId,sessionId:'missing',requestId:'repair-missing'})).ok,false);
+  await f.rpc('setting',{agentInstallEnabled:false});assert.equal((await f.rpc('repair',{jobId:record.jobId,sessionId:f.agent.id,requestId:'repair-disabled'})).ok,false);
+  assert.equal(f.ctx.agents.list().length,1);
+});
+
+test('concurrent repair clicks with different request IDs still queue one native followup',async t=>{
+  const f=await fixture(t),service=f.ctx.coldxMarketplace;service.installer.install=async()=>{throw Error('Failed');};
+  const record=await service.jobs.start({id:'owner/plugin',packageId:'dsh-fixture'},{version:'1.0.0'},{ownerSessionId:f.agent.id});await service.jobs.wait(record.jobId);
+  const seen=[];f.agent.ctx.on('agent/pre-step',async({messages})=>{seen.push(...messages);return{kind:'reject'};});
+  let release;const gate=new Promise(resolve=>{release=resolve;}),update=service.jobs.updateRepair.bind(service.jobs);service.jobs.updateRepair=async(id,value)=>{if(value.messageId)await gate;return update(id,value);};
+  const pending=['repair-window-a','repair-window-b'].map(requestId=>f.rpc('repair',{jobId:record.jobId,sessionId:f.agent.id,requestId}));
+  await new Promise(resolve=>setTimeout(resolve,25));release();const results=await Promise.all(pending);assert.ok(results.every(result=>result.ok));
+  await f.agent.whenIdle();assert.equal(seen.length,1);assert.equal(results[0].value.repairId,results[1].value.repairId);
+});
+
+test('unavailable published packages can request a bounded AI installation diagnosis',async t=>{
+  const f=await fixture(t);f.ctx.coldxMarketplace.catalog.detail=async({id})=>({id,packages:[{id:'dsh-fixture',version:'1.0.0',installable:false,reason:'No compatible native bundle'}]});
+  const seen=[];f.agent.ctx.on('agent/pre-step',async({messages})=>{seen.push(...messages);return{kind:'reject'};});
+  const response=await f.rpc('repair',{id:'owner/plugin',packageId:'dsh-fixture',sessionId:f.agent.id,requestId:'assist-click-1'});
+  assert.equal(response.ok,true);await f.agent.whenIdle();assert.equal(seen.length,1);assert.equal(f.installs,0);
+  const record=(await f.rpc('state')).value.installs[0];assert.equal(record.status,'failed');assert.equal(record.failureCode,'assisted-install-required');assert.equal(record.ownerSessionId,f.agent.id);
+});
+
+test('a native child installation retains its source but parent can repair after child disposal',async t=>{
+  const f=await fixture(t),service=f.ctx.coldxMarketplace;service.installer.install=async()=>{throw Error('Child registry failed');};
+  const handle=await f.agent.ctx.agents.create({sessionId:'market-child',meta:{cwd:process.cwd(),origin:'subagent'}}),child=handle.agent;
+  const failed=await service.installForAgent(child,{id:'owner/plugin',packageId:'dsh-fixture'},new AbortController().signal);
+  assert.equal(failed.ownerSessionId,child.id);assert.equal(failed.rootSessionId,f.agent.id);await handle.dispose();
+  const other=await f.ctx.agents.create({sessionId:'other-root',meta:{cwd:process.cwd()}});
+  assert.equal((await f.rpc('repair',{jobId:failed.jobId,sessionId:other.agent.id,requestId:'child-wrong-root'})).ok,false);
+  const seen=[];f.agent.ctx.on('agent/pre-step',async({messages})=>{seen.push(...messages);return{kind:'reject'};});
+  const response=await f.rpc('repair',{jobId:failed.jobId,sessionId:f.agent.id,requestId:'child-owner-root'});assert.equal(response.ok,true);await f.agent.whenIdle();
+  assert.equal(response.value.ownerSessionId,f.agent.id);assert.equal(seen.length,1);assert.match(seen[0].content[0].text,/market-child/);assert.match(seen[0].content[0].text,/Child registry failed/);
+  const record=service.jobs.snapshot()[0];assert.equal(record.ownerSessionId,child.id);assert.equal(record.rootSessionId,f.agent.id);
+});
+
+test('legacy child records acquire a root repair route only from exact live native ownership',async t=>{
+  const f=await fixture(t),service=f.ctx.coldxMarketplace;service.installer.install=async()=>{throw Error('Legacy child failure');};
+  const {agent:child}=await f.agent.ctx.agents.create({sessionId:'legacy-child',meta:{cwd:process.cwd(),origin:'subagent'}});
+  const failed=await service.jobs.start({id:'owner/plugin',packageId:'dsh-fixture'},{version:'1.0.0'},{ownerSessionId:child.id});await service.jobs.wait(failed.jobId);
+  assert.equal((await f.rpc('state')).value.installs[0].rootSessionId,f.agent.id);
+  const seen=[];f.agent.ctx.on('agent/pre-step',async({messages})=>{seen.push(...messages);return{kind:'reject'};});
+  assert.equal((await f.rpc('repair',{jobId:failed.jobId,sessionId:f.agent.id,requestId:'legacy-root-repair'})).ok,true);await f.agent.whenIdle();assert.equal(seen.length,1);
+  assert.equal(service.jobs.snapshot()[0].ownerSessionId,child.id);assert.equal(service.jobs.snapshot()[0].rootSessionId,f.agent.id);
+});

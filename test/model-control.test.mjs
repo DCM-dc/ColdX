@@ -37,6 +37,15 @@ test('model card uses the native exact-model effort catalog and native model nav
   f.dispose();
 });
 
+test('profile workflow toggle is independent of the native model selection and slider draft',()=>{
+  const f=fixture();let toggles=0;
+  const control={type:'button',props:{'aria-label':'Superpowers',onClick:()=>{toggles++;},children:[]}};
+  const tree=f.render({superpowersControl:control});
+  assert.ok(nodes(tree).includes(control));
+  button(tree,'Superpowers').props.onClick();assert.equal(toggles,1);assert.deepEqual(f.calls,[]);
+  assert.equal(range(f.render({superpowersControl:control})).props['aria-valuetext'],'High');assert.equal(f.opened,0);f.dispose();
+});
+
 test('dragging previews immediately but admits exactly once on release',async()=>{
   const f=fixture();let tree=f.render(),input=range(tree);
   input.props.onPointerDown(event(2,{pointerId:8}));input.props.onChange(event(3));

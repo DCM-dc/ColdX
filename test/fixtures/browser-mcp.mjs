@@ -1,5 +1,5 @@
 import { createInterface } from 'node:readline';
-const tools = ['browser_snapshot', 'browser_take_screenshot', 'browser_navigate', 'browser_close', 'browser_run_code_unsafe'];
+const tools = ['browser_snapshot', 'browser_state', 'browser_take_screenshot', 'browser_navigate', 'browser_close', 'browser_run_code_unsafe'];
 for await (const line of createInterface({ input: process.stdin })) {
   const message = JSON.parse(line);
   if (!('id' in message)) continue;

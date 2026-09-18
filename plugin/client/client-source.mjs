@@ -7,12 +7,26 @@ export function createClientPlugin(React, { MarkdownText }, factories, css) {
     inject: ['slots', 'theme', 'connection', 'sessions', 'settingsScope', 'workspaces', 'remote', 'remote.commands', 'remote.fileReferences'],
     apply(ctx) {
       const frost = factories.frost(React, factories.motion);
+      const rpcFor = service => async (method, request, signal) => {
+        const response = await ctx.connection.rpc.call('/api',`${service}/${method}`,{args:{request}},signal);
+        if (!response?.ok) throw new Error(response?.error?.message || '服务暂时不可用，请稍后重试。');
+        return response.value;
+      };
+      const superpowers = factories.superpowers(React,rpcFor('coldxSuperpowers'));
+      const {SuperpowersControl,SuperpowersSettingsRow} = superpowers;
+      ctx.effect(()=>()=>superpowers.dispose());
+      const {UsageEntry,UsageSettingsRow,BalanceNotice} = factories.usage(React,rpcFor('coldxUsage'));
+      const {UpdateNotice,UpdateSettingsRow} = factories.updates(React,rpcFor('coldxUpdates'));
       const { ModelControl } = factories.modelControl(React);
+      function EnhancedModelControl(props) { return h(ModelControl,{...props,superpowersControl:h(SuperpowersControl)}); }
       const { MarketplaceEntry } = factories.marketplace(React, {}, async (method, request, signal) => {
         const response = await ctx.connection.rpc.call('/api', `coldxMarketplace/${method}`, {args:{request}}, signal);
         if (!response?.ok) throw new Error(response?.error?.message || '插件市场暂时不可用。');
         return response.value;
-      });
+      }, {openSession:id=>ctx.sessions.open(id),getSessionId:()=>{
+        const id=ctx.sessions.list.getSnapshot().current;
+        return id&&!ctx.sessions.subagentAddress?.(id)?id:undefined;
+      }});
       const menuCatalog = factories.menuCatalog({ connection: ctx.connection, sessions: ctx.sessions });
       ctx.effect(() => () => menuCatalog.dispose());
       ctx.effect(() => ctx.remote.$on?.('agent-preset/selected', sessionId => menuCatalog.invalidate(sessionId)));
@@ -44,7 +58,7 @@ export function createClientPlugin(React, { MarkdownText }, factories, css) {
       ctx.provide('coldxFilePreview', { open: files.open, resolve: files.resolve });
       const { AttachmentControl, ComposerAttachments } = factories.attachments(React, frost);
       const activity = factories.activity(React, frost, factories.motion);
-      const { useComputer, ComputerPreview, ComputerStatus } = factories.computer(React, async (sessionId, method, request, signal) => {
+      const { useComputer, ComputerPreview, ComputerStatus, ComputerWorkspace } = factories.computer(React, async (sessionId, method, request, signal) => {
         const address = ctx.sessions.subagentAddress?.(sessionId);
         const response = await ctx.connection.rpc.call('/api', `coldxComputer/${method}${address ? 'Child' : ''}`, { args: { ...(address ? {address} : {agentId:sessionId}), request } }, signal);
         if (!response?.ok) throw new Error(response?.error?.message || '浏览器操作暂时不可用。');
@@ -174,7 +188,7 @@ export function createClientPlugin(React, { MarkdownText }, factories, css) {
           document.addEventListener('click', click, true);
           return () => document.removeEventListener('click', click, true);
         }, [sessionId]);
-        return h(React.Fragment, null, h(files.FileWorkspace, { sessionId }), h(activity.ActivityLens, {
+        return h(React.Fragment, null, h(files.FileWorkspace, { sessionId }), h(ComputerWorkspace,{sessionId,state:computerState,pane}), h(activity.ActivityLens, {
           sessionId, session, trajectory, pages, flow, subagents, jobs, sessionsState, pane,
           computer: computerState.snapshot,
           computerControls: h(ComputerStatus, { state: computerState }),
@@ -199,13 +213,14 @@ export function createClientPlugin(React, { MarkdownText }, factories, css) {
       ctx.slots.inject('sidebar.footer.action', () => ctx.slots.register({
         name:'sidebar.footer.action', id:'coldx-marketplace', order:-10,
       }, MarketplaceEntry));
+      for (const [id,component,order] of [['coldx-usage',UsageEntry,-20],['coldx-balance',BalanceNotice,-40],['coldx-update',UpdateNotice,-30]]) ctx.slots.inject('sidebar.footer.action',()=>ctx.slots.register({name:'sidebar.footer.action',id,order},component));
       ctx.slots.inject('conversation.input.attachments', () => ctx.slots.register({
         // Native single slots choose the lowest priority; the built-in entry is 0.
         name: 'conversation.input.attachments', priority: -10,
       }, ComposerAttachments));
       ctx.slots.inject('conversation.input.plan', () => ctx.slots.register({ name: 'conversation.input.plan', priority: -10 }, ModeChips));
       ctx.slots.inject('conversation.input.add', () => ctx.slots.register({ name: 'conversation.input.add', priority: -10 }, InputAdd));
-      ctx.slots.inject('conversation.input.model.effort', () => ctx.slots.register({ name: 'conversation.input.model.effort', priority: -10 }, ModelControl));
+      ctx.slots.inject('conversation.input.model.effort', () => ctx.slots.register({ name: 'conversation.input.model.effort', priority: -10 }, EnhancedModelControl));
       for (const key of ['plan', 'coldx-goal']) ctx.slots.inject('conversation.chat.commandview', () => ctx.slots.register({ name: 'conversation.chat.commandview', key, priority: -10 }, ModeCommandReceipt));
       ctx.slots.inject('conversation.session.header.utilities', () => ctx.slots.register({
         name: 'conversation.session.header.utilities', id: 'coldx-activity', order: 80,
@@ -216,6 +231,7 @@ export function createClientPlugin(React, { MarkdownText }, factories, css) {
       ctx.slots.inject('settings.general.item', () => ctx.slots.register({
         name: 'settings.general.item', id: 'coldx-terminal', order: 70,
       }, TerminalSettingsRow));
+      for (const [id,component,order] of [['coldx-superpowers',SuperpowersSettingsRow,71],['coldx-usage',UsageSettingsRow,72],['coldx-update',UpdateSettingsRow,73]]) ctx.slots.inject('settings.general.item',()=>ctx.slots.register({name:'settings.general.item',id,order},component));
       for (const key of ['coldx_present_page', 'coldx_interact']) ctx.slots.inject('tool.call.toolview', () => ctx.slots.register({
         name: 'tool.call.toolview', key, id: 'coldx', priority: 10,
       }, InlineTool));

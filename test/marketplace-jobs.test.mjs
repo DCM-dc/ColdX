@@ -10,6 +10,31 @@ const meta={packageId:request.packageId,version:'1.0.0'};
 const deferred=()=>{let resolve;const promise=new Promise(done=>{resolve=done;});return{promise,resolve};};
 async function fixture(t,install){const dir=await mkdtemp(join(tmpdir(),'coldx-market-jobs-'));const statePath=join(dir,'state.json');const jobs=new MarketplaceJobs({installer:{install},statePath});t.after(()=>jobs.dispose());await jobs.ready;return{jobs,statePath};}
 
+test('AI repair preserves the failed attempt and original session through retry and restart',async t=>{
+  let fails=true;const {jobs,statePath}=await fixture(t,async()=>{if(fails)throw Object.assign(Error('Registry failed'),{code:'package-manager-failed'});return{status:'active',message:'Loaded'};});
+  const first=await jobs.start(request,meta,{ownerSessionId:'original-task'});await jobs.wait(first.jobId);
+  const repair=await jobs.beginRepair(first.jobId,'original-task','repair-click-1');assert.equal(repair.parentJobId,first.jobId);
+  assert.equal((await jobs.beginRepair(first.jobId,'original-task','repair-click-1')).repairId,repair.repairId);
+  await assert.rejects(jobs.beginRepair(first.jobId,'other-task','repair-click-2'),/任务|owner/);
+  fails=false;const retry=await jobs.start(request,meta,{ownerSessionId:'original-task'});const result=await jobs.wait(retry.jobId);
+  assert.equal(result.parentJobId,first.jobId);assert.equal(result.ownerSessionId,'original-task');
+  assert.equal(result.attempts[0].status,'failed');assert.equal(result.attempts[0].failureCode,'package-manager-failed');assert.match(result.attempts[0].log,/Registry failed/);
+  assert.equal(result.repairs[0].status,'completed');
+  const loaded=new MarketplaceJobs({statePath,installer:{install:async()=>{throw Error('Unrequested');}}});t.after(()=>loaded.dispose());await loaded.ready;
+  assert.equal(loaded.snapshot()[0].attempts[0].jobId,first.jobId);assert.equal(loaded.snapshot()[0].repairs[0].repairId,repair.repairId);
+});
+
+test('root repair routing survives persistence while original child audit attribution is retained',async t=>{
+ const {jobs,statePath}=await fixture(t,async()=>{throw Error('Child install failed');});
+ const first=await jobs.start(request,meta,{ownerSessionId:'child',rootSessionId:'root'});await jobs.wait(first.jobId);
+ const loaded=new MarketplaceJobs({statePath,installer:{install:async()=>({status:'active',message:'Loaded'})}});t.after(()=>loaded.dispose());await loaded.ready;
+ assert.equal(loaded.snapshot()[0].ownerSessionId,'child');assert.equal(loaded.snapshot()[0].rootSessionId,'root');
+ await assert.rejects(loaded.beginRepair(first.jobId,'foreign','wrong-root'),/任务/);
+ const repair=await loaded.beginRepair(first.jobId,'root','root-repair');assert.equal(repair.ownerSessionId,'root');assert.equal(loaded.snapshot()[0].ownerSessionId,'child');
+ const retry=await loaded.start(request,meta,{ownerSessionId:'root',rootSessionId:'root'});const result=await loaded.wait(retry.jobId);
+ assert.equal(result.attempts[0].ownerSessionId,'child');assert.equal(result.attempts[0].rootSessionId,'root');assert.equal(result.repairs[0].status,'completed');
+});
+
 test('repeated clicks share one install, publish progress and persist actual activation',async t=>{
   const gate=deferred();let calls=0;
   const {jobs,statePath}=await fixture(t,async(_meta,{onProgress})=>{calls++;onProgress({phase:'installing',message:'Downloading package'});await gate.promise;return{status:'active',version:'1.0.0',tools:['test_tool'],message:'Loaded'};});

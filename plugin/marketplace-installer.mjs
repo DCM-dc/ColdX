@@ -11,6 +11,7 @@ const managedNames = ['coldx-client', 'coldx-distribution'];
 const failure = (code, message) => Object.assign(new Error(message), { code });
 const aborted = signal => { if (signal?.aborted) throw signal.reason instanceof Error ? signal.reason : new DOMException('安装已取消', 'AbortError'); };
 const progress = (listener, phase, message) => { try { listener?.({ phase, message }); } catch {} };
+function diagnosticText(value){return value.replace(/\x1b\[[0-?]*[ -/]*[@-~]/g,'').replace(/https?:\/\/[^\s<>"']+/gi,raw=>{try{const url=new URL(raw);if(url.username||url.password){url.username='redacted';url.password='';}if(url.search)url.search='redacted';return url.href;}catch{return'[redacted URL]';}}).replace(/\b(?:Bearer|Basic)\s+[A-Za-z0-9+/_.=:-]+/gi,'[redacted authorization]').replace(/\b(?:npm_|sk-|uds_)[A-Za-z0-9_-]{10,}/g,'[redacted token]').replace(/\b(authorization|_authToken|password|api[_-]?key|token)\s*[:=]\s*(?:"[^"]*"|'[^']*'|\S+)/gi,'$1=[redacted]').slice(-4000);}
 async function json(path) { return JSON.parse(await readFile(path, 'utf8')); }
 function contained(root, path) {
   const part = relative(root, path);
@@ -43,8 +44,15 @@ export function runMarketplaceCommand(command, args, { cwd, env, signal, timeout
   aborted(signal);
   return new Promise((resolveResult, reject) => {
     const child = spawn(command, args, { cwd, env, stdio:['ignore','pipe','pipe'], windowsHide:true, shell:false, detached:process.platform !== 'win32' });
-    // Drain both pipes without retaining npm output, which can contain credential-bearing registry URLs.
-    child.stdout?.resume(); child.stderr?.resume();
+    // Keep only a bounded in-memory tail; redact before it crosses the command boundary.
+    let tail='',discarding=false;
+    const capture=chunk=>{
+      let text=chunk.toString('utf8');
+      if(discarding){const end=text.indexOf('\n');if(end<0)return;text=text.slice(end+1);discarding=false;}
+      tail+=text;
+      if(tail.length>16000){const end=tail.indexOf('\n',tail.length-16000);discarding=end<0;tail=end<0?'':tail.slice(end+1);}
+    };
+    child.stdout?.on('data',capture);child.stderr?.on('data',capture);
     let cancellation, timer, settled = false;
     const stop = () => {
       if (!child.pid || settled) return;
@@ -59,7 +67,7 @@ export function runMarketplaceCommand(command, args, { cwd, env, signal, timeout
     timer = setTimeout(() => { cancellation = failure('install-timeout', '插件安装超时，请检查网络后重试。'); stop(); }, timeoutMs);
     const done = (error, exitCode) => {
       if (settled) return; settled = true; clearTimeout(timer); signal?.removeEventListener('abort', cancel);
-      if (cancellation || error) reject(cancellation ?? error); else resolveResult({ exitCode:exitCode ?? 1 });
+      if (cancellation || error) reject(cancellation ?? error); else resolveResult({ exitCode:exitCode ?? 1,diagnostic:diagnosticText(tail) });
     };
     child.once('error', error => done(error));
     child.once('close', code => done(undefined, code));
@@ -194,7 +202,7 @@ export function createMarketplaceInstaller({ ctx, home, profile = 'web', profile
       await setBundleEnabled(profileDir,packageId,false);
       const result = await runCommand(process.execPath, [cli, 'plugin', '--profile', profile, 'add', '--save-exact', '--ignore-scripts', '--registry=https://registry.npmjs.org', `${packageId}@${version}`], { cwd:profileDir, env:{ ...process.env, DSH_HOME:home, CI:'true' }, signal });
       aborted(signal);
-      if (result.exitCode !== 0) throw failure('package-manager-failed', '原生包管理器安装失败；请检查网络、包版本或 pnpm 是否可用后重试。');
+      if (result.exitCode !== 0) throw failure('package-manager-failed', '原生包管理器安装失败；请检查网络、包版本或 pnpm 是否可用后重试。'+(result.diagnostic?'\n'+result.diagnostic:''));
       await restoreManagedLinks(saved);
       const installed = await json(join(profileDir, 'node_modules', packageId, 'package.json'));
       if (installed.name !== packageId || installed.version !== version || installed.dsh?.bundle?.patch !== meta.manifest.dsh.bundle.patch) throw failure('package-mismatch', '实际安装包与已核验的目录元数据不一致。');

@@ -24,6 +24,17 @@ test('pane factory survives the native lazy factory serialization boundary', () 
   assert.equal(pane.get('owner').active, 'files');
 });
 
+test('browser and desktop share the same session pane and cannot close each other late', () => {
+  const pane = createWorkbenchPane({createElement() {}});
+  assert.equal(pane.open('a', 'browser'), true);
+  assert.equal(pane.open('a', 'desktop'), true);
+  assert.equal(pane.close('a', 'browser'), false);
+  assert.equal(pane.get('a').active, 'desktop');
+  pane.open('b', 'browser');
+  pane.close('a', 'desktop');
+  assert.equal(pane.get('b').active, 'browser');
+});
+
 test('desktop remains nonmodal, narrow drawers use native modality, and hidden panels never steal later focus', () => {
   const hooks = [], observers = new Set(), events = new Map(), calls = [];
   let cursor = 0, pending = [], width = 1000, controls;

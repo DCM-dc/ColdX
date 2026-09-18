@@ -1,9 +1,10 @@
 // Serialized into the DSH client; network/package operations stay in the native host service.
-export function createMarketplaceComponents(React, primitives, api) {
+export function createMarketplaceComponents(React, primitives, api, options={}) {
   const h = React.createElement;
   const names = {installing:'正在安装',installed:'已安装',active:'已启用','needs-config':'需要配置','needs-restart':'需要重启',failed:'安装失败'};
   const installed = record => record && ['installed','active','needs-config','needs-restart'].includes(record.status);
   const keyFor = record => `${record.id}\n${record.packageId}`;
+  const repairSession = record => record?.rootSessionId??record?.ownerSessionId;
   const updatedTime = value => typeof value==='number' && Number.isFinite(value) ? value : typeof value==='string' ? Date.parse(value) || 0 : 0;
   const message = error => typeof error?.message === 'string' ? error.message : '操作暂时无法完成，请重试。';
   const safeUrl = value => {
@@ -27,7 +28,8 @@ export function createMarketplaceComponents(React, primitives, api) {
     if (!record) return null;
     return h('div',{className:'cx-marketplace-status','data-state':record.status,role:record.status==='failed'?'alert':'status'},
       h('span',{className:'cx-marketplace-status-label'},record.status==='installing' && h('span',{className:'cx-marketplace-spinner','aria-hidden':true}),names[record.status] ?? '状态待确认'),
-      withMessage && record.message && h('p',null,record.message));
+      withMessage && record.message && h('p',null,record.message),
+      withMessage && record.repairs?.length>0 && h('p',{className:'cx-marketplace-repair-status'},({queued:'AI 修复已排入原任务',running:'AI 正在诊断安装',completed:'AI 修复后已核实启用','needs-attention':'本轮修复尚未完成，请查看原任务'})[record.repairs.at(-1).status]));
   }
 
   function MarketplaceDialog({onClose,returnFocus}) {
@@ -97,9 +99,24 @@ export function createMarketplaceComponents(React, primitives, api) {
       if(!stateLoaded || !pkg.installable || installed(record) || record?.status==='installing' || busyKeys.current.has(id))return;
       busyKeys.current.add(id);setBusy(previous=>({...previous,[id]:true}));setActionErrors(previous=>({...previous,[id]:''}));
       try {
-        const result=await api('install',{id:selected,packageId:pkg.id});
+        const sessionId=options.getSessionId?.();
+        const result=await api('install',{id:selected,packageId:pkg.id,...sessionId?{sessionId}:{}});
         if(!result || result.id!==selected || result.packageId!==pkg.id || !names[result.status])throw new Error('安装结果尚未确认，请刷新查看。');
         if(alive.current)setState(previous=>({...previous,installs:[...previous.installs.filter(old=>keyFor(old)!==id),result]}));
+      }catch(error){if(alive.current)setActionErrors(previous=>({...previous,[id]:message(error)}));}
+      finally{busyKeys.current.delete(id);if(alive.current)setBusy(previous=>({...previous,[id]:false}));}
+    }
+    async function repairPackage(pkg,record){
+      const id=keyFor({id:selected,packageId:pkg?.id??'(repository)'}),sessionId=options.getSessionId?.();
+      if(!sessionId){setActionErrors(previous=>({...previous,[id]:'请先打开一个会话，再让 AI 安装。'}));return;}
+      if(repairSession(record)&&repairSession(record)!==sessionId){setActionErrors(previous=>({...previous,[id]:'请回到原任务后修复安装。'}));return;}
+      if(!state.agentInstallEnabled||busyKeys.current.has(id))return;
+      busyKeys.current.add(id);setBusy(previous=>({...previous,[id]:true}));setActionErrors(previous=>({...previous,[id]:''}));
+      try{
+        const request={sessionId,requestId:crypto.randomUUID(),...record?{jobId:record.jobId}:{id:selected,...pkg?{packageId:pkg.id}:{}}};
+        const receipt=await api('repair',request);
+        if(receipt?.ownerSessionId!==sessionId||typeof receipt.repairId!=='string')throw new Error('修复任务归属尚未确认，请刷新。');
+        if(alive.current){acceptState(await api('state',{}));setActionErrors(previous=>({...previous,[id]:''}));}
       }catch(error){if(alive.current)setActionErrors(previous=>({...previous,[id]:message(error)}));}
       finally{busyKeys.current.delete(id);if(alive.current)setBusy(previous=>({...previous,[id]:false}));}
     }
@@ -144,7 +161,7 @@ export function createMarketplaceComponents(React, primitives, api) {
           !selected ? h('div',{className:'cx-marketplace-empty cx-marketplace-intro'},h(Icon,{size:32}),h('h3',null,'为工作流添加新能力'),h('p',null,'选择一个插件，查看介绍、发布包与安装状态。')) : detail?.loading ? h('p',{className:'cx-marketplace-empty',role:'status'},'正在读取插件详情…') : detail?.error ? h('div',{className:'cx-marketplace-empty',role:'alert'},detail.error,h('button',{type:'button',onClick:refreshAll},'重试详情')) : detail && h(React.Fragment,null,
             h('div',{className:'cx-marketplace-detail-title'},h('h3',null,detail.name),h(Link,{url:detail.url},'项目源码')),
             h('p',{className:'cx-marketplace-detail-description'},detail.description),detail.notice&&h('p',{className:'cx-marketplace-notice'},detail.notice),
-            !detail.packages.length && h('p',{className:'cx-marketplace-notice'},'此项目还没有可直接安装的发布包。'),
+            !detail.packages.length && h('div',{className:'cx-marketplace-notice'},h('p',null,'此项目还没有可直接安装的发布包。'),h('button',{type:'button',className:'cx-marketplace-ai-repair',disabled:!stateLoaded||!state.agentInstallEnabled||Boolean(busy[keyFor({id:selected,packageId:'(repository)'})]),onClick:()=>repairPackage(undefined,state.installs.find(item=>item.id===selected&&item.packageId==='(repository)'))},'让 AI 检查安装方法'),actionErrors[keyFor({id:selected,packageId:'(repository)'})]&&h('p',{role:'alert'},actionErrors[keyFor({id:selected,packageId:'(repository)'})])),
             detail.packages.map(pkg=>{
               const record=getRecord(pkg.id),id=keyFor({id:selected,packageId:pkg.id}),pending=busy[id] || record?.status==='installing';
               return h('article',{key:pkg.id,className:'cx-marketplace-package'},
@@ -152,7 +169,10 @@ export function createMarketplaceComponents(React, primitives, api) {
                   pkg.installable && !installed(record) && !pending && h('button',{type:'button',className:'cx-marketplace-install','aria-label':`${record?.status==='failed' || actionErrors[id]?'重试安装':'安装插件'} ${pkg.name || pkg.id}`,disabled:!stateLoaded,onClick:()=>installPackage(pkg)},record?.status==='failed' || actionErrors[id]?'重试安装':'安装'),
                   pending && !record && h('span',{role:'status',className:'cx-marketplace-pending'},'正在提交…')),
                 pkg.description && h('p',null,pkg.description),!pkg.installable && h('p',{className:'cx-marketplace-unavailable'},pkg.reason || '暂不支持一键安装。'),
-                h(Status,{record}),actionErrors[id]&&h('p',{role:'alert',className:'cx-marketplace-error'},actionErrors[id]),
+                h(Status,{record}),
+                (!pkg.installable||record&&['failed','needs-config','needs-restart'].includes(record.status))&&h('div',{className:'cx-marketplace-repair-actions'},h('button',{type:'button',className:'cx-marketplace-ai-repair',disabled:!stateLoaded||!state.agentInstallEnabled||pending||record?.repairs?.some(item=>['queued','running'].includes(item.status)),onClick:()=>repairPackage(pkg,record)},record?'让 AI 修复安装':'让 AI 安装'),repairSession(record)&&options.openSession&&h('button',{type:'button',onClick:()=>{options.openSession(repairSession(record));onClose();}},'打开原任务')),
+                actionErrors[id]&&h('p',{role:'alert',className:'cx-marketplace-error'},actionErrors[id]),
+                record?.attempts?.length>0&&h('details',{className:'cx-marketplace-log'},h('summary',null,`之前的安装尝试（${record.attempts.length}）`),record.attempts.map(attempt=>h('div',{key:attempt.jobId},h('strong',null,attempt.version,' · ',names[attempt.status]??attempt.status),h('pre',null,attempt.log||attempt.message)))),
                 h(Link,{url:pkg.sourceUrl},'发布信息'),record?.log&&h('details',{className:'cx-marketplace-log'},h('summary',null,'安装日志'),h('pre',null,record.log)));
             }),
             detail.readme && h('details',{className:'cx-marketplace-readme'},h('summary',null,'使用说明'),h('pre',null,detail.readme))

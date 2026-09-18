@@ -23,14 +23,17 @@ import { createComputerComponents } from './computer-source.mjs';
 import { createModelControlComponents } from './model-control-source.mjs';
 import { createMenuCatalog } from './menu-catalog-source.mjs';
 import { createMarketplaceComponents } from './marketplace-source.mjs';
+import { createSuperpowersComponents } from './superpowers-source.mjs';
+import { createUsageComponents } from './usage-source.mjs';
+import { createUpdateComponents } from './updates-source.mjs';
 
 // DSH rc.2 consumes lazy CJS factory registration, not browser ESM imports.
 await buildPdfBundle();
 const brandAssets = await buildBrandAssets();
-const css = (await Promise.all(['coldx.css', 'native.css', 'interaction.css', 'frost.css', 'attachment.css', 'activity.css', 'terminal.css', 'layout.css', 'workbench.css', 'file-view.css', 'pdf-view.css', 'computer.css', 'ui-consistency.css', 'composer.css', 'model-control.css', 'marketplace.css', 'brand.css'].map(path => readFile(new URL(path, import.meta.url), 'utf8')))).join('\n');
+const css = (await Promise.all(['coldx.css', 'native.css', 'interaction.css', 'frost.css', 'attachment.css', 'activity.css', 'terminal.css', 'layout.css', 'workbench.css', 'file-view.css', 'pdf-view.css', 'computer.css', 'ui-consistency.css', 'composer.css', 'model-control.css', 'marketplace.css', 'brand.css', 'superpowers.css', 'usage.css', 'updates.css'].map(path => readFile(new URL(path, import.meta.url), 'utf8')))).join('\n');
 const factories = { brand: createBrandComponents, stage: createPageStage, document: buildPageDocument, pageSubmit: createPageSubmitter,
   interactions: createInteractionComponents, interactionSubmit: createInteractionSubmitter, workspaceModel: createWorkspaceModel, motion: createMotionRuntime, frost: createFrostComponents, sessionControls: createSessionControls, attachments: createAttachmentComponents,
-  activity: createActivityComponents, terminal: createTerminalComponents, files: createFileViewComponents, htmlPreview:createHtmlPreviewComponents, pdf:createPdfViewComponents, workbenchPane:createWorkbenchPane, computer:createComputerComponents, modelControl:createModelControlComponents, menuCatalog:createMenuCatalog, marketplace:createMarketplaceComponents };
+  activity: createActivityComponents, terminal: createTerminalComponents, files: createFileViewComponents, htmlPreview:createHtmlPreviewComponents, pdf:createPdfViewComponents, workbenchPane:createWorkbenchPane, computer:createComputerComponents, modelControl:createModelControlComponents, menuCatalog:createMenuCatalog, marketplace:createMarketplaceComponents, superpowers:createSuperpowersComponents, usage:createUsageComponents, updates:createUpdateComponents };
 const args = `{${Object.entries(factories).map(([key, fn]) => key === 'brand'
   ? `${key}:(React)=>(${fn.toString()})(React,${JSON.stringify(brandAssets)})`
   : `${key}:(${fn.toString()})`).join(',\n')}}`;

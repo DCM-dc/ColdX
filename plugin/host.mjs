@@ -2,6 +2,7 @@ import { pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 import { realpathSync } from 'node:fs';
 import { OPERATING_POLICY } from './policy.mjs';
+import { superpowersPrompt } from './superpowers-adapter.mjs';
 import * as pageHost from './page-host.mjs';
 import * as interactionHost from './interaction-host.mjs';
 import * as codingModeHost from './coding-mode-host.mjs';
@@ -45,6 +46,6 @@ export function apply(ctx) {
   ctx.systemPrompt.section({
     name: 'coldx:operating-policy',
     order: 40,
-    text: OPERATING_POLICY,
+    text: context => OPERATING_POLICY + superpowersPrompt(context),
   });
 }

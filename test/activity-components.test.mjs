@@ -155,6 +155,18 @@ function mount(initialSnapshot = snapshot(), options = {}) {
   };
 }
 
+test('pinned summary shows verified activity and opens evidence without copying hidden reasoning', () => {
+  const f = mount();
+  const summary = f.all(node => node.props.className === 'cx-activity-pinned')[0];
+  assert.ok(summary, 'current progress remains visible while the panel is closed');
+  assert.match(f.textOf(summary), /读取工作区/);
+  assert.doesNotMatch(f.textOf(summary), /Secret hidden reasoning|User prose|never show/);
+  const outputs = f.all(node => node.props['aria-label'] === '查看 1 个成果')[0];
+  f.fire(outputs, 'onClick');
+  assert.equal(f.all(node => node.props['data-pane'] === 'evidence')[0].props['data-active'], true);
+  f.unmount();
+});
+
 test('utility trigger opens a nonmodal right-side evidence sheet without exposing prose or hidden reasoning', () => {
   const f = mount();
   const trigger = f.all(node => node.type === 'button' && node.props.className?.includes('cx-activity-trigger'))[0];

@@ -24,6 +24,7 @@ function mount(rpc) {
   const api = createComputerComponents(React, rpc);
   return { api, render(sessionId) { cursor = 0; effects = []; apiState = api.useComputer(sessionId); for (const effect of effects) effect(); return apiState; },
     renderPreview(props) { cursor=0; effects=[]; const tree=api.ComputerPreview(props); for (const effect of effects) effect(); return tree; },
+    renderWorkspace(props) { cursor=0; effects=[]; const tree=api.ComputerWorkspace(props); for (const effect of effects) effect(); return tree; },
     get lateUpdates() { return lateUpdates; }, dispose() { for (const entry of hooks) entry.cleanup?.(); disposed = true; } };
 }
 
@@ -141,4 +142,52 @@ test('a completed browser_close is shown as closed even while its driver remains
   assert.match(text(ComputerStatus({state:{...state,snapshot:{...state.snapshot,browserOpen:true}}})),/画面随工具操作更新/);
   assert.doesNotMatch(text(ComputerStatus({state:{...state,snapshot:{...state.snapshot,records:[{surfaceLabel:'关闭浏览器',status:'failed'}]}}})),/浏览器已关闭/);
   view.dispose();
+});
+
+test('workspace normalizes a user URL and exposes explicit browser takeover without operating on mount',()=>{
+  const calls=[],view=mount(async()=>{});const props={sessionId:'a',view:'browser',state:{snapshot:{version:1,records:[],browser:{tabs:[],connected:true,paused:false}},action:(method,request)=>calls.push({method,request})}};
+  let tree=view.renderWorkspace(props);assert.deepEqual(calls,[]);
+  descendants(tree).find(node=>node.props?.['aria-label']==='浏览器地址').props.onChange({target:{value:'example.com'}});
+  tree=view.renderWorkspace(props);descendants(tree).find(node=>node.type==='form').props.onSubmit({preventDefault(){}});
+  assert.deepEqual(calls[0],{method:'browserAction',request:{action:'navigate',url:'https://example.com'}});
+  descendants(tree).find(node=>node.type==='button'&&node.props.children.join('')==='手动接管').props.onClick();
+  assert.deepEqual(calls[1],{method:'browserAction',request:{action:'pause',paused:true}});view.dispose();
+});
+
+test('a finished child workspace disables mutation controls while keeping history visible',()=>{
+  const view=mount(async()=>{});const tree=view.renderWorkspace({sessionId:'ended-child',view:'browser',state:{snapshot:{version:1,readOnly:true,records:[],browser:{tabs:[{id:'0',index:0,title:'Saved page',url:'https://example.com',active:true}],connected:false}}}});
+  assert.match(JSON.stringify(tree),/子任务已结束/);
+  assert.ok(descendants(tree).filter(node=>node.type==='button').every(node=>node.props.disabled));view.dispose();
+});
+
+test('manual screenshot keyboard preserves literal punctuation, spaces, case and shortcuts',()=>{
+  const calls=[],view=mount(async()=>{});
+  const tree=view.renderWorkspace({sessionId:'a',view:'desktop',state:{snapshot:{records:[],desktop:{active:true,paused:true,window:{id:'12'},observation:{id:'observed',previewAttachment:{mime:'image/png',base64:'aGVsbG8='}}}},action:(method,request)=>calls.push({method,request})}});
+  const image=descendants(tree).find(node=>node.type==='img');
+  for(const key of ['!',' ','A'])image.props.onKeyDown({key,shiftKey:key==='A',preventDefault(){}});
+  image.props.onKeyDown({key:'a',ctrlKey:true,preventDefault(){}});
+  assert.deepEqual(calls.map(call=>call.request),[
+    {windowId:'12',observationId:'observed',action:'type',text:'!'},
+    {windowId:'12',observationId:'observed',action:'key',keys:['Space']},
+    {windowId:'12',observationId:'observed',action:'key',keys:['Shift','A']},
+    {windowId:'12',observationId:'observed',action:'key',keys:['Control','A']},
+  ]);view.dispose();
+});
+
+test('workspace screenshot zoom is local, remains across observations and resets for another target',()=>{
+  const calls=[],view=mount(async()=>{}),image={mime:'image/png',base64:'aGVsbG8='};
+  const props={sessionId:'a',view:'desktop',state:{snapshot:{readOnly:true,records:[],desktop:{window:{id:'12'},observation:{previewAttachment:image}}},action:(...args)=>calls.push(args)}};
+  let tree=view.renderWorkspace(props),zoom=descendants(tree).find(node=>node.props?.['aria-label']==='按原尺寸查看截图');
+  assert.ok(zoom);assert.equal(zoom.props.disabled,false,'read-only history can still zoom');zoom.props.onClick();
+  tree=view.renderWorkspace(props);assert.equal(descendants(tree).find(node=>node.props?.role==='region').props['data-zoom'],'actual');
+  props.state.snapshot.desktop.observation.previewAttachment={...image,base64:'d29ybGQ='};tree=view.renderWorkspace(props);
+  assert.equal(descendants(tree).find(node=>node.props?.role==='region').props['data-zoom'],'actual');
+  props.state.snapshot.desktop.window.id='13';tree=view.renderWorkspace(props);assert.equal(descendants(tree).find(node=>node.props?.role==='region').props['data-zoom'],'fit');
+  assert.deepEqual(calls,[]);view.dispose();
+});
+
+test('manual takeover stays visibly pending while a model desktop action is running',()=>{
+  const view=mount(async()=>{});const tree=view.renderWorkspace({sessionId:'a',view:'desktop',state:{snapshot:{records:[],desktop:{active:true,paused:true,busy:true,window:{id:'12'},observation:{previewAttachment:{mime:'image/png',base64:'aGVsbG8='}}}}}});
+  assert.match(JSON.stringify(tree),/等待当前操作完成/);
+  assert.equal(descendants(tree).find(node=>node.props?.className==='cx-computer-live-frame').props['data-interactive'],false);view.dispose();
 });

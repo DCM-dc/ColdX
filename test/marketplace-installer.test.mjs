@@ -8,6 +8,15 @@ import { dshRequire } from '../plugin/page-native.mjs';
 import { createMarketplaceInstaller, runMarketplaceCommand } from '../plugin/marketplace-installer.mjs';
 
 const meta = { id:'fixture/plugin', packageId:'coldx-test-market-plugin', version:'1.0.0', manifest:{name:'coldx-test-market-plugin',version:'1.0.0',dsh:{bundle:{patch:'./cordis.patch.json'}}} };
+test('failed package command retains bounded diagnostic text while redacting authentication',async()=>{
+  const result=await runMarketplaceCommand(process.execPath,['-e',"process.stderr.write('ERR_PNPM_FETCH_404 missing package\\nhttps://fixture-user:fixture-password@registry.example/pkg?token=fixture-secret\\nAuthorization: Bearer fixture-secret\\n_authToken=fixture-hidden\\n'+ 'x'.repeat(6000));process.exitCode=1;"]);
+  assert.equal(result.exitCode,1);assert.equal(typeof result.diagnostic,'string');assert.ok(result.diagnostic.length<=4000);
+  assert.doesNotMatch(result.diagnostic,/fixture-password|fixture-secret|fixture-hidden/);
+  const useful=await runMarketplaceCommand(process.execPath,['-e',"process.stderr.write('ERR_PNPM_FETCH_404 missing package\\nhttps://fixture-user:fixture-password@registry.example/pkg?token=fixture-secret\\nAuthorization: Bearer fixture-secret\\n_authToken=fixture-hidden');process.exitCode=1;"]);
+  assert.match(useful.diagnostic,/ERR_PNPM_FETCH_404/);assert.match(useful.diagnostic,/registry.example/);assert.doesNotMatch(useful.diagnostic,/fixture-password|fixture-secret|fixture-hidden/);
+  const truncated=await runMarketplaceCommand(process.execPath,['-e',"process.stderr.write('password='+ 'private-fragment'.repeat(1500)+'\\nERR_PNPM_NETWORK retry later');process.exitCode=1;"]);
+  assert.doesNotMatch(truncated.diagnostic,/private-fragment/);assert.match(truncated.diagnostic,/ERR_PNPM_NETWORK/);
+});
 async function fixture(t, { failRefresh=false, active=true }={}) {
   const home=await mkdtemp(join(tmpdir(),'coldx-market-test-')), profileDir=join(home,'profiles','web');
   t.after(()=>rm(home,{recursive:true,force:true}));

@@ -23,7 +23,7 @@ export function createModelControlComponents(React) {
     };
   }
   const gestureKeys=new Set(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End','PageUp','PageDown']);
-  function ModelControl({sessionId,locked=false,available=true,directory,load,select,openModels}) {
+  function ModelControl({sessionId,locked=false,available=true,directory,load,select,openModels,superpowersControl}) {
     const state=React.useSyncExternalStore(listener=>directory.subscribe(listener),()=>directory.getSnapshot());
     const model=modelEffortState(state);
     const identity=JSON.stringify([sessionId,model.current?.provider,model.current?.model]);
@@ -142,7 +142,8 @@ export function createModelControlComponents(React) {
     const resetDisabled=blocked || !model.current || model.effectiveEffort===model.defaultEffort;
     const message=activeFailure?.message ?? state.error;
     return h('section',{className:'cx-model-control','aria-label':'模型与推理强度','aria-busy':busy,'data-preview':activePreview?'true':undefined,'data-dragging':activePosition?'true':undefined,'data-max':maximum?'true':undefined},
-      h('header',{className:'cx-model-control-head'},
+      h('header',{className:'cx-model-control-head','data-superpowers':Boolean(superpowersControl)},
+        superpowersControl && h('div',{className:'cx-model-control-workflow'},superpowersControl),
         h('button',{type:'button',className:'cx-model-control-model','aria-label':`选择模型，当前 ${model.modelLabel}`,title:model.modelLabel,disabled,'aria-disabled':blocked,onClick:()=>{if(canEdit()){cancelPreview();openModels();}}},
           h('span',{className:'cx-model-control-name'},model.modelLabel),h('svg',{width:12,height:12,viewBox:'0 0 16 16',fill:'none','aria-hidden':true},h('path',{d:'m4 6 4 4 4-4',stroke:'currentColor',strokeWidth:1.5,strokeLinecap:'round',strokeLinejoin:'round'}))),
         h('button',{type:'button',className:'cx-model-control-reset','aria-label':'恢复模型默认强度',title:'恢复模型默认强度',disabled,'aria-disabled':resetDisabled,'data-at-default':model.effectiveEffort===model.defaultEffort?'true':undefined,onClick:()=>applyEffort(undefined)},

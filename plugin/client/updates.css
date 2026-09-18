@@ -1,0 +1,5 @@
+.cx-update-settings{display:grid;gap:12px;padding:16px 0;border-top:1px solid var(--cx-wb-line);color:var(--cx-wb-text);font-size:13px}
+.cx-update-heading{display:flex;align-items:center;justify-content:space-between;gap:16px}.cx-update-heading p{margin:6px 0 0;color:var(--cx-wb-muted)}
+.cx-update-settings label,.cx-update-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.cx-update-settings input{accent-color:var(--cx-wb-accent)}
+.cx-update-settings button{border:1px solid var(--cx-wb-line);border-radius:8px;background:var(--cx-wb-surface);color:var(--cx-wb-text);padding:7px 12px;cursor:pointer;font:inherit}.cx-update-settings button:hover{background:var(--cx-wb-hover)}.cx-update-settings button:disabled{opacity:.5;cursor:default}
+.cx-update-settings a,.cx-update-notice{color:var(--cx-wb-accent);font-size:12px;text-decoration:none}.cx-update-confirm{background:var(--cx-wb-raised);padding:12px;border-radius:10px}.cx-update-confirm button+button{margin-inline-start:8px}.cx-update-notice{display:block;padding:8px 12px;border-radius:8px;line-height:1.5}.cx-update-notice:hover{background:var(--cx-wb-hover)}

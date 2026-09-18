@@ -30,6 +30,9 @@ function mountClient(reply = { ok: true, value: {} }) {
   const plugin = createClientPlugin(React, { MarkdownText: () => null }, {
     brand: () => ({ Mark() {}, Name() {}, HeroBrand() {} }),
     modelControl: () => ({ ModelControl() {} }),
+    superpowers: () => ({SuperpowersControl(){},SuperpowersSettingsRow(){},dispose(){}}),
+    usage: () => ({UsageEntry(){},UsageSettingsRow(){},BalanceNotice(){}}),
+    updates: () => ({UpdateNotice(){},UpdateSettingsRow(){}}),
     marketplace: (_react,_primitives,api) => ({ MarketplaceEntry() {}, api }),
     menuCatalog: () => ({ load: async () => [], pick() {}, dispose() {} }),
     interactions: () => ({ QuestionFrame() {} }),
@@ -45,7 +48,7 @@ function mountClient(reply = { ok: true, value: {} }) {
     htmlPreview: () => ({HtmlPreview(){}}),
     pdf: () => ({PdfPreview(){}}),
     workbenchPane: createWorkbenchPane,
-    computer: () => ({ useComputer: () => ({snapshot:{version:1,records:[]}}), ComputerPreview(){}, ComputerStatus(){} }),
+    computer: () => ({ useComputer: () => ({snapshot:{version:1,records:[]}}), ComputerPreview(){}, ComputerStatus(){}, ComputerWorkspace(){} }),
   }, '');
   const entries = new Map();
   const options = new Map();
@@ -74,10 +77,10 @@ function mountClient(reply = { ok: true, value: {} }) {
 test('ColdX owns only its inline tool renderers and releases every slot on disposal', t => {
   const mounted = mountClient(); t.after(() => mounted.dispose());
   const { entries, options, InlineTool } = mounted;
-  assert.equal(entries.size, 17);
+  assert.equal(entries.size, 23);
   assert.equal(entries.get('sidebar.footer.action:coldx-marketplace').name,'MarketplaceEntry');
   assert.equal(options.get('sidebar.footer.action:coldx-marketplace').order,-10);
-  assert.equal(entries.get('conversation.input.model.effort:').name, 'ModelControl');
+  assert.equal(entries.get('conversation.input.model.effort:').name, 'EnhancedModelControl');
   assert.equal(options.get('conversation.input.model.effort:').priority, -10);
   const Entry = entries.get('conversation.input.add:');
   const label = Entry({ sessionId: 'demo' });
@@ -177,7 +180,7 @@ test('header utility derives activity from native stores and leaves terminal in 
       return selector({ subagentsByParent: { parent: { entries: [] } }, jobsBySession: { parent: [{ id: 'job' }] }, byId: {} });
     },
   });
-  const activity = tree.props.children[1];
+  const activity = tree.props.children.find(child=>child.type===mounted.ActivityLens);
   assert.equal(activity.type, mounted.ActivityLens);
   assert.equal(activity.props.session, session);
   assert.equal(activity.props.trajectory, session.views.get('trajectory'));

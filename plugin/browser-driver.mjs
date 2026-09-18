@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { createConnection } from '@playwright/mcp';
 import { dshRequire } from './page-native.mjs';
 import { browserRuntime } from './computer-preset.mjs';
+import { createBrowserTransport } from './browser-transport.mjs';
 
 const driverRequire = createRequire(import.meta.resolve('@playwright/mcp'));
 const sdkRequire = createRequire(dshRequire.resolve('@deepseek-ai/dsh-mcp-client'));
@@ -43,4 +44,4 @@ async function stop() {
 process.stdin.once('end', () => { void stop(); });
 process.once('SIGINT', () => { void stop(); });
 process.once('SIGTERM', () => { void stop(); });
-await connection.connect(new StdioServerTransport());
+await connection.connect(createBrowserTransport(new StdioServerTransport(), () => context));

@@ -8,7 +8,7 @@ import { PNPM_VERSION, stagePackageManager } from './package-manager.mjs';
 import { stageBrowserBundle, verifyBrowserBundle } from './browser-bundle.mjs';
 export { applyStagedNativePatches } from './native-patches.mjs';
 
-const sourceDirectories = ['bin', 'lib', 'plugin'];
+const sourceDirectories = ['bin', 'lib', 'plugin', 'vendor'];
 const privateSource = part => part.startsWith('.') || ['node_modules', 'work', 'sessions', 'uploads', 'credentials'].includes(part.toLowerCase()) || /(?:\.(?:log|pem|p12|pfx|key)|(?:^|[._-])credentials?(?:\.[^.]+)?)$/iu.test(part);
 
 async function resetStage(project) {
@@ -81,7 +81,7 @@ export async function verifyStagedRuntime(projectRoot, { platform = process.plat
   for (const name of await readdir(runtimeDirectory)) if (!allowed.has(name)) throw new Error(`Unexpected file in desktop runtime: ${name}`);
   const entry = manifest.packageManager.entry;
   if (typeof entry !== 'string' || !/^tools\/node_modules\/pnpm\/bin\/[a-z.]+$/u.test(entry)) throw new Error('Invalid staged package manager entry.');
-  await Promise.all([node, launcher, 'NODE-LICENSE', 'PNPM-LICENSE', entry, 'app/bin/coldx-web.mjs', 'app/desktop/backend-entry.mjs', 'app/plugin/client/client.js', 'app/node_modules/@deepseek-ai/dsh/lib/bin.js'].map(file => access(join(runtimeDirectory, file))));
+  await Promise.all([node, launcher, 'NODE-LICENSE', 'PNPM-LICENSE', entry, 'app/bin/coldx-web.mjs', 'app/desktop/backend-entry.mjs', 'app/plugin/client/client.js', 'app/node_modules/@deepseek-ai/dsh/lib/bin.js', 'app/vendor/superpowers/manifest.json', 'app/vendor/superpowers/LICENSE', 'app/plugin/windows/computer-worker.ps1', 'app/plugin/windows/computer-native.cs'].map(file => access(join(runtimeDirectory, file))));
   const pnpm = JSON.parse(await readFile(join(runtimeDirectory, 'tools/node_modules/pnpm/package.json'), 'utf8'));
   if (pnpm.name !== 'pnpm' || pnpm.version !== PNPM_VERSION) throw new Error('Staged pnpm version mismatch.');
   const patches = JSON.parse(await readFile(join(runtimeDirectory, 'app/desktop/native-patches.json'), 'utf8'));

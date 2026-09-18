@@ -42,7 +42,7 @@ test('380px preview offers actual-size keyboard scrolling without a new capture 
       const canvas=document.createElement('canvas');canvas.width=1280;canvas.height=720;
       const ctx=canvas.getContext('2d');ctx.fillStyle='#ccddee';ctx.fillRect(0,0,1280,720);ctx.fillStyle='#123';ctx.font='40px sans-serif';ctx.fillText('1280 × 720 test capture',700,600);
       const record={callId:'capture',surfaceLabel:'测试网页',previewAttachment:{mime:'image/png',base64:canvas.toDataURL('image/png').split(',')[1]}};
-      modules['react-dom/client'].createRoot(document.getElementById('fixture')).render(React.createElement(ComputerPreview,{record}));
+      window.fixtureRoot=modules['react-dom/client'].createRoot(document.getElementById('fixture'));window.fixtureRoot.render(React.createElement(ComputerPreview,{record}));
     },createComputerComponents.toString());
     const figure=page.locator('figure'),img=figure.locator('img'),viewport=figure.getByRole('region');
     await img.waitFor();
@@ -66,5 +66,22 @@ test('380px preview offers actual-size keyboard scrolling without a new capture 
     assert.equal(await page.evaluate(()=>window.rpcCount),0);
     assert.equal(context.pages().length,1);
     assert.equal(await page.locator('dialog').count(),0);
+    await page.evaluate(({factory,src})=>{
+      const modules=window.nativeModules,React=modules.react;
+      const {ComputerWorkspace}=new Function(`return (${factory});`)()(React,()=>{throw new Error('Zoom must not request an RPC');});
+      window.workspaceActions=[];
+      const state={snapshot:{records:[],browser:{connected:true,paused:true,activeTabId:'0',tabs:[],latestPreview:{mime:'image/png',base64:src.split(',')[1]}}},action:(method,request)=>window.workspaceActions.push({method,request})};
+      window.fixtureRoot.render(React.createElement(ComputerWorkspace,{sessionId:'fixture',view:'browser',state}));
+    },{factory:createComputerComponents.toString(),src});
+    const liveImage=page.locator('.cx-computer-live-frame img'),liveViewport=page.locator('.cx-computer-live-frame');
+    await liveImage.waitFor();await page.getByRole('button',{name:'按原尺寸查看截图'}).click();
+    await page.waitForFunction(()=>document.querySelector('.cx-computer-live-frame')?.dataset.zoom==='actual');
+    assert.equal((await liveImage.boundingBox()).width,1280);
+    assert.ok(await liveViewport.evaluate(node=>node.scrollWidth>node.clientWidth&&node.scrollLeft>0));
+    const coordinate=await liveViewport.evaluate(node=>{const r=node.getBoundingClientRect(),img=node.querySelector('img').getBoundingClientRect(),x=r.left+node.clientWidth/2,y=r.top+40;return{x,y,naturalX:Math.floor(x-img.left),naturalY:Math.floor(y-img.top)};});
+    await page.mouse.click(coordinate.x,coordinate.y);
+    assert.deepEqual(await page.evaluate(()=>window.workspaceActions),[{method:'browserAction',request:{action:'click',x:coordinate.naturalX,y:coordinate.naturalY}}]);
+    await page.getByRole('button',{name:'截图适合宽度'}).click();assert.ok((await liveImage.boundingBox()).width<=380);
+    assert.equal(await page.evaluate(()=>window.workspaceActions.length),1,'zoom remains local even during manual control');
   }finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}
 });

@@ -96,3 +96,8 @@
   .cx-marketplace-dialog[open], .cx-marketplace-dialog::backdrop, .cx-marketplace-spinner { animation: none; }
   .cx-marketplace-dialog *, .cx-marketplace-trigger { transition: none; }
 }
+.coldx-shell .cx-marketplace-repair-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0}
+.coldx-shell .cx-marketplace-ai-repair{border:1px solid var(--cx-wb-line);border-radius:8px;padding:6px 10px;background:var(--cx-wb-hover);color:var(--cx-wb-text);font:inherit;cursor:pointer}
+.coldx-shell .cx-marketplace-ai-repair:disabled{opacity:.5;cursor:default}
+.coldx-shell .cx-marketplace-repair-actions>button:not(.cx-marketplace-ai-repair){border:0;background:transparent;color:var(--cx-wb-muted);font:inherit;cursor:pointer}
+.coldx-shell .cx-marketplace-repair-status{font-size:12px;color:var(--cx-wb-muted)}

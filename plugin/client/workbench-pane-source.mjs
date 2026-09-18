@@ -4,7 +4,7 @@ export function createWorkbenchPane(React) {
   const states = new Map(), listeners = new Set(), returnTargets = new Map();
   const motionInputs = new Map();
   const empty = Object.freeze({ active: null });
-  const views = [['timeline', '进度'], ['evidence', '成果'], ['files', '文件']];
+  const views = [['timeline', '进度'], ['evidence', '成果'], ['files', '文件'], ['browser', '浏览器'], ['desktop', '电脑']];
   const get = sessionId => states.get(sessionId) ?? empty;
   const subscribe = listener => { listeners.add(listener); return () => listeners.delete(listener); };
   const update = (sessionId, active) => {

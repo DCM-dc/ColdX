@@ -1,0 +1,27 @@
+.coldx-shell .cx-superpowers-control{position:relative;width:28px;height:28px}
+.coldx-shell .cx-superpowers-toggle{display:grid;place-items:center;width:28px;height:28px;border:0;border-radius:8px;background:transparent;color:var(--cx-wb-muted);cursor:pointer}
+.coldx-shell .cx-superpowers-toggle[aria-pressed="true"]{color:var(--cx-wb-accent);background:color-mix(in srgb,var(--cx-wb-accent) 10%,transparent)}
+.coldx-shell .cx-superpowers-toggle:disabled{opacity:.45;cursor:default}
+.coldx-shell .cx-superpowers-info{position:absolute;right:-5px;bottom:-6px;width:16px;height:16px;padding:0;border:0;border-radius:50%;background:var(--cx-wb-surface);color:var(--cx-wb-muted);line-height:12px;cursor:pointer}
+.coldx-shell .cx-superpowers-info[data-update="true"]{color:var(--cx-wb-accent);font-size:9px}
+.coldx-shell .cx-superpowers-detail{position:absolute;left:-4px;top:38px;z-index:40;width:min(286px,calc(100vw - 48px));box-sizing:border-box;padding:14px;border:1px solid var(--cx-wb-line);border-radius:12px;background:var(--cx-wb-surface);box-shadow:var(--cx-wb-shadow-popup);font-size:12px;line-height:1.5;cursor:default;animation:cx-superpowers-enter 160ms ease-out}
+.coldx-shell .cx-superpowers-detail header{display:flex;align-items:center;justify-content:space-between;font-size:13px}
+.coldx-shell .cx-superpowers-detail p{margin:8px 0}
+.coldx-shell .cx-superpowers-detail button,.coldx-shell .cx-superpowers-settings-line button{padding:5px 9px;border:1px solid var(--cx-wb-line);border-radius:7px;background:var(--cx-wb-hover);color:var(--cx-wb-text);font:inherit;cursor:pointer}
+.coldx-shell .cx-superpowers-detail button:disabled{opacity:.55;cursor:default}
+.coldx-shell .cx-superpowers-detail header button{padding:0 5px;border:0;background:transparent;font-size:18px}
+.coldx-shell .cx-superpowers-detail a{display:inline-block;margin-left:10px;color:var(--cx-wb-muted);font-size:11px}
+.coldx-shell .cx-superpowers-hint{color:var(--cx-wb-muted)}
+.coldx-shell .cx-superpowers-update{margin:10px 0;padding:10px;border:1px solid var(--cx-wb-line);border-radius:8px;background:var(--cx-wb-hover)}
+.coldx-shell .cx-superpowers-update code{display:inline-block;margin-left:8px;color:var(--cx-wb-muted);font-size:11px}
+.coldx-shell .cx-superpowers-auto{display:flex;align-items:center;gap:6px;margin:12px 0}
+.coldx-shell .cx-superpowers-error{color:var(--dsw-alias-state-error-primary,#b64b58);overflow-wrap:anywhere}
+.coldx-shell .cx-superpowers-settings{padding:12px 0;color:var(--cx-wb-text)}
+.coldx-shell .cx-superpowers-settings-line{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.coldx-shell .cx-superpowers-settings-line>div{flex:1;min-width:160px}
+.coldx-shell .cx-superpowers-settings-line p{font-size:12px;color:var(--cx-wb-muted);margin:4px 0}
+.coldx-shell .cx-superpowers-settings .cx-superpowers-detail{position:static;width:100%;margin-top:12px;box-shadow:none}
+.coldx-shell :is(.cx-superpowers-control,.cx-superpowers-settings) button:focus-visible{outline:2px solid var(--cx-wb-accent);outline-offset:2px}
+@keyframes cx-superpowers-enter{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+@media(pointer:coarse){.coldx-shell .cx-superpowers-control,.coldx-shell .cx-superpowers-toggle{width:44px;height:44px}.coldx-shell .cx-superpowers-detail{top:48px}}
+@media(prefers-reduced-motion:reduce){.coldx-shell .cx-superpowers-detail{animation:none}}

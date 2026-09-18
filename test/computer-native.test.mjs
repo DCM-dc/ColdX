@@ -66,6 +66,11 @@ test('child browser calls cannot reach inherited parent connection; child close 
   assert.notEqual(ctx.tools.get('mcp__coldx_browser__browser_snapshot', child), ctx.tools.get('mcp__coldx_browser__browser_snapshot', a));
   assert.equal((await run(child, 'mcp__coldx_browser__browser_snapshot')).isError, false);
   const address = { parentSessionId: a.id, childSessionId: child.id, mode: 'one-shot' };
+  const pause=target=>ctx.typertGateway.invokeRpc('coldxComputer/browserActionChild',{args:{address:target,request:{action:'pause',paused:true}}},new AbortController().signal);
+  assert.equal((await pause({...address,parentSessionId:b.id})).ok,false);
+  assert.equal((await pause(address)).ok,true);
+  assert.equal(ctx.coldxComputer.snapshot(child.id).browser.paused,true);
+  assert.equal(ctx.coldxComputer.snapshot(a.id).browser.paused,false);
   const close = target => ctx.typertGateway.invokeRpc('coldxComputer/closeChild', { args: { address: target, request: {} } }, new AbortController().signal);
   assert.equal((await close({ ...address, parentSessionId: b.id })).ok, false);
   assert.equal(ctx.coldxComputer.snapshot(child.id).connected, true);
@@ -164,4 +169,60 @@ test('computer service is lazy, rejects foreign owner, filters unsafe tools and 
   assert.equal(ctx.coldxComputer.snapshot(a.id).browserOpen, false);
   assert.equal(ctx.coldxComputer.snapshot(b.id).connected, true);
   assert.throws(() => ctx.coldxComputer.read({ id: a.id }, { afterRevision: -1, waitMs: 0 }), /exact live Agent/);
+});
+
+test('manual browser controls expose actual state and pause model tools until resumed', async t => {
+  const { ctx,a }=await fixture(t);
+  await ctx.plugin(await import('../plugin/computer-host.mjs'),{driverArgs:[fileURLToPath(new URL('./fixtures/browser-mcp.mjs',import.meta.url))]});
+  assert.equal(typeof ctx.coldxComputer.browserAction,'function');
+  await ctx.coldxComputer.browserAction(a,{action:'navigate',url:'https://example.com'},new AbortController().signal);
+  await ctx.coldxComputer.browserAction(a,{action:'pause',paused:true},new AbortController().signal);
+  const result=await ctx.tools.execute({agent:a,name:'mcp__coldx_browser__browser_snapshot',arguments:{},callId:'paused-model',signal:new AbortController().signal});
+  assert.equal(result.isError,true);
+  assert.match(result.content[0].text,/paused|暂停/);
+  await ctx.coldxComputer.browserAction(a,{action:'pause',paused:false},new AbortController().signal);
+  assert.equal(ctx.coldxComputer.snapshot(a.id).browser.paused,false);
+  const desktopRecord={callId:'independent-desktop-action',surface:'desktop',status:'running'};
+  ctx.coldxComputer.state(a.id).records.push(desktopRecord);
+  await ctx.coldxComputer.close(a,{});
+  assert.equal(desktopRecord.status,'running','closing an isolated browser must not cancel a desktop record');
+});
+
+test('real browser workspace navigates history, switches tabs and types into an observed input', {timeout:30000},async t=>{
+  const {browserRuntime}=await import('../plugin/computer-preset.mjs');if(!browserRuntime().available)return t.skip('Browser not installed.');
+  const {ctx,a}=await fixture(t);const storage=await mkdtemp(join(tmpdir(),'coldx-browser-workspace-'));t.after(()=>rm(storage,{recursive:true,force:true}));
+  await ctx.plugin((await nativeImport('@deepseek-ai/dsh-attachment-local')).default,{dshHome:storage});
+  const {DeepSeekAdapter,resolveAdapterOptions}=await nativeImport('@deepseek-ai/dsh-llm-deepseek');
+  const options=resolveAdapterOptions({models:[{id:'vision',name:'Local fixture',inputModalities:['text','image']}]});
+  ctx.llm.registerAdapter(['browser-fixture'],new DeepSeekAdapter({options:()=>options,resolveApiKey:async()=>'unused',attachments:ctx.attachments}));
+  await ctx.plugin(await import('../plugin/computer-host.mjs'));
+  const server=createServer((request,response)=>{response.setHeader('content-type','text/html');response.end(`<title>${request.url}</title><input aria-label="fixture entry" style="position:absolute;left:20px;top:20px;width:300px;height:40px">`);});server.listen(0,'127.0.0.1');await once(server,'listening');t.after(()=>new Promise(resolve=>server.close(resolve)));
+  const base=`http://127.0.0.1:${server.address().port}`;
+  const call=request=>ctx.coldxComputer.browserAction(a,request,new AbortController().signal);
+  let state=await call({action:'navigate',url:base+'/one'});assert.equal(state.browser.tabs.length,1);assert.equal(state.browser.url,base+'/one');assert.ok(state.browser.latestPreview);
+  await call({action:'navigate',url:base+'/two'});state=await call({action:'back'});assert.equal(state.browser.url,base+'/one');
+  state=await call({action:'forward'});assert.equal(state.browser.url,base+'/two');state=await call({action:'reload'});assert.equal(state.browser.url,base+'/two');
+  await call({action:'new',url:base+'/three'});await call({action:'new',url:base+'/four'});state=await call({action:'select',index:0});assert.equal(state.browser.url,base+'/two');
+  state=await call({action:'closeTab',index:0});assert.equal(state.browser.url,base+'/three');assert.equal(state.browser.tabs.length,2);
+  await call({action:'pause',paused:true});await call({action:'click',x:100,y:40});await call({action:'type',text:'你好 ColdX'});await call({action:'pause',paused:false});
+  const snapshot=await ctx.tools.execute({agent:a,name:COMPUTER_PREFIX_FOR_TEST+'browser_snapshot',arguments:{},callId:'verify-browser-entry',signal:new AbortController().signal});
+  assert.match(snapshot.content.map(block=>block.text||'').join('\n'),/你好 ColdX/);
+});
+const COMPUTER_PREFIX_FOR_TEST='mcp__coldx_browser__';
+
+test('desktop native tool commits an image attachment and preserves its observation identity',async t=>{
+  const {ctx,a}=await fixture(t);const storage=await mkdtemp(join(tmpdir(),'coldx-desktop-native-'));t.after(()=>rm(storage,{recursive:true,force:true}));
+  await ctx.plugin((await nativeImport('@deepseek-ai/dsh-attachment-local')).default,{dshHome:storage});
+  const {DeepSeekAdapter,resolveAdapterOptions}=await nativeImport('@deepseek-ai/dsh-llm-deepseek');
+  const options=resolveAdapterOptions({models:[{id:'vision',name:'Local fixture',inputModalities:['text','image']}]});ctx.llm.registerAdapter(['browser-fixture'],new DeepSeekAdapter({options:()=>options,resolveApiKey:async()=>'unused',attachments:ctx.attachments}));
+  const window={id:'12',pid:42,title:'Owned test',processName:'fixture',foreground:true,bounds:{x:0,y:0,width:32,height:24}};
+  const {createRequire}=await import('node:module'),{dshRequire}=await import('../plugin/page-native.mjs');const sharp=createRequire(dshRequire.resolve('@deepseek-ai/dsh-attachment-local'))('sharp');
+  const image={mime:'image/png',base64:(await sharp({create:{width:32,height:24,channels:3,background:'#abcdef'}}).png().toBuffer()).toString('base64')};
+  await ctx.plugin(await import('../plugin/computer-host.mjs'),{desktop:{platform:'win32',workerFactory:()=>({request:async request=>request.action==='windows'?{windows:[window]}:{window,width:32,height:24,image,controls:[]},stop:async()=>{}})}});
+  const run=args=>ctx.tools.execute({agent:a,name:'coldx_computer',arguments:args,callId:'native-desktop-'+args.action,signal:new AbortController().signal});
+  const observed=await run({action:'observe',windowId:'12'});assert.equal(observed.isError,false,JSON.stringify(observed.content));assert.ok(observed.content.some(block=>block.type==='image'&&block.attachment));
+  const state=ctx.coldxComputer.snapshot(a.id);assert.ok(state.desktop.observation.id);assert.equal(state.records.at(-1).surface,'desktop');
+  const keyed=await run({action:'key',windowId:'12',observationId:state.desktop.observation.id,keys:['Control','A']});assert.equal(keyed.isError,false,JSON.stringify(keyed.content));
+  await ctx.coldxComputer.desktopPause(a,{paused:true});
+  const pausedFocus=await run({action:'focus',windowId:'12'});assert.equal(pausedFocus.isError,true);assert.match(pausedFocus.content.map(block=>block.text||'').join('\n'),/paused|暂停/);
 });

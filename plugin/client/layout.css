@@ -30,13 +30,30 @@
   max-width: 100%;
 }
 .coldx-shell .wSkVaW_headerUtilities {
-  flex: 0 1 auto;
+  flex: 1 1 100%;
   flex-wrap: wrap;
   gap: 6px;
   min-width: 0;
   max-width: 100%;
   margin-left: 0;
   margin-inline-start: auto;
+}
+.coldx-shell .wSkVaW_headerUtilities [data-slot="conversation.session.header.utilities"] { flex: 1; min-width: 0; }
+.coldx-shell .cx-activity-lens { display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; }
+.coldx-shell .wSkVaW_headerUtilities:has(.cx-activity-lens) { align-items: center; }
+.coldx-shell .wSkVaW_headerUtilities .cx-activity-lens { flex: 1; }
+.coldx-shell .cx-activity-pinned { display: flex; align-items: center; flex: 1; gap: 12px; min-width: 0; }
+.coldx-shell .cx-activity-pinned button { border: 0; background: transparent; color: var(--cx-wb-muted); font: inherit; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 3px 6px; border-radius: 7px; cursor: pointer; }
+.coldx-shell .cx-activity-pinned button:hover { background: var(--cx-wb-hover); color: var(--cx-wb-text); }
+.coldx-shell .cx-activity-pinned button:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary); outline-offset: 2px; }
+.coldx-shell .cx-activity-pinned-current { min-width: 0; max-width: 430px; }
+.coldx-shell .cx-activity-pinned-text { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: start; }
+.coldx-shell .cx-activity-pinned-links { display: flex; flex: 0 0 auto; align-items: center; gap: 4px; }
+.coldx-shell .cx-activity-pinned-links button { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.coldx-shell .cx-activity-pinned svg { width: 14px; height: 14px; flex: none; }
+@container coldx-conversation (max-width: 720px) {
+  .coldx-shell .cx-activity-pinned-links { display: none; }
+  .coldx-shell .cx-activity-pinned-current { max-width: 100%; }
 }
 .coldx-shell .wSkVaW_header :is(.QsffPG_trigger, .ZKlsPq_trigger) { white-space: nowrap; }
 .coldx-shell .wSkVaW_headerUtilities :is(.nL4_yW_sessionLogButton, .cx-file-trigger, .cx-activity-trigger) {

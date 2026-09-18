@@ -8,7 +8,8 @@ import { mkdir, lstat } from 'node:fs/promises';
 export const COMPUTER_PREFIX = 'mcp__coldx_browser__';
 export const COMPUTER_TOOLS = Object.freeze(['browser_navigate', 'browser_navigate_back', 'browser_snapshot',
   'browser_take_screenshot', 'browser_click', 'browser_type', 'browser_press_key', 'browser_select_option',
-  'browser_mouse_click_xy', 'browser_mouse_move_xy', 'browser_mouse_drag_xy', 'browser_mouse_wheel', 'browser_tabs', 'browser_close']);
+  'browser_mouse_click_xy', 'browser_mouse_move_xy', 'browser_mouse_drag_xy', 'browser_mouse_wheel', 'browser_tabs', 'browser_close',
+  'browser_forward', 'browser_reload', 'browser_state', 'browser_type_focused']);
 
 export function browserRuntime() {
   const require = createRequire(import.meta.url);

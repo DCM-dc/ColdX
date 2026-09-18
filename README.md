@@ -8,14 +8,25 @@ DSH 负责模型连接、会话、权限、工具运行和插件生命周期。C
 
 ## Windows 安装包
 
-当前桌面版本为 **0.1.2 / Windows x64**。发行版本和安装附件见 [Releases](https://github.com/DCM-dc/ColdX/releases)，安装包名称为 `ColdX-0.1.2-win-x64.exe`。
+当前桌面版本为 **0.1.3 / Windows x64**。发行版本和安装附件见 [Releases](https://github.com/DCM-dc/ColdX/releases)，安装包名称为 `ColdX-0.1.3-win-x64.exe`。
 
 - 安装包内置 Node、pnpm、锁定的 DSH 运行时和匹配的 Chromium headless shell，无需先安装开发环境或浏览器组件。
 - 紧凑的一体式标题栏包含侧栏、前进/后退和文件/编辑/视图/帮助菜单，随 ColdX 深浅主题改变颜色；右侧保留原生窗口按钮，支持 F11 全屏。
 - 首次启动在设置中配置模型。安装包不携带开发者的密钥、会话或工作文件。
 - 应用使用独立的用户数据目录；卸载默认保留应用数据。Git、Python、编译器等任务工具按需另行安装。
 
-Windows x64 的 0.1.1 已完成实际安装、启动、退出及卸载验收；0.1.2 的浏览器修复验证范围见 [发行说明](https://github.com/DCM-dc/ColdX/releases/tag/v0.1.2)。当前安装包未进行代码签名。macOS、Linux 有构建配置，尚未完成实机验收；不能直接复用 Windows 的运行时资源。
+Windows x64 的 0.1.1 已完成实际安装、启动、退出及卸载验收；各版本的验证范围见发行说明。当前安装包未进行代码签名。macOS、Linux 有构建配置，尚未完成实机验收；不能直接复用 Windows 的运行时资源，新增原生桌面控制目前仅支持 Windows。
+
+### 0.1.3 新增
+
+- **工作面板**：对话上方显示当前动作、子智能体和成果摘要；右侧统一查看进度、成果、文件、浏览器和电脑。
+- **浏览器与电脑操作**：浏览器支持标签、导航、截图和手动接管；Windows 桌面支持窗口观察、真实截图、点击、输入、快捷键、滚动和拖动。AI 与手动操作共用任务归属和执行状态。
+- **Superpowers**：模型推理强度滑轨上方的哑铃按钮开启公开工作流技能；首次默认关闭。内置经过版本校验的 14 项技能，更新下载后需确认装载。
+- **插件修复**：安装失败或不支持一键安装的项目可选择“让 AI 安装/修复”，在当前任务内调查原因、安装和验证。
+- **用量与活动**：左侧入口查看真实会话 Token、活动热力图、工具和技能使用；支持查询上游余额及低余额提醒。缺少数据时明确显示未知。
+- **应用更新**：桌面版自动检查 GitHub Release 并下载可校验的安装包，确认后才启动安装；任务运行期间禁止安装。设置可关闭自动检查或下载。
+
+详细功能与验收记录见 [0.1.3 工作台说明](docs/agent-workbench-2026-09-19.md)。
 
 ## 从源码启动
 
@@ -86,7 +97,7 @@ pnpm start --cwd ../my-project
 
 左侧“设置”上方的 **插件市场** 从 [GitHub 的 dsh-plugin topic](https://github.com/topics/dsh-plugin) 发现社区项目。选择项目后可查看说明、源码、发布信息、兼容性与可安装包；通过核验的包可一键安装。
 
-市场与 AI 共用安装服务和状态记录。安装失败可以重试，需要配置或重启时会明确显示；关闭市场不会取消已经提交的手动安装。
+市场与 AI 共用安装服务和状态记录。安装失败可以重试，或选择“让 AI 安装/修复”交给当前真实会话；没有会话时会提示先打开任务。AI 会读取受限的失败记录，再通过原生工具安装和验证。需要配置或重启时会明确显示；关闭市场不会取消已经提交的手动安装。
 
 “允许 AI 按需安装插件”默认开启。AI 可以使用 `coldx_plugins_search`、`coldx_plugins_inspect`、`coldx_plugins_install` 和 `coldx_plugins_status` 查找并安装所需能力。AI 安装要求当前会话为 **Full access**；关闭该开关不影响手动搜索和安装。
 
@@ -122,7 +133,7 @@ pnpm desktop:dev
 pnpm computer:install
 ```
 
-当前 computer use 侧重受控浏览器操作和任务内截图预览，不是对整个操作系统桌面的通用控制。具体能力与边界见 [研究说明](docs/research/deepseek-computer-use-2026-09-12.md)。
+浏览器操作与 Windows 桌面控制位于工作面板对应页签；桌面控制需先开启。Windows 使用系统自带 PowerShell、Win32 与 UI Automation，不依赖 Python 或额外 SDK。WeChat、Blender 操作指南按需提供给模型；指南并不等于已经代替用户验证了每个第三方软件版本的全部操作。平台能力与验收范围见 [工作台说明](docs/agent-workbench-2026-09-19.md)。
 
 在目标系统和架构上构建桌面发行版：
 
@@ -139,6 +150,9 @@ Windows 产物输出到 `dist/desktop/`。跨平台原生依赖、Node sidecar �
 | [plugin/client/](plugin/client/) | 原生 slot 组件、主题、模型控件、文件预览与生成页面 |
 | [plugin/terminal-host.mjs](plugin/terminal-host.mjs) | 原生命令输出流与会话归属 |
 | [plugin/marketplace-host.mjs](plugin/marketplace-host.mjs) | 插件市场 RPC 与 AI 工具 |
+| [plugin/computer-host.mjs](plugin/computer-host.mjs)、[plugin/windows/](plugin/windows/) | 浏览器、Windows 桌面控制与原生任务归属 |
+| [plugin/superpowers-host.mjs](plugin/superpowers-host.mjs)、[vendor/superpowers/](vendor/superpowers/) | 原生技能提供器、公开技能与版本记录 |
+| [plugin/usage-host.mjs](plugin/usage-host.mjs)、[plugin/updates-host.mjs](plugin/updates-host.mjs) | 用量、上游余额与确认式应用更新 |
 | [desktop/](desktop/)、[scripts/desktop/](scripts/desktop/) | 独立窗口、运行时 staging 和安装包 |
 | [examples/](examples/)、[test/](test/) | 交互示例与回归测试 |
 

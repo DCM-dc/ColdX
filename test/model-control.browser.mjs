@@ -8,6 +8,7 @@ import {realpathSync} from 'node:fs';
 import path from 'node:path';
 import {dshRequire} from '../plugin/page-native.mjs';
 import {createModelControlComponents} from '../plugin/client/model-control-source.mjs';
+import {createSuperpowersComponents} from '../plugin/client/superpowers-source.mjs';
 
 test('native model menu and directory share the slider admission, keyboard, cancellation and fallback',async()=>{
   const require=createRequire(process.env.COLDX_BROWSER_PACKAGES?path.join(process.env.COLDX_BROWSER_PACKAGES,'package.json'):realpathSync(new URL('../node_modules/@playwright/mcp/package.json',import.meta.url)));
@@ -37,7 +38,7 @@ test('native model menu and directory share the slider admission, keyboard, canc
     const page=await browser.newPage({viewport:{width:900,height:800}});
     page.setDefaultTimeout(5000);
     await page.goto(`http://127.0.0.1:${server.address().port}/`);await page.waitForFunction(()=>window.nativeModules);
-    await page.evaluate(({native,factory})=>{
+    await page.evaluate(({native,factory,superFactory})=>{
       const modules=window.nativeModules,React=modules.react,h=React.createElement;
       const createSnapshotStore=initial=>{let value=initial;const listeners=new Set();return{getSnapshot:()=>value,subscribe(fn){listeners.add(fn);return()=>listeners.delete(fn);},update(fn){const next={...value};fn(next);value=next;for(const listener of listeners)listener();}};};
       const primitives=new Proxy({Toast:props=>h('div',{role:'alert'},props.text)},{get:(target,key)=>target[key]??(()=>h('span',{'aria-hidden':true}))});
@@ -47,6 +48,8 @@ test('native model menu and directory share the slider admission, keyboard, canc
       })[id]);}};
       new Function(native.replace('exports.ModelDirectory = ModelDirectory;','exports.__test_ModelSelect = ModelSelect; exports.ModelDirectory = ModelDirectory;'))();
       const {ModelControl}=new Function(`return (${factory});`)()(React);
+      let superState={enabled:false,autoCheck:true,active:{version:'6.3.0',commit:'a'.repeat(40)},candidate:null,revision:0};window.superRequests=[];
+      const {SuperpowersControl}=new Function(`return (${superFactory});`)()(React,async(method,request)=>{window.superRequests.push({method,request});if(method==='setting'){await new Promise(resolve=>{window.releaseSuper=resolve;});superState={...superState,...request,revision:superState.revision+1};}return structuredClone(superState);});
       const levels=[{id:'off',name:'Off'},{id:'low',name:'Low'},{id:'high',name:'High'},{id:'max',name:'Max'}];
       const groups=[{id:'deepseek',name:'DeepSeek',models:[{id:'flash',name:'DeepSeek Flash',reasoning:{efforts:levels,defaultEffort:'high'}},{id:'fast',name:'Fast only',reasoning:{efforts:[levels[0]],defaultEffort:'off'}}]}];
       let current={provider:'deepseek',model:'flash',reasoningEffort:'high'};window.modelRequests=[];
@@ -63,13 +66,21 @@ test('native model menu and directory share the slider admission, keyboard, canc
       const t=(key,args={})=>Object.entries(args).reduce((text,[name,value])=>text.replaceAll('{'+name+'}',String(value)),dict[key]??key);
       const props={sessionId:'owned-session',available:true,locked:false,directory:directory.store,load:()=>directory.load().catch(()=>{}),select:selection=>directory.select(selection).then(()=>true,()=>false),t};
       const root=modules['react-dom/client'].createRoot(document.getElementById('fixture'));
-      const render=legacy=>root.render(h(window.nativeModel.__test_ModelSelect,{...props,key:legacy?'legacy':'custom',renderSlot:(name,owner,{fallback})=>{if(name!=='conversation.input.model.effort')throw new Error('wrong slot');return h('div',{'data-slot':name,style:{display:'contents'}},legacy?fallback:h(ModelControl,owner));}}));
+      const render=legacy=>root.render(h(window.nativeModel.__test_ModelSelect,{...props,key:legacy?'legacy':'custom',renderSlot:(name,owner,{fallback})=>{if(name!=='conversation.input.model.effort')throw new Error('wrong slot');return h('div',{'data-slot':name,style:{display:'contents'}},legacy?fallback:h(ModelControl,{...owner,superpowersControl:h(SuperpowersControl)}));}}));
       window.showLegacy=()=>render(true);render(false);
-    },{native,factory:createModelControlComponents.toString()});
+    },{native,factory:createModelControlComponents.toString(),superFactory:createSuperpowersComponents.toString()});
     await page.addStyleTag({content:css});
     const trigger=page.locator('._7KE1Ra_trigger');await page.waitForFunction(()=>document.querySelector('._7KE1Ra_triggerLabel')?.textContent==='DeepSeek Flash');
     await trigger.click();const slider=page.getByRole('slider',{name:'推理强度'});
     await slider.waitFor();assert.equal(await page.getByRole('dialog').count(),1);
+    const superToggle=page.getByRole('button',{name:'开启 Superpowers',exact:true});
+    await superToggle.click();await page.waitForFunction(()=>typeof window.releaseSuper==='function');
+    assert.equal(await page.getByRole('dialog').count(),1,'pending workflow save must preserve the real native model menu');
+    assert.equal(await superToggle.evaluate(node=>document.activeElement===node),true,'workflow save must preserve focus');
+    assert.equal(await superToggle.evaluate(node=>node.disabled),false);assert.equal(await superToggle.getAttribute('aria-disabled'),'true');
+    await superToggle.click({force:true});assert.equal(await page.evaluate(()=>window.superRequests.filter(row=>row.method==='setting').length),1,'pending workflow save admits only one request');
+    await page.evaluate(()=>window.releaseSuper());await page.getByRole('button',{name:'关闭 Superpowers',exact:true}).waitFor();
+    assert.equal(await page.getByRole('dialog').count(),1);assert.equal(await slider.inputValue(),'2');assert.equal(await page.evaluate(()=>window.modelRequests.length),0);
     const thumbRadius=await page.locator('.cx-model-control-thumb').evaluate(node=>parseFloat(getComputedStyle(node).width)/2);
     const compact=await page.getByRole('dialog').evaluate(node=>{
       const rect=node.getBoundingClientRect();
