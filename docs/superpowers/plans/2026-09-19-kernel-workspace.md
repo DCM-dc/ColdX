@@ -64,5 +64,5 @@ Interface: `createWorkspaceShell(React) -> {Home, KernelStatus}`. `KernelStatus`
 
 - [x] Run full tests and browser acceptance after integration; resolve regressions and inspect light/dark screenshots.
 - [x] Fresh independent review of cancellation, caches, hidden state, attribution and tests; fix substantive findings.
-- [ ] Add reproducible benchmark results and architecture docs. Bump to 0.2.0 only for validated release; package/CI if publishing installer. Push authorized source and release only verified artifacts.
-- [ ] Report what changed, measured scope, limitations and installation state accurately.
+- [x] Add reproducible benchmark results and architecture docs. Bump to 0.2.0 only for validated release; package/CI if publishing installer. Push authorized source and release only verified artifacts.
+- [x] Report what changed, measured scope, limitations and installation state accurately.

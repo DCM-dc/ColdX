@@ -17,7 +17,7 @@ DSH 负责模型连接、会话、权限、工具运行和插件生命周期。C
 
 ## Windows 安装包
 
-当前桌面版本为 **0.1.4 / Windows x64**。发行版本和安装附件见 [Releases](https://github.com/DCM-dc/ColdX/releases)，安装包名称为 `ColdX-0.1.4-win-x64.exe`。
+当前桌面版本为 **0.2.0 / Windows x64**。发行版本和安装附件见 [ColdX 0.2.0](https://github.com/DCM-dc/ColdX/releases/tag/v0.2.0)，安装包名称为 `ColdX-0.2.0-win-x64.exe`。
 
 - 安装包内置 Node、pnpm、锁定的 DSH 运行时和匹配的 Chromium headless shell，无需先安装开发环境或浏览器组件。
 - 紧凑的一体式标题栏包含侧栏、前进/后退和文件/编辑/视图/帮助菜单，随 ColdX 深浅主题改变颜色；右侧保留原生窗口按钮，支持 F11 全屏。

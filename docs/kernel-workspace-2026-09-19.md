@@ -89,3 +89,11 @@ node scripts/bench-activity.mjs c58d63d
 - 新工作区的独立视觉夹具只用于组件外观回归，不冒充安装版截图；桌面安装包的构建与烟测结果以对应 GitHub Actions 为准。
 
 没有新增付费模型质量评测，因此不宣称比 Codex、Qoder、WorkBuddy 等产品更聪明。下一步模型质量实验应固定模型、任务、预算和环境，把成功率、重试、token 与费用一起比较。
+
+## 已发布安装包
+
+[ColdX 0.2.0](https://github.com/DCM-dc/ColdX/releases/tag/v0.2.0) 已发布，安装包源码固定在 `e42f77032efe52090264696e2e6fa58ddafd4e9d`。[源码检查](https://github.com/DCM-dc/ColdX/actions/runs/35424046703)、[Windows 构建与打包烟测](https://github.com/DCM-dc/ColdX/actions/runs/35424057675)、[附件来源和完整性核验](https://github.com/DCM-dc/ColdX/actions/runs/35424448186)均通过。
+
+Windows x64 安装包为 283,969,534 字节，SHA-256 为 `fcb49cec2a243a01732af8e31f3c0b3538a9bab079145cc901f2072d719864f6`，附有校验文件。公开下载与校验文件已回读核验，更新选择器从 0.1.4 正确识别新版、对 0.2.0 返回已是最新版。打包后的应用与浏览器移出源码目录后完成启动、导航、点击、截图、主题、全屏与退出清理检查；NSIS 长路径清理检查通过。
+
+启动过渡期日志出现一次非活动主框架的标题栏请求被拒绝；后续界面和生命周期检查通过。本次不将这条日志称为已修复。安装包未代码签名；macOS/Linux 尚未实机验收。本轮没有覆盖用户已安装的 0.1.4。
