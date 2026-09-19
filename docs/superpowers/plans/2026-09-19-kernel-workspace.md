@@ -31,11 +31,11 @@ Files: `lib/kernel/scheduler.mjs`, `lib/kernel/context-meter.mjs`, `lib/kernel/l
 
 Interfaces: `RequestScheduler.acquire({owner,priority,signal}) -> Promise<release>`; `scheduler.snapshot()`; `scheduler.dispose()`; `ContextMeter.measure(request) -> numeric summary`; `KernelLedger.start(owner,metrics) -> request handle`, `snapshot(owner)`. RPC `coldxKernel/read` and verified `readChild` use existing live-agent/address invocation conventions.
 
-- [ ] Write tests that hold 4 leases, abort a queued fifth, verify fair root/child ordering, drain after return/throw, dispose waiters and reject queue overflow.
-- [ ] Write tests asserting `measure(frozenRequest)` reuses immutable blocks, mutation is remeasured, image/binary data is not copied and no input changes.
-- [ ] Implement bounded scheduler, numeric ledger and context meter. Capture native llm streaming only for ColdX scoped agents; wrap the iterable in try/finally and forward every chunk unchanged.
-- [ ] Register profile-owned service and exact-session read RPC; add native deterministic-adapter tests for concurrent roots/children, cancellation, error, provider usage and unrelated presets.
-- [ ] Run `node --test test/kernel-*.test.mjs`, integrate optional UI metrics and validate native profile startup.
+- [x] Write tests that hold 4 leases, abort a queued fifth, verify fair root/child ordering, drain after return/throw, dispose waiters and reject queue overflow.
+- [x] Write tests asserting `measure(frozenRequest)` reuses immutable blocks, mutation is remeasured, image/binary data is not copied and no input changes.
+- [x] Implement bounded scheduler, numeric ledger and context meter. Capture native llm streaming only for ColdX scoped agents; wrap the iterable in try/finally and forward every chunk unchanged.
+- [x] Register profile-owned service and exact-session read RPC; add native deterministic-adapter tests for concurrent roots/children, cancellation, error, provider usage and unrelated presets.
+- [x] Run `node --test test/kernel-*.test.mjs`, integrate optional UI metrics and validate native profile startup.
 
 ## Task 2: Incremental protocol engine — isolated implementer
 
@@ -43,10 +43,10 @@ Files: `plugin/protocol-guard.mjs`, optional `lib/kernel/protocol-scanner.mjs`, 
 
 Interface: existing `repairProtocolStream(stream, options)` remains byte/semantic compatible. Benchmark may accept an explicit baseline module path and reports output-equivalent results; keep the frozen baseline outside published code.
 
-- [ ] Add exact-boundary fixtures for markers, fences, quoted examples, long multiline streams and final text replacement; run against existing code to establish behavior.
-- [ ] Implement persistent scanning cursor and line/fence state; retain necessary lookbehind. Avoid repeated full-buffer normalization while deciding idle reminder prefixes.
-- [ ] Verify all protocol and native tool replay tests; compare 16KiB/128KiB/1MiB text streams against the frozen baseline with fixed chunk sizes.
-- [ ] Report equality checks, iterations and median timings without calling them agent quality improvements.
+- [x] Add exact-boundary fixtures for markers, fences, quoted examples, long multiline streams and final text replacement; run against existing code to establish behavior.
+- [x] Implement persistent scanning cursor and line/fence state; retain necessary lookbehind. Avoid repeated full-buffer normalization while deciding idle reminder prefixes.
+- [x] Verify all protocol and native tool replay tests; compare 16KiB/128KiB/1MiB text streams against the frozen baseline with fixed chunk sizes.
+- [x] Report equality checks, iterations and median timings without calling them agent quality improvements.
 
 ## Task 3: Workspace visual system and activity performance — isolated implementer
 
@@ -54,15 +54,15 @@ Files: `plugin/client/workspace-shell-source.mjs`, `plugin/client/workspace-shel
 
 Interface: `createWorkspaceShell(React) -> {Home, KernelStatus}`. `KernelStatus` accepts `{snapshot,loading,error}` only, no RPC ownership. Home is functional presentational content in native home slot; composer remains native. If activity performance caching is unsafe, use bounded subscriptions/lazy rendering with evidence instead of identity-only memoization.
 
-- [ ] Inspect pinned native UI class/slot contracts, current screenshots and browser fixtures; implement the spec's hierarchy/tokens/responsive states.
-- [ ] Preserve plus-menu/modes/model slider/terminal/file/computer wiring and existing meaningful controls.
-- [ ] Add browser fixture testing narrow layout, themes, keyboard focus and real control interactions; capture screenshots.
-- [ ] Optimize a proven activity hot path with correctness fixtures and operation-count/performance evidence.
-- [ ] Run relevant client/browser tests; return integration instructions and captures.
+- [x] Inspect pinned native UI class/slot contracts, current screenshots and browser fixtures; implement the spec's hierarchy/tokens/responsive states.
+- [x] Preserve plus-menu/modes/model slider/terminal/file/computer wiring and existing meaningful controls.
+- [x] Add browser fixture testing narrow layout, themes, keyboard focus and real control interactions; capture screenshots.
+- [x] Optimize a proven activity hot path with correctness fixtures and operation-count/performance evidence.
+- [x] Run relevant client/browser tests; return integration instructions and captures.
 
 ## Task 4: Review, measure and deliver — root
 
-- [ ] Run full tests and browser acceptance after integration; resolve regressions and inspect light/dark screenshots.
-- [ ] Fresh independent review of cancellation, caches, hidden state, attribution and tests; fix substantive findings.
+- [x] Run full tests and browser acceptance after integration; resolve regressions and inspect light/dark screenshots.
+- [x] Fresh independent review of cancellation, caches, hidden state, attribution and tests; fix substantive findings.
 - [ ] Add reproducible benchmark results and architecture docs. Bump to 0.2.0 only for validated release; package/CI if publishing installer. Push authorized source and release only verified artifacts.
 - [ ] Report what changed, measured scope, limitations and installation state accurately.

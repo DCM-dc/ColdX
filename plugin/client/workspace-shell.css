@@ -1,0 +1,94 @@
+/* Late-loaded adapter over the pinned DSH rc.2 chrome. The host keeps the
+   transcript, input, selection, file tabs and dialogs in their native seats. */
+.coldx-shell [data-slot="root"] {
+  --cx-workspace-line: color-mix(in srgb, var(--dsw-alias-label-primary) 10%, transparent);
+  --cx-workspace-soft: color-mix(in srgb, var(--dsw-alias-label-primary) 4%, var(--dsw-alias-bg-base));
+  --cx-workspace-selected: color-mix(in srgb, var(--dsw-alias-label-primary) 8%, var(--dsw-alias-bg-base));
+}
+.coldx-shell [data-slot="root"] > .pI_x6G_frame,
+.coldx-shell .hHd-Xa_root,
+.coldx-shell .wSkVaW_header,
+.coldx-shell .ydkMvW_root,
+.coldx-shell .ydkMvW_header {
+  background: var(--dsw-alias-bg-base);
+  box-shadow: none;
+}
+.coldx-shell .pI_x6G_sidebarCol,
+.coldx-shell .hHd-Xa_root,
+.coldx-shell .ydkMvW_root { border-color: var(--cx-workspace-line); box-shadow: none; }
+.coldx-shell .hHd-Xa_logoRow { padding: 16px 16px 12px; gap: 8px; }
+.coldx-shell .cx-brand-name { font-size: 15px; font-weight: 650; letter-spacing: -.025em; }
+.coldx-shell .cx-brand-symbol { width: 24px; height: 24px; }
+.coldx-shell .hHd-Xa_newSession {
+  min-height: 36px; margin: 0 12px 16px; border: 1px solid var(--cx-workspace-line);
+  border-radius: 10px; background: var(--dsw-alias-bg-base); box-shadow: none;
+}
+.coldx-shell .YDXeBa_sessionRow,
+.coldx-shell .YDXeBa_projectRow { min-height: 34px; border-radius: 8px; }
+.coldx-shell .YDXeBa_sessionRow.YDXeBa_selected { background: var(--cx-workspace-selected); box-shadow: none; }
+.coldx-shell .YDXeBa_title { font-size: 13px; line-height: 1.4; }
+.coldx-shell .qDHVXG_sectionHeader { font-size: 11px; }
+.coldx-shell .wSkVaW_root { --dsh-chat-content-width: 760px; --dsh-composer-card-max-width: 760px; --cx-inspector-width: 440px; }
+.coldx-shell .wSkVaW_header { border-bottom: 1px solid var(--cx-workspace-line); }
+.coldx-shell .wSkVaW_titleRow { gap: 4px 12px; }
+.coldx-shell .wSkVaW_headerUtilities { gap: 6px; }
+.coldx-shell .wSkVaW_tabs { margin-top: 2px; }
+.coldx-shell [data-phase="hero"] .wSkVaW_composerHero { gap: 18px; padding-bottom: clamp(48px, 12vh, 110px); }
+.coldx-shell .cx-workspace-home { width: 100%; max-width: 760px; margin-inline: auto; padding: 0 16px; box-sizing: border-box; text-align: left; }
+.coldx-shell .cx-workspace-home h1 { margin: 0; color: var(--dsw-alias-label-primary); font-size: clamp(24px, 3vw, 32px); font-weight: 620; line-height: 1.25; letter-spacing: -.035em; }
+.coldx-shell .cx-workspace-home p { margin: 8px 0 0; color: var(--dsw-alias-label-secondary); font-size: 14px; line-height: 1.5; }
+.coldx-shell [data-composer-card] { border-radius: 14px; box-shadow: none; }
+.coldx-shell [data-composer-card]:focus-within { box-shadow: 0 0 0 1px var(--cx-workspace-line); }
+.coldx-shell .cx-composer-menu { border-radius: 14px; }
+.coldx-shell .cx-composer-menu :is(.cx-composer-menu-item, .cx-coding-mode-choice) { border-radius: 8px; }
+.coldx-shell .cx-workbench-panel { background: var(--dsw-alias-bg-base); border-color: var(--cx-workspace-line); }
+.coldx-shell .cx-workbench-header { min-height: 52px; padding: 10px 16px; border-bottom: 1px solid var(--cx-workspace-line); }
+.coldx-shell .cx-workbench-tabs { padding: 0 16px; gap: 16px; }
+.coldx-shell .cx-activity-sheet { background: var(--dsw-alias-bg-base); border-color: var(--cx-workspace-line); }
+.coldx-shell .cx-activity-scroll { padding: 16px 20px 28px; }
+.coldx-shell .cx-activity-row-core { min-height: 30px; padding-block: 9px; }
+.coldx-shell .cx-activity-row-detail { background: var(--cx-workspace-soft); }
+.coldx-shell .cx-file-tabs { border-bottom: 1px solid var(--cx-workspace-line); }
+
+.coldx-shell .cx-kernel-status { position: relative; flex: none; color: var(--dsw-alias-label-secondary); font-size: 12px; }
+.coldx-shell .cx-kernel-status > summary { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 9px; border: 1px solid var(--cx-workspace-line); border-radius: 8px; background: var(--dsw-alias-bg-base); cursor: pointer; list-style: none; white-space: nowrap; }
+.coldx-shell .cx-kernel-status > summary::-webkit-details-marker { display: none; }
+.coldx-shell .cx-kernel-status > summary::after { content: '⌄'; margin-left: 2px; font-size: 12px; }
+.coldx-shell .cx-kernel-status[open] > summary::after { transform: rotate(180deg); }
+.coldx-shell .cx-kernel-status > summary:hover { background: var(--cx-workspace-soft); }
+.coldx-shell .cx-kernel-status > summary:focus-visible { outline: 2px solid var(--cx-wb-accent, currentColor); outline-offset: 2px; }
+.coldx-shell .cx-kernel-status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--dsw-alias-label-tertiary); }
+.coldx-shell .cx-kernel-status-dot[data-state="running"] { background: var(--cx-wb-accent); }
+.coldx-shell .cx-kernel-status-dot[data-state="failed"] { background: var(--dsw-alias-state-error-primary); }
+.coldx-shell .cx-kernel-status-summary { color: var(--dsw-alias-label-tertiary); }
+.coldx-shell .cx-kernel-status-body { position: absolute; z-index: 12; inset: calc(100% + 8px) auto auto 0; width: min(320px, calc(100vw - 24px)); padding: 16px; box-sizing: border-box; border: 1px solid var(--cx-workspace-line); border-radius: 12px; background: var(--dsw-alias-bg-base); box-shadow: 0 12px 32px rgb(0 0 0 / 12%); }
+.coldx-shell .cx-kernel-status-body p { margin: 0; line-height: 1.5; }
+.coldx-shell .cx-kernel-status-description { margin-bottom: 12px !important; color: var(--dsw-alias-label-tertiary); }
+.coldx-shell .cx-kernel-status-error { color: var(--dsw-alias-state-error-primary); }
+.coldx-shell .cx-kernel-status-body dl { display: grid; gap: 0; margin: 0; }
+.coldx-shell .cx-kernel-status-body dl > div { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--cx-workspace-line); }
+.coldx-shell .cx-kernel-status-body dt { color: var(--dsw-alias-label-tertiary); }
+.coldx-shell .cx-kernel-status-body dd { margin: 0; color: var(--dsw-alias-label-primary); font-variant-numeric: tabular-nums; text-align: right; }
+.coldx-shell .cx-kernel-status-refresh { margin-top: 8px !important; font-size: 11px; }
+@media (max-width: 820px) {
+  .coldx-shell .wSkVaW_root { --cx-inspector-width: min(440px, 100%); }
+  .coldx-shell .cx-workbench-panel[data-mode="drawer"] { width: min(440px, calc(100vw - 12px)); }
+  .coldx-shell .wSkVaW_header { padding-inline: 12px; }
+}
+@media (max-width: 520px) {
+  .coldx-shell .cx-workspace-home { padding-inline: 16px; }
+  .coldx-shell .cx-workspace-home h1 { font-size: 24px; }
+  .coldx-shell [data-composer-card] { border-radius: 12px; }
+  .coldx-shell .cx-workbench-panel[data-mode="drawer"] { width: calc(100vw - 8px); }
+  .coldx-shell .cx-kernel-status-summary { display: none; }
+  .coldx-shell .cx-kernel-status-body { position: fixed; inset: auto 8px 8px; width: auto; max-height: min(70vh, 480px); overflow: auto; }
+}
+@media (pointer: coarse) {
+  .coldx-shell .cx-kernel-status > summary, .coldx-shell .hHd-Xa_newSession { min-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .coldx-shell .cx-kernel-status > summary::after { transition: none; }
+}
+@media (forced-colors: active) {
+  .coldx-shell .cx-kernel-status-body, .coldx-shell .cx-kernel-status > summary { border-color: CanvasText; background: Canvas; box-shadow: none; }
+}

@@ -1,7 +1,8 @@
 // No bundled React: DSH supplies its existing browser instance to this factory.
 export function createClientPlugin(React, { MarkdownText }, factories, css) {
   const h = React.createElement;
-  const { Mark, Name, HeroBrand, faviconHref } = factories.brand(React);
+  const { Mark, Name, faviconHref } = factories.brand(React);
+  const { Home, KernelStatus } = factories.workspaceShell(React);
   function PageQuestion() { return h('span', { className: 'coldx-page-question', hidden: true, 'aria-hidden': true }); }
   return {
     inject: ['slots', 'theme', 'connection', 'sessions', 'settingsScope', 'workspaces', 'remote', 'remote.commands', 'remote.fileReferences'],
@@ -100,7 +101,34 @@ export function createClientPlugin(React, { MarkdownText }, factories, css) {
         return false;
       }
       function HomeBrand() {
-        return h(HeroBrand);
+        return h(Home);
+      }
+      function KernelDetails({sessionId}) {
+        const [open,setOpen] = React.useState(false);
+        const [state,setState] = React.useState({snapshot:null,loading:false,error:null});
+        React.useEffect(() => {
+          if (!open || !sessionId) return;
+          const controller = new AbortController();
+          let timer;
+          async function read() {
+            setState(value=>({...value,loading:true}));
+            try {
+              const address = ctx.sessions.subagentAddress?.(sessionId);
+              const response = await ctx.connection.rpc.call('/api', address ? 'coldxKernel/readChild' : 'coldxKernel/read', {
+                args: {...(address ? {address} : {agentId:sessionId}),request:{}},
+              },controller.signal);
+              if (!response?.ok) throw new Error(response?.error?.message || '运行状态暂时不可用。');
+              if (!controller.signal.aborted) setState({snapshot:response.value,loading:false,error:null});
+            } catch(error) {
+              if (!controller.signal.aborted) setState(value=>({...value,loading:false,error}));
+            } finally {
+              if (!controller.signal.aborted) timer=setTimeout(read,2000);
+            }
+          }
+          void read();
+          return ()=>{controller.abort();clearTimeout(timer);};
+        },[sessionId,open]);
+        return h(KernelStatus,{...state,onOpenChange:setOpen});
       }
       async function runCommand(sessionId, command) {
           if (typeof sessionId !== 'string' || !sessionId.trim()) throw new Error('请先打开一个会话。');
@@ -188,7 +216,7 @@ export function createClientPlugin(React, { MarkdownText }, factories, css) {
           document.addEventListener('click', click, true);
           return () => document.removeEventListener('click', click, true);
         }, [sessionId]);
-        return h(React.Fragment, null, h(files.FileWorkspace, { sessionId }), h(ComputerWorkspace,{sessionId,state:computerState,pane}), h(activity.ActivityLens, {
+        return h(React.Fragment, null, h(KernelDetails,{key:sessionId,sessionId}), h(files.FileWorkspace, { sessionId }), h(ComputerWorkspace,{sessionId,state:computerState,pane}), h(activity.ActivityLens, {
           sessionId, session, trajectory, pages, flow, subagents, jobs, sessionsState, pane,
           computer: computerState.snapshot,
           computerControls: h(ComputerStatus, { state: computerState }),

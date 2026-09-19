@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { nativeImport } from './page-native.mjs';
+import { IncrementalProtocolScanner } from '../lib/kernel/protocol-scanner.mjs';
 
 const { isAgentLoopRequest } = await nativeImport('@deepseek-ai/dsh-llm');
 const { scopeOf, scopeChainOf } = await nativeImport('@deepseek-ai/dsh-scope');
@@ -7,12 +8,10 @@ const { scopeOf, scopeChainOf } = await nativeImport('@deepseek-ai/dsh-scope');
 export const name = 'coldx-protocol-guard';
 export const inject = ['llm', 'agents'];
 
-const DSML_TOKENS = ['|DSML|', '｜DSML｜', '||DSML||'];
-const DSML_OPENINGS = DSML_TOKENS.map(token => `<${token}tool_calls>`);
 const CANONICAL_OPEN = '<|DSML|tool_calls>';
 const CANONICAL_CLOSE = '</|DSML|tool_calls>';
 const AGENT_DONE_MARKER = '<|DS2_AGENT_DONE|>';
-const LOOKBEHIND = Math.max(AGENT_DONE_MARKER.length, ...DSML_OPENINGS.map(value => value.length)) + 16;
+const LOOKBEHIND = 36;
 const IDLE_REMINDER = "<system-reminder>The user has not sent any new message. Do not perform any new work. Do not call any tools. Wait for the user's next instruction.</system-reminder>";
 
 function normalizedControlText(value) {
@@ -45,61 +44,26 @@ function normalizeDsmlTags(value) {
   return value.replaceAll('｜DSML｜', '|DSML|').replaceAll('||DSML||', '|DSML|');
 }
 
-function lineBoundaryBefore(value, index) {
-  const lineStart = value.lastIndexOf('\n', index - 1) + 1;
-  return value.slice(lineStart, index).trim() === '';
+function findAgentDoneTail(value, scanner) {
+  const match = /<\|DS2_AGENT_DONE\|>[ \t]*(?:\r?\n[ \t]*)*$/.exec(value);
+  if (!match || scanner.lastAgentDone?.index !== match.index || scanner.lastAgentDone.literal) return -1;
+  return match.index;
 }
 
-function insideMarkdownFence(value, index) {
-  let fence;
-  for (const line of value.slice(0, index).split(/\r?\n/)) {
-    const match = /^ {0,3}(`{3,}|~{3,})/.exec(line);
-    if (!match) continue;
-    if (!fence) fence = match[1];
-    else if (match[1][0] === fence[0] && match[1].length >= fence.length) fence = undefined;
-  }
-  return fence !== undefined;
-}
-
-function findDsmlStart(value) {
-  let best = -1;
-  for (const opening of DSML_OPENINGS) {
-    let from = 0;
-    while (from < value.length) {
-      const index = value.indexOf(opening, from);
-      if (index < 0) break;
-      if (lineBoundaryBefore(value, index) && !insideMarkdownFence(value, index)
-        && (best < 0 || index < best)) best = index;
-      from = index + opening.length;
+function appendReminderPrefix(state, value) {
+  if (!state.reminderCandidate) return;
+  for (const char of value) {
+    if (/\s/.test(char)) {
+      if (state.reminderNormalized) state.reminderSpace = true;
+      continue;
+    }
+    state.reminderNormalized += `${state.reminderSpace ? ' ' : ''}${char}`;
+    state.reminderSpace = false;
+    if (!IDLE_REMINDER.startsWith(state.reminderNormalized)) {
+      state.reminderCandidate = false;
+      return;
     }
   }
-  return best;
-}
-
-function literalAgentDoneAt(value, index) {
-  if (insideMarkdownFence(value, index)) return true;
-  const lineStart = value.lastIndexOf('\n', index - 1) + 1;
-  const prefix = value.slice(lineStart, index);
-  // Quoted and indented examples are content, not control output. Ordinary prose
-  // followed by the private marker is still control output and must be cleaned.
-  return /^ {0,3}>/.test(prefix) || /^(?: {4}|\t)/.test(prefix);
-}
-
-function findAgentDoneCandidate(value) {
-  let from = 0;
-  while (from < value.length) {
-    const index = value.indexOf(AGENT_DONE_MARKER, from);
-    if (index < 0) return -1;
-    if (!literalAgentDoneAt(value, index)) return index;
-    from = index + AGENT_DONE_MARKER.length;
-  }
-  return -1;
-}
-
-function findAgentDoneTail(value) {
-  const match = /<\|DS2_AGENT_DONE\|>[ \t]*(?:\r?\n[ \t]*)*$/.exec(value);
-  if (!match || literalAgentDoneAt(value, match.index)) return -1;
-  return match.index;
 }
 
 function decodeParameterBody(raw) {
@@ -187,8 +151,10 @@ export function parseDsmlToolCalls(source, tools) {
 
 function textState() {
   return {
-    raw: '', cursor: 0, output: '', marker: -1, agentDoneCandidate: -1,
+    parts: [], rawLength: 0, pending: '', cursor: 0, output: '', marker: -1, agentDoneCandidate: -1,
     outputIndex: undefined, ended: false, finalText: undefined,
+    scanner: new IncrementalProtocolScanner(), reminderCandidate: true,
+    reminderNormalized: '', reminderSpace: false,
   };
 }
 
@@ -200,6 +166,7 @@ function textChunks(state, value, allocate, skipTo) {
     state.output += value;
     chunks.push({ type: 'text-delta', index: state.outputIndex, text: value });
   }
+  state.pending = state.pending.slice(skipTo - state.cursor);
   state.cursor = skipTo;
   return chunks;
 }
@@ -256,12 +223,16 @@ export async function* repairProtocolStream(stream, options = {}) {
   function* flushDeferred() {
     for (const pending of deferred.splice(0)) yield* emitNonText(pending);
   }
-  function* finalizeText(state, finalText = state.raw) {
-    if (finalText !== state.raw) rewritten = true;
-    state.raw = finalText;
-    const agentDone = preserveAgentDone ? -1 : findAgentDoneTail(finalText);
+  function* finalizeText(state, authoritativeText) {
+    const raw = state.parts.join('');
+    const finalText = authoritativeText ?? raw;
+    if (finalText !== raw) rewritten = true;
+    const scanner = finalText === raw ? state.scanner : new IncrementalProtocolScanner();
+    if (scanner !== state.scanner) scanner.feed(finalText);
+    scanner.finish();
+    const agentDone = preserveAgentDone ? -1 : findAgentDoneTail(finalText, scanner);
     const protocolText = agentDone < 0 ? finalText : finalText.slice(0, agentDone).trimEnd();
-    const marker = findDsmlStart(protocolText);
+    const marker = scanner.marker < protocolText.length ? scanner.marker : -1;
     let visible = protocolText;
     if (marker >= 0) {
       visible = protocolText.slice(0, marker).trimEnd();
@@ -306,30 +277,31 @@ export async function* repairProtocolStream(stream, options = {}) {
     if (chunk.type === 'text-delta') {
       const state = texts.get(chunk.index) ?? textState();
       texts.set(chunk.index, state);
-      state.raw += chunk.text;
+      state.parts.push(chunk.text);
+      state.rawLength += chunk.text.length;
+      state.pending += chunk.text;
+      state.scanner.feed(chunk.text);
+      if (!preserveIdleReminder) appendReminderPrefix(state, chunk.text);
       if (texts.keys().next().value !== chunk.index) continue;
-      if (state.marker < 0) state.marker = findDsmlStart(state.raw);
-      if (!preserveAgentDone && state.agentDoneCandidate < 0) {
-        state.agentDoneCandidate = findAgentDoneCandidate(state.raw);
-      }
+      state.marker = state.scanner.marker;
+      if (!preserveAgentDone) state.agentDoneCandidate = state.scanner.agentDoneCandidate;
       const controlStart = [state.marker, state.agentDoneCandidate]
         .filter(index => index >= 0).reduce((first, index) => Math.min(first, index), Infinity);
       if (Number.isFinite(controlStart)) {
         if (state.cursor < controlStart) {
           let visibleEnd = controlStart;
-          while (visibleEnd > state.cursor && /\s/.test(state.raw[visibleEnd - 1])) visibleEnd--;
+          while (visibleEnd > state.cursor && /\s/.test(state.pending[visibleEnd - state.cursor - 1])) visibleEnd--;
           // DSML owns the whitespace before its private tail. An agent-done
           // candidate may turn out to be literal prose, so retain that gap
           // until block-end can decide without losing user-visible spacing.
           const skipTo = state.marker === controlStart ? controlStart : visibleEnd;
-          for (const output of textChunks(state, state.raw.slice(state.cursor, visibleEnd), allocate, skipTo)) yield output;
+          for (const output of textChunks(state, state.pending.slice(0, visibleEnd - state.cursor), allocate, skipTo)) yield output;
         }
         continue;
       }
-      const reminderPrefix = normalizedControlText(state.raw);
-      if (!preserveIdleReminder && reminderPrefix && IDLE_REMINDER.startsWith(reminderPrefix)) continue;
-      const safeEnd = Math.max(state.cursor, state.raw.length - LOOKBEHIND);
-      if (safeEnd > state.cursor) for (const output of textChunks(state, state.raw.slice(state.cursor, safeEnd), allocate, safeEnd)) yield output;
+      if (!preserveIdleReminder && state.reminderCandidate && state.reminderNormalized) continue;
+      const safeEnd = Math.max(state.cursor, state.rawLength - LOOKBEHIND);
+      if (safeEnd > state.cursor) for (const output of textChunks(state, state.pending.slice(0, safeEnd - state.cursor), allocate, safeEnd)) yield output;
       continue;
     }
     if (chunk.type === 'block-end' && chunk.block.type === 'text') {
@@ -348,7 +320,7 @@ export async function* repairProtocolStream(stream, options = {}) {
 
     if (texts.size > 0) rewritten = true;
     for (const [index, state] of texts) {
-      yield* finalizeText(state, state.ended ? state.finalText : state.raw);
+      yield* finalizeText(state, state.ended ? state.finalText : undefined);
       texts.delete(index);
     }
     yield* flushDeferred();

@@ -8,6 +8,7 @@ import { dshRequire } from '../plugin/page-native.mjs';
 import { createFileViewComponents } from '../plugin/client/file-view-source.mjs';
 import { createWorkbenchPane } from '../plugin/client/workbench-pane-source.mjs';
 import { createSessionControls } from '../plugin/client/session-controls-source.mjs';
+import { createWorkspaceShell } from '../plugin/client/workspace-shell-source.mjs';
 
 test('the built client retains its native lazy module entry', async () => {
   const source = await readFile(new URL('../plugin/client/client.js', import.meta.url), 'utf8');
@@ -29,6 +30,7 @@ function mountClient(reply = { ok: true, value: {} }) {
   const InlineTool = props => React.createElement('article', props);
   const plugin = createClientPlugin(React, { MarkdownText: () => null }, {
     brand: () => ({ Mark() {}, Name() {}, HeroBrand() {} }),
+    workspaceShell: createWorkspaceShell,
     modelControl: () => ({ ModelControl() {} }),
     superpowers: () => ({SuperpowersControl(){},SuperpowersSettingsRow(){},dispose(){}}),
     usage: () => ({UsageEntry(){},UsageSettingsRow(){},BalanceNotice(){}}),

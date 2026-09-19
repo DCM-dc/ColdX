@@ -1,0 +1,30 @@
+{
+  "kind": "protocol-parser-cpu",
+  "baselineRef": "v0.1.4",
+  "iterations": 3,
+  "chunkSize": 256,
+  "results": [
+    {
+      "bytes": 16384,
+      "deltas": 64,
+      "outputEquivalent": true,
+      "baselineMedianMs": 3.1144000000000034,
+      "currentMedianMs": 1.6739000000000033
+    },
+    {
+      "bytes": 131072,
+      "deltas": 512,
+      "outputEquivalent": true,
+      "baselineMedianMs": 142.94009999999997,
+      "currentMedianMs": 4.4010000000000105
+    },
+    {
+      "bytes": 1048576,
+      "deltas": 4096,
+      "outputEquivalent": true,
+      "baselineMedianMs": 13012.7851,
+      "currentMedianMs": 34.83070000000225
+    }
+  ],
+  "scope": "Synthetic ASCII protocol parsing only; UUID-normalized output equality; no model, network, whole-agent or token-saving claim."
+}

@@ -27,6 +27,37 @@ async function fixture(t) {
   return { ctx, parent, other, child, address, rpc };
 }
 
+test('kernel child metrics inherit native scope and use the verified parent address without resuming a cold child', async t => {
+  const {ctx,parent,child,other,address,rpc}=await fixture(t);
+  await ctx.plugin(await import('../plugin/kernel-host.mjs'));
+  await parent.ctx.plugin(await import('../plugin/kernel-agent.mjs'));
+  await other.ctx.plugin(await import('../plugin/kernel-agent.mjs'));
+  assert.equal(ctx.coldxKernel.owns(child.agent),true);
+  const {defineContentToolFixture}=await nativeImport('@deepseek-ai/dsh-tools');
+  parent.ctx.tools.register(defineContentToolFixture({name:'child_metric_probe',description:'metric fixture',parameters:{},execute:async()=>[{type:'text',text:'ok'}]}));
+  await ctx.tools.execute({agent:child.agent,name:'child_metric_probe',callId:'child-probe',arguments:{},signal:new AbortController().signal});
+  const read=await rpc('coldxKernel/readChild',{});assert.equal(read.ok,true,JSON.stringify(read));
+  assert.equal(read.value.session.toolCount,1);assert.equal(ctx.coldxKernel.ledger.snapshot(parent.id).toolCount,0);
+  assert.equal((await rpc('coldxKernel/readChild',{}, {...address,parentSessionId:other.id})).ok,false);
+  assert.equal((await rpc('coldxKernel/readChild',{}, {...address,mode:'continuable'})).ok,false);
+  await ctx.sessions.flush(child.agent.session);await child.dispose();
+  assert.equal((await rpc('coldxKernel/readChild',{})).ok,true);
+  assert.equal(ctx.agents.get(address.childSessionId),undefined);
+});
+
+test('kernel child read revalidates its ColdX parent after asynchronous catalog access', async t => {
+  const {ctx,parent,rpc}=await fixture(t);
+  await ctx.plugin(await import('../plugin/kernel-host.mjs'));
+  const attachment=await parent.ctx.plugin(await import('../plugin/kernel-agent.mjs'));
+  const catalog=ctx.subagents,original=catalog.listChildren;
+  let entered,release;const started=new Promise(resolve=>{entered=resolve;}),gate=new Promise(resolve=>{release=resolve;});
+  catalog.listChildren=async function(...args){const rows=await original.apply(this,args);entered();await gate;return rows;};
+  try{
+    const pending=rpc('coldxKernel/readChild',{});await started;await attachment.dispose();release();
+    const result=await pending;assert.equal(result.ok,false);assert.match(result.error.message,/parent changed/);
+  }finally{release();catalog.listChildren=original;}
+});
+
 test('child read-only file RPC uses native lineage while generic child Agent lookup remains fenced', async t => {
   const { ctx, child, other, address, rpc } = await fixture(t);
   const generic = await ctx.typertGateway.invokeRpc('coldxFiles/readFile', { args: { agentId: child.agent.id, request: { path: 'report.txt' } } }, new AbortController().signal);

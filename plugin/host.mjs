@@ -8,6 +8,7 @@ import * as interactionHost from './interaction-host.mjs';
 import * as codingModeHost from './coding-mode-host.mjs';
 import * as protocolGuard from './protocol-guard.mjs';
 import * as artifactHost from './artifact-host.mjs';
+import * as kernelAgent from './kernel-agent.mjs';
 
 // Use the same native tool implementation as the pinned DSH installation.
 const localRequire = createRequire(import.meta.url);
@@ -19,6 +20,7 @@ export const inject = ['systemPrompt', 'tools'];
 
 /** Native DSH contributions. Cordis owns their scope, registration and disposal. */
 export function apply(ctx) {
+  ctx.plugin(kernelAgent);
   ctx.plugin(pageHost);
   ctx.plugin(interactionHost);
   ctx.plugin(codingModeHost);

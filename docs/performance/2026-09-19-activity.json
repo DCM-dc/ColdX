@@ -1,0 +1,23 @@
+{
+  "kind": "activity-projection-cpu",
+  "baselineRef": "c58d63d",
+  "outputEquivalent": true,
+  "fixture": {
+    "chatRows": 900,
+    "tools": 300,
+    "pages": 30,
+    "children": 12,
+    "jobs": 8
+  },
+  "iterations": 90,
+  "warmup": 20,
+  "before": {
+    "medianMs": 1.1161000000000172,
+    "p90Ms": 1.6093999999999937
+  },
+  "after": {
+    "medianMs": 0.9502999999999702,
+    "p90Ms": 1.4895999999999958
+  },
+  "scope": "selectActivityModel CPU only; no UI paint, model request, network, or memory-allocation claim"
+}

@@ -16,8 +16,15 @@ export function createActivityComponents(React, frost = {}, motionSource) {
   const finite = value => Number.isFinite(value) ? value : undefined;
   const nonblank = value => typeof value === 'string' && value.trim() ? value.trim() : undefined;
   const array = value => Array.isArray(value) ? value : [];
+  // A projection-local scan is safe for native snapshots whose nested Maps and
+  // call blocks can change in place. Nothing survives the current selector call.
+  const projectedRows = Symbol('activity rows');
+  const projectedTrajectory = Symbol('activity trajectory');
+  const projectedRoots = Symbol('activity roots');
+  const projectedBlocks = Symbol('activity blocks');
 
   function chatNodes(input) {
+    if (Object.hasOwn(input ?? {}, projectedRows)) return input[projectedRows];
     if (Array.isArray(input?.chatNodes)) return input.chatNodes;
     const chat = input?.session?.chat;
     if (!Array.isArray(chat?.order) || typeof chat?.nodes?.get !== 'function') return [];
@@ -25,6 +32,7 @@ export function createActivityComponents(React, frost = {}, motionSource) {
   }
 
   function trajectoryNodes(input) {
+    if (Object.hasOwn(input ?? {}, projectedTrajectory)) return input[projectedTrajectory];
     const direct = input?.trajectory;
     if (Array.isArray(direct?.eventNodes)) return direct.eventNodes;
     const store = input?.session?.views;
@@ -42,6 +50,7 @@ export function createActivityComponents(React, frost = {}, motionSource) {
   }
 
   function callRoots(input) {
+    if (Object.hasOwn(input ?? {}, projectedRoots)) return input[projectedRoots];
     const rows = chatNodes(input);
     const roots = [];
     const seen = new Set();
@@ -71,6 +80,7 @@ export function createActivityComponents(React, frost = {}, motionSource) {
   }
 
   function walkBlocks(input) {
+    if (Object.hasOwn(input ?? {}, projectedBlocks)) return input[projectedBlocks];
     const flat = [];
     const visit = (block, parentCallId, anchorSeq, depth) => {
       if (!block?.callId || depth > 256) return;
@@ -536,16 +546,19 @@ export function createActivityComponents(React, frost = {}, motionSource) {
   }
 
   function selectActivityModel(input = {}) {
-    const timeline = selectConversationActivity(input);
-    const outputs = selectActivityOutputs(input);
-    const sources = selectActivitySources(input);
-    const subagents = selectSubagentActivity(input);
-    const jobs = selectBackgroundActivity(input);
-    const computers = selectComputerActivity(input);
-    const terminals = selectTerminalEvidence(input);
+    const shared = { ...input, [projectedRows]: chatNodes(input), [projectedTrajectory]: trajectoryNodes(input) };
+    shared[projectedRoots] = callRoots(shared);
+    shared[projectedBlocks] = walkBlocks(shared);
+    const timeline = selectConversationActivity(shared);
+    const outputs = selectActivityOutputs(shared);
+    const sources = selectActivitySources(shared);
+    const subagents = selectSubagentActivity(shared);
+    const jobs = selectBackgroundActivity(shared);
+    const computers = selectComputerActivity(shared);
+    const terminals = selectTerminalEvidence(shared);
     const flat = flattenRecords(timeline);
     const calls = flat.filter(item => Boolean(item.callId));
-    const realChat = chatNodes(input).length > 0 || trajectoryNodes(input).length > 0 || array(input?.session?.nodes).length > 0;
+    const realChat = shared[projectedRows].length > 0 || shared[projectedTrajectory].length > 0 || array(input?.session?.nodes).length > 0;
     const evidence = Boolean(outputs.length || sources.loadedCount || subagents.length || jobs.length || computers.length || terminals.length || timeline.length);
     const visible = Boolean(evidence || array(input?.session?.pending).length || input?.session?.running || input?.session?.composerPhase === 'active' || realChat);
     const counts = { calls: calls.length, subagents: subagents.length, runningSubagents: subagents.filter(item => item.status === 'running').length, jobs: jobs.length, sources: sources.loadedCount, outputs: outputs.length, terminals: terminals.length };
@@ -865,9 +878,9 @@ export function createActivityComponents(React, frost = {}, motionSource) {
 
   function ActivityLens({ snapshot, sessionId, session, trajectory, flow, pages, subagents, jobs, sessionsState, computer, reducedMotion, onOpenChange, pane, ...actions }) {
     const readModel = () => selectActivityModel(snapshot ?? { sessionId, session, trajectory, flow, pages, subagents, jobs, sessionsState, computer });
-    const model = React.useMemo
-      ? React.useMemo(readModel, [snapshot, sessionId, session, trajectory, flow, pages, subagents, jobs, sessionsState, computer])
-      : readModel();
+    // Native session/projection objects may be mutated in place. Referential
+    // memoization here hides same-session jobs, child status and file edits.
+    const model = readModel();
     const currentSessionId = model.sessionId ?? sessionId ?? 'session';
     const initial = id => ({ sessionId: id, open: false, present: false, tab: 'timeline', follow: true, unseen: 0 });
     const [state, setState] = React.useState(() => initial(currentSessionId));
