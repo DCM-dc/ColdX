@@ -59,6 +59,12 @@ export function createClientPlugin(React, { MarkdownText }, factories, css) {
       ctx.provide('coldxFilePreview', { open: files.open, resolve: files.resolve });
       const { AttachmentControl, ComposerAttachments } = factories.attachments(React, frost);
       const activity = factories.activity(React, frost, factories.motion);
+      const companionSettings = ctx.settingsScope.bind({
+        namespace: 'coldx-companion',
+        decode: value => typeof value?.enabled === 'boolean' ? {enabled:value.enabled} : undefined,
+      });
+      const companion = factories.companion(React, companionSettings);
+      ctx.effect(() => () => companion.dispose());
       const { useComputer, ComputerPreview, ComputerStatus, ComputerWorkspace } = factories.computer(React, async (sessionId, method, request, signal) => {
         const address = ctx.sessions.subagentAddress?.(sessionId);
         const response = await ctx.connection.rpc.call('/api', `coldxComputer/${method}${address ? 'Child' : ''}`, { args: { ...(address ? {address} : {agentId:sessionId}), request } }, signal);
@@ -216,7 +222,7 @@ export function createClientPlugin(React, { MarkdownText }, factories, css) {
           document.addEventListener('click', click, true);
           return () => document.removeEventListener('click', click, true);
         }, [sessionId]);
-        return h(React.Fragment, null, h(KernelDetails,{key:sessionId,sessionId}), h(files.FileWorkspace, { sessionId }), h(ComputerWorkspace,{sessionId,state:computerState,pane}), h(activity.ActivityLens, {
+        return h(React.Fragment, null, h(companion.SessionObserver,{sessionId,session}), h(KernelDetails,{key:sessionId,sessionId}), h(files.FileWorkspace, { sessionId }), h(ComputerWorkspace,{sessionId,state:computerState,pane}), h(activity.ActivityLens, {
           sessionId, session, trajectory, pages, flow, subagents, jobs, sessionsState, pane,
           computer: computerState.snapshot,
           computerControls: h(ComputerStatus, { state: computerState }),
@@ -241,6 +247,12 @@ export function createClientPlugin(React, { MarkdownText }, factories, css) {
       ctx.slots.inject('sidebar.footer.action', () => ctx.slots.register({
         name:'sidebar.footer.action', id:'coldx-marketplace', order:-10,
       }, MarketplaceEntry));
+      ctx.slots.inject('sidebar.footer.action', () => ctx.slots.register({
+        name:'sidebar.footer.action', id:'coldx-companion', order:-50,
+      }, companion.Companion));
+      ctx.slots.inject('settings.general.item', () => ctx.slots.register({
+        name:'settings.general.item', id:'coldx-companion', order:69,
+      }, companion.CompanionSettingsRow));
       for (const [id,component,order] of [['coldx-usage',UsageEntry,-20],['coldx-balance',BalanceNotice,-40],['coldx-update',UpdateNotice,-30]]) ctx.slots.inject('sidebar.footer.action',()=>ctx.slots.register({name:'sidebar.footer.action',id,order},component));
       ctx.slots.inject('conversation.input.attachments', () => ctx.slots.register({
         // Native single slots choose the lowest priority; the built-in entry is 0.

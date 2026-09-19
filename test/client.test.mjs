@@ -9,6 +9,7 @@ import { createFileViewComponents } from '../plugin/client/file-view-source.mjs'
 import { createWorkbenchPane } from '../plugin/client/workbench-pane-source.mjs';
 import { createSessionControls } from '../plugin/client/session-controls-source.mjs';
 import { createWorkspaceShell } from '../plugin/client/workspace-shell-source.mjs';
+import { createCompanionComponents } from '../plugin/client/companion-source.mjs';
 
 test('the built client retains its native lazy module entry', async () => {
   const source = await readFile(new URL('../plugin/client/client.js', import.meta.url), 'utf8');
@@ -31,6 +32,7 @@ function mountClient(reply = { ok: true, value: {} }) {
   const plugin = createClientPlugin(React, { MarkdownText: () => null }, {
     brand: () => ({ Mark() {}, Name() {}, HeroBrand() {} }),
     workspaceShell: createWorkspaceShell,
+    companion: createCompanionComponents,
     modelControl: () => ({ ModelControl() {} }),
     superpowers: () => ({SuperpowersControl(){},SuperpowersSettingsRow(){},dispose(){}}),
     usage: () => ({UsageEntry(){},UsageSettingsRow(){},BalanceNotice(){}}),
@@ -79,7 +81,9 @@ function mountClient(reply = { ok: true, value: {} }) {
 test('ColdX owns only its inline tool renderers and releases every slot on disposal', t => {
   const mounted = mountClient(); t.after(() => mounted.dispose());
   const { entries, options, InlineTool } = mounted;
-  assert.equal(entries.size, 23);
+  assert.equal(entries.size, 25);
+  assert.ok(entries.has('sidebar.footer.action:coldx-companion'));
+  assert.ok(entries.has('settings.general.item:coldx-companion'));
   assert.equal(entries.get('sidebar.footer.action:coldx-marketplace').name,'MarketplaceEntry');
   assert.equal(options.get('sidebar.footer.action:coldx-marketplace').order,-10);
   assert.equal(entries.get('conversation.input.model.effort:').name, 'EnhancedModelControl');

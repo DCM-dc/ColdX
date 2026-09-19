@@ -1,15 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { COLDX_SETTINGS_NAMESPACE, COLDX_SETTINGS_BASE, coldxSettingsSchema, apply } from '../plugin/settings-host.mjs';
+import { COLDX_SETTINGS_NAMESPACE, COLDX_SETTINGS_BASE, coldxSettingsSchema, companionSettingsSchema, apply } from '../plugin/settings-host.mjs';
 
-test('ColdX owns one live global settings namespace with Terminal off by default', () => {
+test('ColdX registers live terminal and companion preferences separately', () => {
   const calls = [];
   apply({ settings: { register(...args) { calls.push(args); return {}; } } });
   assert.equal(COLDX_SETTINGS_NAMESPACE, 'coldx-activity');
   assert.deepEqual(COLDX_SETTINGS_BASE, { showTerminal: false });
   assert.deepEqual(coldxSettingsSchema({}), { showTerminal: false });
   assert.deepEqual(coldxSettingsSchema({ showTerminal: true }), { showTerminal: true });
-  assert.equal(calls.length, 1);
+  assert.equal(calls.length, 2);
+  assert.equal(calls[1][0], 'coldx-companion');
+  assert.deepEqual(companionSettingsSchema({}), {enabled:true});
+  assert.deepEqual(companionSettingsSchema({enabled:false}), {enabled:false});
+  assert.throws(() => companionSettingsSchema({enabled:'no'}), /boolean/i);
   assert.equal(calls[0][0], COLDX_SETTINGS_NAMESPACE);
   assert.equal(calls[0][1], coldxSettingsSchema);
   assert.deepEqual(calls[0][2], { base: COLDX_SETTINGS_BASE, applies: 'live' });
