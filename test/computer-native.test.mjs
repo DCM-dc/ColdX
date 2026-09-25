@@ -31,6 +31,22 @@ async function fixture(t) {
   return { ctx, a, b };
 }
 
+test('native agent disposal releases only its own desktop lease without crashing the host',async t=>{
+  const {ctx}=await fixture(t);
+  let stops=0;
+  await ctx.plugin(await import('../plugin/computer-host.mjs'),{desktop:{platform:'win32',workerFactory:()=>({stop:async()=>{stops++;}})}});
+  const owned=await ctx.agents.create({sessionId:'disposed-computer',meta:{cwd:process.cwd()}});
+  await ctx.coldxComputer.desktop.enable(owned.agent.id);
+  await owned.dispose();
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(stops,1);
+  assert.equal(ctx.coldxComputer.desktop.owner,undefined);
+  const idle=await ctx.agents.create({sessionId:'disposed-idle',meta:{cwd:process.cwd()}});
+  await idle.dispose();
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(stops,1);
+});
+
 test('native MCP filters exact raw names and reserves same namespace independently per Agent', async t => {
   const { ctx, a, b } = await fixture(t);
   const mcp = await nativeImport('@deepseek-ai/dsh-mcp-client');

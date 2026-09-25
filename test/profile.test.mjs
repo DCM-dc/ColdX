@@ -30,6 +30,7 @@ async function resolvedLinkTarget(path) {
 
 async function createFixtureApp(root) {
   await mkdir(join(root, 'plugin', 'client'), { recursive: true });
+  await mkdir(join(root, 'plugin', 'sidebar'), { recursive: true });
   await Promise.all([
     writeFile(join(root, 'plugin', 'client', 'package.json'), '{"name":"coldx-client","type":"module"}\n'),
     writeFile(join(root, 'plugin', 'host.mjs'), 'export function apply() {}\n'),
@@ -164,9 +165,10 @@ test('profile starts native web with the full Cordis preset and preserves user c
     assert.equal(new URL(hostUrl).protocol, 'file:', 'host plugin is importable on Windows');
     assert.equal(typeof (await import(hostUrl)).apply, 'function');
     const patch = JSON.parse(await readFile(result.patchPath, 'utf8'));
+    assert.equal(patch.find(row=>row.id==='session-query-sqlite').config.openAt,'first-search','full-text search activates lazily without delaying startup');
     assert.equal(patch.find(row => row.id === 'agent-presets').config.default, 'coldx');
     assert.equal(patch.find(row => row.id === 'ui-brand-official').disabled, true);
-    const inserted = patch.find(row => row.insert)?.insert ?? [];
+    const inserted = patch.flatMap(row => row.insert ?? []);
     const computerHostUrl = inserted.find(row => row.id === 'coldx-computer')?.name;
     assert.equal(new URL(computerHostUrl).protocol, 'file:', 'computer capability is mounted globally before the first model tool list');
     assert.equal((await import(computerHostUrl)).name, 'coldx-computer');
@@ -260,6 +262,7 @@ test('profile refreshes only ColdX-managed links and policy URL after the packag
 
     const moved = await ensureProfile({ ...options, projectRoot: secondRoot });
     assert.equal(await resolvedLinkTarget(clientLink), resolve(secondRoot, 'plugin', 'client'));
+    assert.equal(await resolvedLinkTarget(join(nodeModules,'@deepseek-ai','dsh-client-ui-sidebar')), resolve(secondRoot,'plugin','sidebar'));
     assert.equal(await resolvedLinkTarget(distributionLink), resolve(home, 'coldx-distribution'));
     const migrated = await readPreset(moved.presetPath);
     const newHostUrl = pathToFileURL(join(secondRoot, 'plugin', 'host.mjs')).href;

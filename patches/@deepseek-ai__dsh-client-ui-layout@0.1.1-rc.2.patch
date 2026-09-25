@@ -1,0 +1,29 @@
+--- a/lib/client.js
++++ b/lib/client.js
+@@ -192,7 +192,7 @@
+ 				actions.setNarrow(narrow);
+ 			}, [actions, narrow]);
+ 			const sidebarCollapsed = narrow ? !panels.narrowExpanded : panels.sidebar === 0;
+-			const cols = computeColumns(viewport, sidebarCollapsed ? 0 : panels.sidebar === 0 ? 280 : panels.sidebar, detailsSession === void 0 ? 0 : panels.details);
++			const cols = computeColumns(viewport, sidebarCollapsed ? 0 : panels.sidebar === 0 ? 294 : panels.sidebar, detailsSession === void 0 ? 0 : panels.details);
+ 			const colsRef = (0, react.useRef)(cols);
+ 			colsRef.current = cols;
+ 			const sidebarBase = (0, react.useRef)(0);
+@@ -277,7 +277,7 @@
+ 		function createLayoutStore() {
+ 			return (0, _deepseek_ai_dsh_client_runtime_client.defineStore)({
+ 				init: () => ({
+-					sidebar: 280,
++					sidebar: 294,
+ 					details: 0,
+ 					narrow: false,
+ 					narrowExpanded: false
+@@ -291,7 +291,7 @@
+ 					},
+ 					toggleSidebar: (d) => {
+ 						if (d.narrow) d.narrowExpanded = !d.narrowExpanded;
+-						else d.sidebar = d.sidebar === 0 ? 280 : 0;
++						else d.sidebar = d.sidebar === 0 ? 294 : 0;
+ 					},
+ 					setNarrow: (d, narrow) => {
+ 						if (d.narrow === narrow) return;

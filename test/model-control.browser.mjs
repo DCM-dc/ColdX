@@ -20,7 +20,7 @@ test('native model menu and directory share the slider admission, keyboard, canc
   const native=await readFile(process.env.COLDX_MODEL_CLIENT || dshRequire.resolve('@deepseek-ai/dsh-client-ui-model-selection/client'),'utf8');
   assert.match(native,/children: \{ "conversation\.input\.model\.effort": \{ kind: "single", scope: "session" \} \}/);
   const pluginBuild=await readFile(new URL('../plugin/client/build.mjs',import.meta.url),'utf8');
-  const names=pluginBuild.match(/\['coldx\.css',[\s\S]*?\]\.map\(path/)[0].match(/'([^']+\.css)'/g).map(name=>name.slice(1,-1));
+  const names=pluginBuild.match(/Promise\.all\(\[[\s\S]*?\]\.map\(path/)[0].match(/'([^']+\.css)'/g).map(name=>name.slice(1,-1));
   const css=(await Promise.all(names.map(name=>readFile(new URL('../plugin/client/'+name,import.meta.url),'utf8')))).join('\n');
   const server=createServer(async(request,response)=>{
     const route=new URL(request.url,'http://localhost').pathname;
@@ -93,7 +93,7 @@ test('native model menu and directory share the slider admission, keyboard, canc
       });
       return{width:rect.width,height:rect.height,left:rect.left,right:rect.right,top:rect.top,bottom:rect.bottom,hidden,controls};
     });
-    assert.ok(compact.width>=280&&compact.width<=340,`compact menu width ${compact.width}px`);
+    assert.ok(compact.width>=250&&compact.width<=260,`reference menu width ${compact.width}px`);
     assert.ok(compact.height>=90&&compact.height<=140,`compact menu height ${compact.height}px`);
     assert.equal(compact.hidden,true,'stop labels and helper copy must not occupy visible rows');
     assert.ok(compact.controls.every(box=>box.left>=compact.left&&box.right<=compact.right&&box.top>=compact.top&&box.bottom<=compact.bottom),'compact controls remain within the card');
@@ -201,7 +201,8 @@ test('native model menu and directory share the slider admission, keyboard, canc
     await page.waitForFunction(()=>document.querySelector('.cx-model-control')?.getAttribute('aria-busy')==='false');
     assert.equal(await page.locator('.cx-model-control-saving').count(),0);
     await page.evaluate(()=>window.pauseSelect());await slider.focus();await page.keyboard.press('ArrowLeft');
-    await page.waitForFunction(()=>{const saving=document.querySelector('.cx-model-control-saving');return saving&&Number(getComputedStyle(saving).opacity)===1;});
+    await page.waitForFunction(()=>document.querySelector('.cx-model-control-detail[role="status"]')?.textContent==='正在应用…');
+    assert.equal(await page.locator('.cx-model-control-saving').count(),0,'the compact reference card does not insert a saving text row');
     assert.equal(await slider.getAttribute('aria-disabled'),'true','slow saves still prevent duplicate writes');
     assert.equal(await slider.evaluate(node=>document.activeElement===node),true);
     await page.evaluate(()=>window.releaseSelect());

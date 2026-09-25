@@ -1,0 +1,246 @@
+/* New-task presentation in the native DSH hero slot. The native composer owns
+   typing, references, model selection and submission. */
+.coldx-shell .cx-workspace-home {
+  --cx-home-paper: var(--dsw-alias-bg-base, #fff);
+  --cx-home-ink: var(--dsw-alias-label-primary, #202124);
+  --cx-home-muted: var(--dsw-alias-label-secondary, #6d717a);
+  --cx-home-line: color-mix(in srgb, var(--cx-home-ink) 10%, transparent);
+  --cx-home-soft: color-mix(in srgb, var(--cx-home-ink) 3%, var(--cx-home-paper));
+  display: grid;
+  gap: 24px;
+  width: min(760px, 100%);
+  max-width: calc(100% - 32px);
+  margin: 0 auto 24px;
+  padding: 0 8px;
+  box-sizing: border-box;
+  color: var(--cx-home-ink);
+  text-align: left;
+  animation: cx-home-arrive 360ms var(--cx-wb-ease-enter, cubic-bezier(.19, 1, .22, 1)) both;
+}
+
+.coldx-shell .cx-home-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 160px;
+  align-items: center;
+  gap: 28px;
+  min-width: 0;
+}
+.coldx-shell .cx-home-copy { min-width: 0; }
+.coldx-shell .cx-home-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+  color: var(--cx-home-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+.coldx-shell .cx-home-eyebrow-mark {
+  position: relative;
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border: 1.5px solid currentColor;
+  border-radius: 4px;
+  transform: rotate(-8deg);
+}
+.coldx-shell .cx-home-eyebrow-mark::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 1px;
+  background: currentColor;
+}
+.coldx-shell .cx-home-eyebrow-separator { color: var(--cx-home-line); }
+.coldx-shell .cx-workspace-home h1 {
+  margin: 16px 0 0;
+  color: var(--cx-home-ink);
+  font-size: clamp(30px, 3.4vw, 42px);
+  font-weight: 590;
+  line-height: 1.18;
+  letter-spacing: -.045em;
+  text-wrap: balance;
+}
+.coldx-shell .cx-workspace-home p.cx-home-lead {
+  display: block;
+  max-width: 51ch;
+  margin: 14px 0 0;
+  color: var(--cx-home-muted);
+  font-size: 14px;
+  line-height: 1.7;
+  text-wrap: pretty;
+}
+
+/* A quiet document stack signals the result surface without pretending to be
+   a live file or an interactive control. */
+.coldx-shell .cx-home-art {
+  position: relative;
+  width: 160px;
+  height: 150px;
+  isolation: isolate;
+  pointer-events: none;
+}
+.coldx-shell .cx-home-art-sheet {
+  position: absolute;
+  display: block;
+  width: 120px;
+  height: 124px;
+  border: 1px solid var(--cx-home-line);
+  border-radius: 18px;
+  background: var(--cx-home-paper);
+}
+.coldx-shell .cx-home-art-sheet-back {
+  top: 13px;
+  left: 10px;
+  transform: rotate(-9deg);
+  background: var(--cx-home-soft);
+}
+.coldx-shell .cx-home-art-sheet-middle {
+  top: 7px;
+  left: 19px;
+  transform: rotate(-3deg);
+  background: color-mix(in srgb, var(--cx-home-ink) 2%, var(--cx-home-paper));
+}
+.coldx-shell .cx-home-art-sheet-front {
+  top: 0;
+  left: 30px;
+  transform: rotate(5deg);
+  box-shadow: 0 12px 26px rgb(0 0 0 / 7%), 0 1px 3px rgb(0 0 0 / 4%);
+}
+.coldx-shell .cx-home-art-glyph {
+  position: absolute;
+  top: 19px;
+  left: 18px;
+  display: grid;
+  place-items: center;
+  width: 29px;
+  height: 29px;
+  border: 1px solid var(--cx-home-line);
+  border-radius: 9px;
+  color: var(--cx-home-ink);
+  font-size: 25px;
+  font-weight: 350;
+  line-height: 1;
+}
+.coldx-shell .cx-home-art-line {
+  position: absolute;
+  left: 18px;
+  height: 5px;
+  border-radius: 4px;
+  background: var(--cx-home-line);
+}
+.coldx-shell .cx-home-art-line-one { top: 65px; width: 79px; }
+.coldx-shell .cx-home-art-line-two { top: 79px; width: 64px; }
+.coldx-shell .cx-home-art-line-three { top: 93px; width: 44px; }
+
+.coldx-shell .cx-home-flow {
+  padding: 17px 20px 19px;
+  border: 1px solid var(--cx-home-line);
+  border-radius: 18px;
+  background: var(--cx-home-soft);
+}
+.coldx-shell .cx-home-flow-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--cx-home-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .045em;
+  white-space: nowrap;
+}
+.coldx-shell .cx-home-flow-rule { flex: 1; height: 1px; background: var(--cx-home-line); }
+.coldx-shell .cx-home-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  margin: 17px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.coldx-shell .cx-home-step { display: flex; gap: 11px; min-width: 0; }
+.coldx-shell .cx-home-step + .cx-home-step {
+  padding-left: 16px;
+  border-left: 1px solid var(--cx-home-line);
+}
+.coldx-shell .cx-home-step-index {
+  flex: none;
+  padding-top: 3px;
+  color: var(--cx-home-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.coldx-shell .cx-home-step-content { display: grid; gap: 3px; min-width: 0; }
+.coldx-shell .cx-home-step-content strong {
+  color: var(--cx-home-ink);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.coldx-shell .cx-home-step-detail {
+  color: var(--cx-home-muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+.coldx-shell .cx-home-examples {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  min-width: 0;
+  color: var(--cx-home-muted);
+  font-size: 12px;
+}
+.coldx-shell .cx-workspace-home p.cx-home-examples-label {
+  display: block;
+  flex: none;
+  margin: 0;
+  color: var(--cx-home-muted);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.coldx-shell .cx-home-examples ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 17px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.coldx-shell .cx-home-examples li { line-height: 1.5; }
+
+@keyframes cx-home-arrive {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 600px) {
+  .coldx-shell .cx-workspace-home { gap: 19px; max-width: calc(100% - 20px); padding: 0 4px; margin-bottom: 18px; }
+  .coldx-shell .cx-home-stage { display: block; }
+  .coldx-shell .cx-home-art { display: none; }
+  .coldx-shell .cx-workspace-home h1 { margin-top: 11px; font-size: clamp(27px, 8vw, 34px); }
+  .coldx-shell .cx-workspace-home p.cx-home-lead { margin-top: 10px; font-size: 13px; line-height: 1.55; }
+  .coldx-shell .cx-home-flow { padding: 14px 15px 15px; border-radius: 15px; }
+  .coldx-shell .cx-home-steps { margin-top: 13px; }
+  .coldx-shell .cx-home-step { display: grid; gap: 3px; }
+  .coldx-shell .cx-home-step + .cx-home-step { padding-left: 11px; }
+  .coldx-shell .cx-home-step-content strong { font-size: 12px; }
+  .coldx-shell .cx-home-step-detail { display: none; }
+  .coldx-shell .cx-home-examples { display: block; }
+  .coldx-shell .cx-home-examples ul { margin-top: 4px; }
+}
+@media (max-width: 360px) {
+  .coldx-shell .cx-home-step + .cx-home-step { padding-left: 7px; }
+  .coldx-shell .cx-home-step-content strong { font-size: 11px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .coldx-shell .cx-workspace-home { animation: none; }
+}
+@media (forced-colors: active) {
+  .coldx-shell .cx-home-flow,
+  .coldx-shell .cx-home-art-sheet { background: Canvas; border-color: CanvasText; }
+  .coldx-shell .cx-home-flow-rule,
+  .coldx-shell .cx-home-art-line { background: CanvasText; }
+}

@@ -108,7 +108,7 @@ export function createUsageComponents(React, rpc) {
       ['CNY', 'USD'].map(currency => h('label', { key: currency }, `${currency} 低余额阈值`, h('input', { inputMode: 'decimal', value: settings.thresholds[currency], onChange: event => setSettings({ ...settings, thresholds: { ...settings.thresholds, [currency]: event.target.value } }), maxLength: 37, 'aria-label': `${currency} 低余额阈值` }))),
       h('button', { type: 'submit', className: 'cx-usage-button', disabled: busy }, busy ? '保存中…' : '保存设置')));
   }
-  function UsageDialog({ onClose, returnFocus }) {
+  function UsageDialog({ onClose, returnFocus, embedded=false }) {
     const dialog = React.useRef(null), controller = React.useRef(null), alive = React.useRef(false), pending = React.useRef(false);
     const [data, setData] = React.useState(null), [error, setError] = React.useState(''), [busy, setBusy] = React.useState(true);
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
@@ -118,11 +118,11 @@ export function createUsageComponents(React, rpc) {
       catch { if (alive.current && !controller.current.signal.aborted) setError('用量记录暂时无法加载，请重试。'); }
       finally { pending.current = false; if (alive.current) setBusy(false); }
     }
-    (React.useLayoutEffect ?? React.useEffect)(() => { alive.current = true; dialog.current?.showModal(); return () => { alive.current = false; controller.current?.abort(); if (dialog.current?.open) dialog.current.close(); returnFocus?.current?.focus?.({ preventScroll: true }); }; }, []);
+    (React.useLayoutEffect ?? React.useEffect)(() => { alive.current = true; if(!embedded)dialog.current?.showModal(); return () => { alive.current = false; controller.current?.abort(); if (dialog.current?.open) dialog.current.close(); returnFocus?.current?.focus?.({ preventScroll: true }); }; }, []);
     React.useEffect(() => { load(); const timer = setInterval(() => { if (document.visibilityState !== 'hidden') load(); }, 30000); return () => clearInterval(timer); }, []);
     const cards = data ? [[formatCount(data.summary.totalTokens), '累计 Token', '包括已记录的缓存输入与输出'], [formatCount(data.summary.peakDailyTokens), '单日峰值 Token', '按当前时区的自然日统计'], [formatDuration(data.summary.longestSessionMs), '最长活跃会话', '已结束回合的执行时长，排除会话空置时间'], [`${data.summary.currentStreak} 天`, '当前连续天数', '今天或昨天开始的连续使用天数'], [`${data.summary.longestStreak} 天`, '最长连续天数', '本地已记录的最长连续使用天数']] : [];
     const knownEfforts = data?.efforts.reduce((sum, row) => sum + row.count, 0) ?? 0, topEffort = data?.efforts[0], effortLabel = { off: '关闭', low: '低', high: '高', max: '最高' };
-    return h('dialog', { ref: dialog, className: 'cx-usage-dialog', 'aria-labelledby': 'cx-usage-title', onCancel: event => { event.preventDefault(); onClose(); }, onClick: event => { if (event.target === dialog.current) { const box = dialog.current.getBoundingClientRect(); if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) onClose(); } } },
+    return h(embedded?'section':'dialog', { ref: dialog, className: 'cx-usage-dialog', 'data-embedded':embedded, 'aria-labelledby': 'cx-usage-title', onCancel: event => { event.preventDefault(); onClose(); }, onClick: event => { if (event.target === dialog.current) { const box = dialog.current.getBoundingClientRect(); if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) onClose(); } } },
       h('header', { className: 'cx-usage-header' }, h('div', null, h('h2', { id: 'cx-usage-title' }, '用量与活动'), h('p', null, '看清每一次工作积累')), h('div', { className: 'cx-usage-header-actions' }, h('button', { type: 'button', className: 'cx-usage-icon-button', onClick: load, disabled: busy, 'aria-label': '刷新用量统计' }, h(Icon, { kind: 'refresh' })), h('button', { type: 'button', className: 'cx-usage-icon-button', onClick: onClose, 'aria-label': '关闭用量与活动', autoFocus: true }, h(Icon, { kind: 'close' })))),
       h('div', { className: 'cx-usage-body', 'aria-busy': busy }, error && h('p', { role: 'alert', className: 'cx-usage-warning' }, error),
         !data ? h('p', { className: 'cx-usage-empty', role: 'status' }, busy ? '正在整理本地会话记录…' : '暂无可读取的用量记录。') : h(React.Fragment, null,

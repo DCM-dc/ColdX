@@ -1,0 +1,87 @@
+/* The task summary shares the native conversation and pane callbacks. */
+.coldx-shell .wSkVaW_root { --cx-summary-dock-width: clamp(304px, 27cqw, 352px); }
+.coldx-shell .cx-rebuild-brand { gap: 9px; min-width: 0; letter-spacing: -.025em; }
+.coldx-shell .cx-rebuild-brand-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.coldx-shell .cx-rebuild-brand-mark {
+  position: relative; display: inline-grid; place-items: center; flex: none;
+  width: 24px; height: 24px; border-radius: 7px;
+  background: var(--cx-wb-text); color: var(--cx-wb-surface);
+  font: 650 17px/1 "Segoe UI", system-ui, sans-serif; letter-spacing: -.09em;
+}
+.coldx-shell .cx-rebuild-brand-mark > span { transform: translate(-1px, -1px); }
+.coldx-shell .cx-rebuild-brand-mark > i {
+  position: absolute; right: 3px; bottom: 3px; width: 5px; height: 5px;
+  border: 1px solid var(--cx-wb-text); border-radius: 50%;
+  background: var(--cx-wb-accent); box-sizing: border-box;
+}
+.coldx-shell .cx-rebuild-summary-scrim { display: none; }
+.coldx-shell .cx-rebuild-summary {
+  display: flex; flex-direction: column;
+  position: absolute; inset: var(--cx-summary-top, 46px) 0 0 auto;
+  width: var(--cx-summary-dock-width); height: auto; max-height: none;
+  padding: 0; border: 0; border-inline-start: 1px solid var(--cx-wb-line);
+  border-radius: 0; box-shadow: none; overflow: hidden;
+  background: var(--cx-wb-surface); z-index: 7;
+  animation: cx-summary-dock-in 180ms cubic-bezier(.19, 1, .22, 1);
+}
+@container coldx-conversation (min-width: 960px) {
+  .coldx-shell .wSkVaW_root:has(.cx-rebuild-summary[data-open="true"]):not(:has(.cx-workbench-panel[open])) > .wSkVaW_scrollBody {
+    margin-inline-end: var(--cx-summary-dock-width);
+  }
+}
+.coldx-shell .cx-summary-header {
+  display: flex; flex: none; align-items: center; justify-content: space-between;
+  min-height: 70px; padding: 12px 16px 10px 20px; box-sizing: border-box;
+  border-bottom: 1px solid var(--cx-wb-line);
+}
+.coldx-shell .cx-summary-header > div { min-width: 0; }
+.coldx-shell .cx-summary-eyebrow { display: block; color: var(--cx-wb-muted); font-size: 11px; line-height: 16px; }
+.coldx-shell .cx-summary-header h2 { margin: 1px 0 0; font-size: 15px; line-height: 22px; font-weight: 650; letter-spacing: -.015em; }
+.coldx-shell .cx-summary-header .cx-rebuild-icon { width: 30px; height: 30px; }
+.coldx-shell .cx-summary-scroll { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 14px 14px 24px; }
+.coldx-shell .cx-summary-now {
+  display: flex; align-items: center; gap: 10px; min-height: 74px;
+  padding: 12px 11px; box-sizing: border-box;
+  border: 1px solid var(--cx-wb-line); border-radius: 10px;
+  background: var(--cx-wb-raised, var(--cx-wb-hover));
+}
+.coldx-shell .cx-summary-live-mark { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--cx-wb-muted); }
+.coldx-shell .cx-summary-now[data-tone="accent"] .cx-summary-live-mark { background: var(--cx-wb-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--cx-wb-accent) 12%, transparent); }
+.coldx-shell .cx-summary-now[data-tone="warning"] .cx-summary-live-mark { background: #bc7b29; }
+.coldx-shell .cx-summary-now[data-tone="danger"] .cx-summary-live-mark { background: var(--cx-sys-status-danger, #c64646); }
+.coldx-shell .cx-summary-now-copy { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.coldx-shell .cx-summary-now-label { color: var(--cx-wb-muted); font-size: 11px; line-height: 16px; }
+.coldx-shell .cx-summary-now-copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; line-height: 19px; font-weight: 600; }
+.coldx-shell .cx-summary-now-link { display: inline-grid; place-items: center; flex: none; width: 28px; height: 28px; border: 0; border-radius: 7px; background: transparent; color: var(--cx-wb-muted); cursor: pointer; }
+.coldx-shell .cx-summary-now-link:not(:disabled):hover { background: var(--cx-wb-hover); color: var(--cx-wb-text); }
+.coldx-shell .cx-summary-now-link svg { transform: rotate(-90deg); }
+.coldx-shell .cx-summary-now-link:disabled { opacity: .45; cursor: default; }
+.coldx-shell .cx-summary-tool-count { margin: 8px 3px 0; color: var(--cx-wb-muted); font-size: 11px; line-height: 17px; }
+.coldx-shell .cx-rebuild-summary .cx-summary-section { padding: 20px 0 0; }
+.coldx-shell .cx-rebuild-summary .cx-summary-section + .cx-summary-section { margin-top: 16px; border-top: 1px solid var(--cx-wb-line); }
+.coldx-shell .cx-rebuild-summary-heading { height: auto; min-height: 28px; margin: 0 2px 8px; gap: 8px; color: var(--cx-wb-text); }
+.coldx-shell .cx-rebuild-summary-heading h3 { margin: 0; font-size: 13px; line-height: 20px; font-weight: 650; }
+.coldx-shell .cx-summary-heading-actions { display: inline-flex; align-items: center; gap: 8px; margin-inline-start: auto; }
+.coldx-shell .cx-summary-count { min-width: 17px; padding: 1px 5px; border-radius: 6px; background: var(--cx-wb-hover); color: var(--cx-wb-muted); text-align: center; font: 11px/17px "Segoe UI", system-ui, sans-serif; }
+.coldx-shell .cx-summary-text-action { display: inline-flex; align-items: center; gap: 2px; min-height: 28px; padding: 0 4px; border: 0; border-radius: 6px; background: transparent; color: var(--cx-wb-muted); font: inherit; font-size: 11px; cursor: pointer; }
+.coldx-shell .cx-summary-text-action:not(:disabled):hover { background: var(--cx-wb-hover); color: var(--cx-wb-text); }
+.coldx-shell .cx-summary-text-action svg { width: 12px; height: 12px; transform: rotate(-90deg); }
+.coldx-shell .cx-rebuild-summary-row { gap: 10px; height: auto; min-height: 40px; padding: 5px 7px; border-radius: 7px; }
+.coldx-shell .cx-rebuild-summary-row + .cx-rebuild-summary-row { margin-top: 2px; }
+.coldx-shell .cx-summary-row-icon { display: inline-grid; place-items: center; flex: none; width: 28px; height: 28px; border: 1px solid var(--cx-wb-line); border-radius: 7px; background: var(--cx-wb-surface); color: var(--cx-wb-muted); }
+.coldx-shell .cx-summary-row-icon svg { width: 15px; height: 15px; }
+.coldx-shell .cx-summary-row-copy { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+.coldx-shell .cx-summary-row-title { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--cx-wb-text); font-size: 12px; line-height: 18px; }
+.coldx-shell .cx-summary-row-detail { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--cx-wb-muted); font-size: 11px; line-height: 15px; }
+.coldx-shell .cx-summary-row-status { flex: none; max-width: 62px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--cx-wb-muted); font-size: 11px; }
+.coldx-shell .cx-rebuild-summary-empty { margin: 0 2px; padding: 7px 2px 5px; font-size: 12px; line-height: 19px; }
+.coldx-shell .cx-rebuild-agent-count { margin: 0 2px 8px; color: var(--cx-wb-muted); font-size: 11px; }
+.coldx-shell .cx-rebuild-summary-error { margin: 16px 2px 0; }
+.coldx-shell .cx-rebuild-summary :is(button, a):focus-visible { outline: 2px solid var(--cx-wb-accent); outline-offset: 2px; }
+@container coldx-conversation (max-width: 959px) {
+  .coldx-shell .cx-rebuild-summary-scrim { display: block; position: absolute; inset: var(--cx-summary-top, 46px) 0 0; z-index: 6; width: 100%; height: auto; padding: 0; border: 0; background: rgb(0 0 0 / 19%); cursor: default; }
+  .coldx-shell .cx-rebuild-summary { width: min(380px, calc(100% - 24px)); max-width: none; right: 0; box-shadow: -8px 0 30px rgb(0 0 0 / 9%); }
+}
+@keyframes cx-summary-dock-in { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; transform: translateX(0); } }
+@media (prefers-reduced-motion: reduce) { .coldx-shell .cx-rebuild-summary { animation: none; } }
+@media (pointer: coarse) { .coldx-shell .cx-rebuild-summary-row, .coldx-shell .cx-summary-text-action { min-height: 44px; } }

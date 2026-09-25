@@ -1,0 +1,9 @@
+{
+  "name": "@deepseek-ai/dsh-client-ui-sidebar",
+  "version": "0.1.1-rc.2",
+  "private": true,
+  "type": "module",
+  "description": "ColdX replacement of the native DSH sidebar presentation, preserving its slot contract",
+  "exports": { ".": "./host.mjs", "./client": "./client.js", "./package.json": "./package.json" },
+  "dsh": {"client":{"platform":"web","inject":["@deepseek-ai/dsh-client-runtime","@deepseek-ai/dsh-client-ui-layout"]}}
+}

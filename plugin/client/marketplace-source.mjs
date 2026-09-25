@@ -32,7 +32,7 @@ export function createMarketplaceComponents(React, primitives, api, options={}) 
       withMessage && record.repairs?.length>0 && h('p',{className:'cx-marketplace-repair-status'},({queued:'AI 修复已排入原任务',running:'AI 正在诊断安装',completed:'AI 修复后已核实启用','needs-attention':'本轮修复尚未完成，请查看原任务'})[record.repairs.at(-1).status]));
   }
 
-  function MarketplaceDialog({onClose,returnFocus}) {
+  function MarketplaceDialog({onClose,returnFocus,embedded=false}) {
     const dialog = React.useRef(null),searchInput = React.useRef(null),alive = React.useRef(true),busyKeys = React.useRef(new Set());
     const policyVersion = React.useRef(0),policyPending = React.useRef(false),catalogRefresh = React.useRef(0);
     const [query,setQuery] = React.useState(''),[page,setPage] = React.useState(1),[refresh,setRefresh] = React.useState(0);
@@ -54,7 +54,7 @@ export function createMarketplaceComponents(React, primitives, api, options={}) 
       setStateLoaded(true);setStateError('');
     };
     (React.useLayoutEffect ?? React.useEffect)(()=>{
-      const node = dialog.current;alive.current = true;node?.showModal();searchInput.current?.focus({preventScroll:true});
+      const node = dialog.current;alive.current = true;if(!embedded)node?.showModal();searchInput.current?.focus({preventScroll:true});
       return ()=>{alive.current=false;if(node?.open)node.close();returnFocus?.current?.focus?.({preventScroll:true});};
     },[]);
     React.useEffect(()=>{
@@ -130,7 +130,7 @@ export function createMarketplaceComponents(React, primitives, api, options={}) 
     const selectTab = value => {setTab(value);setSelected(null);};
     const records = state.installs.filter(record=>tab==='installed' && [record.packageId,record.id,record.message].join(' ').toLowerCase().includes(query.trim().toLowerCase()));
     const refreshAll = ()=>{setPage(1);setRefresh(value=>value+1);};
-    return h('dialog',{ref:dialog,className:'cx-marketplace-dialog','aria-labelledby':'cx-marketplace-title','data-detail':Boolean(selected),onCancel:event=>{event.preventDefault();onClose();},onClick:event=>{
+    return h(embedded?'section':'dialog',{ref:dialog,className:'cx-marketplace-dialog','data-embedded':embedded,'aria-labelledby':'cx-marketplace-title','data-detail':Boolean(selected),onCancel:event=>{event.preventDefault();onClose();},onClick:event=>{
       if(event.target!==event.currentTarget)return;const bounds=event.currentTarget.getBoundingClientRect();
       if(event.clientX<bounds.left || event.clientX>bounds.right || event.clientY<bounds.top || event.clientY>bounds.bottom)onClose();
     }},

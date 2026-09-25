@@ -1,11 +1,12 @@
 // No bundled React: DSH supplies its existing browser instance to this factory.
-export function createClientPlugin(React, { MarkdownText }, factories, css) {
+export function createWorkbenchPlugin(React, { MarkdownText }, factories, css) {
   const h = React.createElement;
   const { Mark, Name, faviconHref } = factories.brand(React);
   const { Home, KernelStatus } = factories.workspaceShell(React);
+  const { Sidebar, Summary, icon } = factories.workbenchShell(React);
   function PageQuestion() { return h('span', { className: 'coldx-page-question', hidden: true, 'aria-hidden': true }); }
   return {
-    inject: ['slots', 'theme', 'connection', 'sessions', 'settingsScope', 'workspaces', 'remote', 'remote.commands', 'remote.fileReferences'],
+    inject: ['layout', 'slots', 'theme', 'connection', 'sessions', 'settingsScope', 'workspaces', 'remote', 'remote.commands', 'remote.fileReferences'],
     apply(ctx) {
       const frost = factories.frost(React, factories.motion);
       const rpcFor = service => async (method, request, signal) => {
@@ -16,11 +17,11 @@ export function createClientPlugin(React, { MarkdownText }, factories, css) {
       const superpowers = factories.superpowers(React,rpcFor('coldxSuperpowers'));
       const {SuperpowersControl,SuperpowersSettingsRow} = superpowers;
       ctx.effect(()=>()=>superpowers.dispose());
-      const {UsageEntry,UsageSettingsRow,BalanceNotice} = factories.usage(React,rpcFor('coldxUsage'));
+      const {UsageEntry,UsageSettingsRow,BalanceNotice,UsageDialog} = factories.usage(React,rpcFor('coldxUsage'));
       const {UpdateNotice,UpdateSettingsRow} = factories.updates(React,rpcFor('coldxUpdates'));
       const { ModelControl } = factories.modelControl(React);
       function EnhancedModelControl(props) { return h(ModelControl,{...props,superpowersControl:h(SuperpowersControl)}); }
-      const { MarketplaceEntry } = factories.marketplace(React, {}, async (method, request, signal) => {
+      const { MarketplaceEntry, MarketplaceDialog } = factories.marketplace(React, {}, async (method, request, signal) => {
         const response = await ctx.connection.rpc.call('/api', `coldxMarketplace/${method}`, {args:{request}}, signal);
         if (!response?.ok) throw new Error(response?.error?.message || '插件市场暂时不可用。');
         return response.value;
@@ -57,90 +58,19 @@ export function createClientPlugin(React, { MarkdownText }, factories, css) {
         return current !== sessionId && !ctx.sessions.subagentAddress?.(current) ? {sessionId:current,open:()=>ctx.sessions.open(current)} : undefined;
       }});
       ctx.provide('coldxFilePreview', { open: files.open, resolve: files.resolve });
+      const navigation=factories.navigation(React,ctx,{icon,api:rpcFor('coldxWorkbench'),Marketplace:MarketplaceDialog,Usage:UsageDialog,files,pane});
+      ctx.provide('coldxNavigation',navigation);
+      for(const [id,component,order] of [['coldx-balance',BalanceNotice,40],['coldx-update',UpdateNotice,50]])ctx.slots.inject('sidebar.footer.action',()=>ctx.slots.register({name:'sidebar.footer.action',id,order},component));
+      ctx.slots.inject('sidebar.workspaces',()=>ctx.slots.register({name:'sidebar.workspaces',priority:-10},navigation.TaskList));
+      ctx.slots.inject('shell.overlay',()=>ctx.slots.register({name:'shell.overlay',id:'coldx-pages',order:20},navigation.Pages));
+      ctx.slots.inject('conversation.chat.node',()=>{
+        const native=ctx.slots.entries('conversation.chat.node').find(entry=>entry.options.key==='assistant-step');
+        if(!native)return()=>{};
+        const {AssistantMessage}=factories.messages(React,files,native.component);
+        return ctx.slots.register({name:'conversation.chat.node',key:'assistant-step',priority:-10,locale:'conversation'},AssistantMessage);
+      });
       const { AttachmentControl, ComposerAttachments } = factories.attachments(React, frost);
       const activity = factories.activity(React, frost, factories.motion);
-      const companionSettings = ctx.settingsScope.bind({
-        namespace: 'coldx-companion',
-        decode: value => typeof value?.enabled === 'boolean' ? {
-          enabled:value.enabled,
-        } : undefined,
-      });
-      let groupNavigating=0;
-      async function openCompanionTask(id,task,signal) {
-        signal?.throwIfAborted();
-        const address=ctx.sessions.subagentAddress?.(id)
-          ?? (task?.parentSessionId&&['one-shot','continuable'].includes(task.mode)
-            ? {parentSessionId:task.parentSessionId,childSessionId:id,mode:task.mode}:undefined);
-        if(address){await ctx.sessions.refreshSubagents(address.parentSessionId);signal?.throwIfAborted();return ctx.sessions.openSubagent(address);}
-        return ctx.sessions.open(id);
-      }
-      const companion = factories.companion(React, companionSettings, {
-        rpc:rpcFor('coldxCompanion'),
-        getSessionId:()=>ctx.sessions.list?.getSnapshot().current,
-        openTask:openCompanionTask,
-        async ensureParent(parentId,{signal}={}) {
-          groupNavigating++;
-          const controller=new AbortController(),forwardAbort=()=>controller.abort(signal.reason);
-          signal?.addEventListener('abort',forwardAbort,{once:true});if(signal?.aborted)forwardAbort();
-          const navigationSignal=controller.signal;let offNavigation=()=>{};
-          try{
-            navigationSignal.throwIfAborted();
-            let id=parentId||companion.getGroupView?.()?.parentSessionId;
-            if(!id){
-              const workspace=ctx.workspaces.list?.getSnapshot();
-              const target=workspace?.recentWorkspaceId||workspace?.items?.[0]?.workspaceId;
-              if(!target)throw Error('请先添加工作区，再创建群组。');
-              id=await ctx.workspaces.connectWorkspace(target);
-            }
-            navigationSignal.throwIfAborted();
-            let selected=ctx.sessions.list?.getSnapshot().current;
-            offNavigation=ctx.sessions.list?.subscribe(()=>{
-              const next=ctx.sessions.list.getSnapshot().current;
-              if(next===selected||navigationSignal.aborted)return;
-              selected=next;
-              if(next!==id){controller.abort(new DOMException('Group navigation cancelled','AbortError'));companion.closeGroup();}
-            })||(()=>{});
-            await openCompanionTask(id,undefined,navigationSignal);
-            navigationSignal.throwIfAborted();
-            const session=ctx.sessions.binding(id)?.session;
-            if(!session)throw Error('会话暂时无法打开，请重试。');
-            await new Promise((resolve,reject)=>{
-              let off=()=>{},timer,settled=false;
-              const finish=error=>{if(settled)return;settled=true;off();clearTimeout(timer);navigationSignal.removeEventListener('abort',cancel);error?reject(error):resolve();};
-              const cancel=()=>finish(navigationSignal.reason);
-              const check=()=>{const state=session.getSnapshot();if(state.openState==='open')finish();else if(state.openState==='error')finish(Error('会话加载失败，请重试。'));};
-              navigationSignal.addEventListener('abort',cancel,{once:true});
-              off=session.subscribe(check);if(settled)off();
-              if(navigationSignal.aborted)cancel();
-              if(!settled){timer=setTimeout(()=>finish(Error('会话加载超时，请重试。')),15000);check();}
-            });
-            return id;
-          }finally{offNavigation();signal?.removeEventListener('abort',forwardAbort);groupNavigating--;}
-        },
-      });
-      ctx.effect(() => () => companion.dispose());
-      ctx.slots.inject('conversation',()=>{
-        if(!companion.subscribeGroup)return()=>{};
-        let disposeView,previousView;
-        const sync=()=>{
-          const view=companion.getGroupView();
-          if(view){
-            if(!disposeView)disposeView=ctx.slots.register({name:'conversation',id:'coldx-group',priority:-20},companion.GroupPage);
-            previousView=view;
-            if(ctx.sessions.list?.getSnapshot().current!==undefined){groupNavigating++;try{ctx.sessions.clear();}finally{groupNavigating--;}}
-          }else if(disposeView){
-            disposeView();disposeView=undefined;
-            if(ctx.sessions.list?.getSnapshot().current===undefined&&previousView?.parentSessionId)void openCompanionTask(previousView.parentSessionId).catch(()=>{});
-            previousView=undefined;
-          }
-        };
-        const off=companion.subscribeGroup(sync);
-        const offSession=ctx.sessions.list?.subscribe(()=>{if(!groupNavigating&&companion.getGroupView()&&ctx.sessions.list.getSnapshot().current!==undefined)companion.closeGroup();});
-        sync();return()=>{off();offSession?.();disposeView?.();};
-      });
-      function CompanionDock(props) {
-        return h(React.Fragment,null,companion.Controller?h(companion.Controller):null,h(companion.Companion,props));
-      }
       const { useComputer, ComputerPreview, ComputerStatus, ComputerWorkspace } = factories.computer(React, async (sessionId, method, request, signal) => {
         const address = ctx.sessions.subagentAddress?.(sessionId);
         const response = await ctx.connection.rpc.call('/api', `coldxComputer/${method}${address ? 'Child' : ''}`, { args: { ...(address ? {address} : {agentId:sessionId}), request } }, signal);
@@ -298,7 +228,17 @@ export function createClientPlugin(React, { MarkdownText }, factories, css) {
           document.addEventListener('click', click, true);
           return () => document.removeEventListener('click', click, true);
         }, [sessionId]);
-        return h(React.Fragment, null, h(companion.SessionObserver,{sessionId,session}), h(KernelDetails,{key:sessionId,sessionId}), h(files.FileWorkspace, { sessionId }), h(ComputerWorkspace,{sessionId,state:computerState,pane}), h(activity.ActivityLens, {
+        const summaryModel = activity.selectActivityModel({sessionId,session,trajectory,pages,flow,subagents,jobs,sessionsState,computer:computerState.snapshot});
+        return h(React.Fragment, null, h(Summary, {key:sessionId,sessionId,model:summaryModel,
+          onOpenView:view=>pane.open(sessionId,view),
+          onOpenFile:(path,line)=>files.open(sessionId,path,line),
+          onOpenSubagent:address=>ctx.sessions.openSubagent(address),
+          onOpenOutput:output=>{
+            if(output.kind==='file')return files.open(sessionId,output.path);
+            const page=[...document.querySelectorAll('[data-coldx-call-id]')].find(node=>node.getAttribute('data-coldx-call-id')===output.pageId);
+            page?.scrollIntoView({block:'center'});
+          },
+        }), h(files.FileWorkspace, { sessionId }), h(ComputerWorkspace,{sessionId,state:computerState,pane}), h(activity.ActivityLens, {
           sessionId, session, trajectory, pages, flow, subagents, jobs, sessionsState, pane,
           computer: computerState.snapshot,
           computerControls: h(ComputerStatus, { state: computerState }),
@@ -322,17 +262,7 @@ export function createClientPlugin(React, { MarkdownText }, factories, css) {
       ]) ctx.slots.inject(name, () => ctx.slots.register({ name, id: 'coldx', order: 80, priority: 10 }, component));
       ctx.slots.inject('sidebar.footer.action', () => ctx.slots.register({
         name:'sidebar.footer.action', id:'coldx-marketplace', order:-10,
-      }, MarketplaceEntry));
-      ctx.slots.inject('sidebar.footer.action', () => ctx.slots.register({
-        name:'sidebar.footer.action', id:'coldx-companion', order:-50,
-      }, CompanionDock));
-      ctx.slots.inject('sidebar.footer.action', () => ctx.slots.register({
-        name:'sidebar.footer.action', id:'coldx-groups', order:-70,
-      }, companion.GroupSidebar));
-      ctx.slots.inject('settings.general.item', () => ctx.slots.register({
-        name:'settings.general.item', id:'coldx-companion', order:69,
-      }, companion.CompanionSettingsRow));
-      for (const [id,component,order] of [['coldx-usage',UsageEntry,-20],['coldx-balance',BalanceNotice,-40],['coldx-update',UpdateNotice,-30]]) ctx.slots.inject('sidebar.footer.action',()=>ctx.slots.register({name:'sidebar.footer.action',id,order},component));
+      }, navigation.Nav));
       ctx.slots.inject('conversation.input.attachments', () => ctx.slots.register({
         // Native single slots choose the lowest priority; the built-in entry is 0.
         name: 'conversation.input.attachments', priority: -10,
@@ -364,11 +294,16 @@ export function createClientPlugin(React, { MarkdownText }, factories, css) {
         },
       }, PageQuestion));
       ctx.effect(() => ctx.theme.overrideTokens('coldx', {
-        '--dsw-alias-bg-base': { light: '#ffffff', dark: '#17191c' },
-        '--dsw-specific-sidebar-fill': { light: '#f8f9fa', dark: '#141618' },
-        '--dsw-specific-input-major': { light: '#ffffff', dark: '#202327' },
-        '--dsw-alias-state-business-primary': { light: '#1b1d20', dark: '#eff1f4' },
-        '--dsw-alias-button-info-fill': { light: '#1b1d20', dark: '#eff1f4' },
+        '--dsw-alias-bg-base': { light: '#ffffff', dark: '#181818' },
+        '--dsw-specific-sidebar-fill': { light: '#f9f9f9', dark: '#000000' },
+        '--dsw-specific-input-major': { light: '#ffffff', dark: '#212121' },
+        '--dsw-specific-menu': { light: '#f9f9f9', dark: '#212121' },
+        '--dsw-specific-bubble': { light: '#f3f3f3', dark: '#414141' },
+        '--dsw-alias-label-primary': { light: '#1a1c1f', dark: '#dfdfdf' },
+        '--dsw-alias-label-secondary': { light: '#1a1c1fb3', dark: '#ffffffb3' },
+        '--dsw-alias-label-tertiary': { light: '#1a1c1f80', dark: '#ffffff80' },
+        '--dsw-alias-state-business-primary': { light: '#1a1c1f', dark: '#dfdfdf' },
+        '--dsw-alias-button-info-fill': { light: '#1a1c1f', dark: '#dfdfdf' },
       }));
       if (typeof document !== 'undefined') ctx.effect(() => {
         const previous = document.title;

@@ -9,10 +9,12 @@ test('ColdX registers live terminal and companion preferences separately', () =>
   assert.deepEqual(COLDX_SETTINGS_BASE, { showTerminal: false });
   assert.deepEqual(coldxSettingsSchema({}), { showTerminal: false });
   assert.deepEqual(coldxSettingsSchema({ showTerminal: true }), { showTerminal: true });
-  assert.equal(calls.length, 2);
+  assert.equal(calls.length, 3);
+  assert.equal(calls[2][0], 'coldx-navigation');
   assert.equal(calls[1][0], 'coldx-companion');
   assert.deepEqual(companionSettingsSchema({}), {enabled:true});
   assert.deepEqual(companionSettingsSchema({enabled:false}), {enabled:false});
+  assert.equal(companionSettingsSchema({enabled:true,desktop:false,reminders:false}).enabled,true,'old preferences remain loadable');
   assert.throws(() => companionSettingsSchema({enabled:'no'}), /boolean/i);
   assert.equal(calls[0][0], COLDX_SETTINGS_NAMESPACE);
   assert.equal(calls[0][1], coldxSettingsSchema);

@@ -5,9 +5,44 @@ export function createWorkspaceShell(React) {
   const duration = value => Number.isFinite(value) && value >= 0 ? `${number(Math.round(value))} ms` : '—';
 
   function Home() {
-    return h('div', { className: 'cx-workspace-home' },
-      h('h1', null, '今天想完成什么？'),
-      h('p', null, '描述任务，或从左侧继续已有工作。'));
+    const steps = [
+      ['01', '说出目标', '你希望得到什么结果'],
+      ['02', '跟进过程', '查看计划、工具与进展'],
+      ['03', '打开成果', '检查文件与最终交付'],
+    ];
+    return h('section', { className: 'cx-workspace-home', 'aria-labelledby': 'cx-home-title' },
+      h('div', { className: 'cx-home-stage' },
+        h('div', { className: 'cx-home-copy' },
+          h('div', { className: 'cx-home-eyebrow' },
+            h('span', { className: 'cx-home-eyebrow-mark', 'aria-hidden': true }),
+            h('span', null, 'ColdX'),
+            h('span', { className: 'cx-home-eyebrow-separator', 'aria-hidden': true }, '/'),
+            h('span', null, '新任务')),
+          h('h1', { id: 'cx-home-title' }, '今天想完成什么？'),
+          h('p', { className: 'cx-home-lead' }, '描述你想完成的结果。ColdX 会在当前工作区中推进任务，让过程和成果都可以随时查看。')),
+        h('div', { className: 'cx-home-art', 'aria-hidden': true },
+          h('span', { className: 'cx-home-art-sheet cx-home-art-sheet-back' }),
+          h('span', { className: 'cx-home-art-sheet cx-home-art-sheet-middle' }),
+          h('span', { className: 'cx-home-art-sheet cx-home-art-sheet-front' },
+            h('span', { className: 'cx-home-art-glyph' }, '›'),
+            h('span', { className: 'cx-home-art-line cx-home-art-line-one' }),
+            h('span', { className: 'cx-home-art-line cx-home-art-line-two' }),
+            h('span', { className: 'cx-home-art-line cx-home-art-line-three' })))),
+      h('div', { className: 'cx-home-flow', 'aria-label': '完成任务的三个步骤' },
+        h('div', { className: 'cx-home-flow-heading' },
+          h('span', null, '从想法到成果'),
+          h('span', { className: 'cx-home-flow-rule', 'aria-hidden': true })),
+        h('ol', { className: 'cx-home-steps' }, ...steps.map(([index, title, detail]) =>
+          h('li', { className: 'cx-home-step', key: index },
+            h('span', { className: 'cx-home-step-index', 'aria-hidden': true }, index),
+            h('span', { className: 'cx-home-step-content' },
+              h('strong', null, title),
+              h('span', { className: 'cx-home-step-detail' }, detail)))))),
+      h('div', { className: 'cx-home-examples' },
+        h('p', { className: 'cx-home-examples-label' }, '试着这样描述'),
+        h('ul', null,
+          h('li', null, '“审查这个页面，找到体验问题并修好。”'),
+          h('li', null, '“根据引用的文件，做一份可以预览的成果。”'))));
   }
 
   function KernelStatus({ snapshot, loading = false, error, onOpenChange } = {}) {

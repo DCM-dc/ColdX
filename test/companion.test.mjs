@@ -45,3 +45,43 @@ test('petting never masks waiting or failed execution state', () => {
   }
   assert.notEqual(pet.petCaption('idle',0),pet.petCaption('idle',1));
 });
+test('host snapshots keep native task identity and never invent team messages', async()=>{
+  const task={id:'child',parentSessionId:'parent',mode:'continuable',name:'研究伙伴',mood:'waiting',caption:'需要选择',pendingId:'p1',color:'sky'};
+  const calls=[],cleanups=[];
+  const pet=createCompanionComponents({createElement(){},useEffect:fn=>cleanups.push(fn())},{getSnapshot:()=>({value:{enabled:true}}),subscribe:()=>()=>{}},'',{
+    rpc:async(method)=>{calls.push(method);return {version:1,tasks:[task],teams:[]};},getSessionId:()=> 'parent'
+  });
+  pet.Controller();await new Promise(resolve=>setImmediate(resolve));await pet.refresh();
+  assert.deepEqual(pet.getLive().data.teams,[]);
+  assert.equal(pet.getLive().data.tasks[0].mode,'continuable');
+  assert.deepEqual(calls.filter(x=>typeof x==='string'),['snapshot','snapshot']);
+  assert.equal(pet.getLive().data.tasks[0].pendingId,'p1');
+  for(const cleanup of cleanups)cleanup?.();
+  assert.deepEqual(pet.getLive().data.tasks,[],'teardown clears stale tasks');
+  pet.dispose();
+});
+test('disconnect clears task state and reconnect restores native state',async t=>{
+  const cleanups=[];let offline=false;
+  const pet=createCompanionComponents({createElement(){},useEffect:fn=>cleanups.push(fn())},{getSnapshot:()=>({value:{enabled:true}}),subscribe:()=>()=>{}},'',{
+    rpc:async()=>{if(offline)throw Error('offline');return {version:1,tasks:[{id:'child',mood:'working',caption:'working',parentSessionId:'parent',mode:'continuable'}],teams:[]};},
+  });
+  t.after(()=>{for(const cleanup of cleanups)cleanup?.();pet.dispose();});
+  pet.Controller();await new Promise(resolve=>setImmediate(resolve));await pet.refresh();
+  assert.equal(pet.getLive().data.tasks[0].id,'child');
+  offline=true;await pet.refresh();
+  assert.deepEqual(pet.getLive().data.tasks,[]);
+  assert.match(pet.getLive().error,/无法连接/);
+  offline=false;await pet.refresh();
+  assert.equal(pet.getLive().error,'');assert.equal(pet.getLive().data.tasks[0].id,'child');
+});
+test('pending refresh does not overlap and a disposed controller ignores its late response',async t=>{
+  const cleanups=[];let resolveSnapshot,calls=0;
+  const pet=createCompanionComponents({createElement(){},useEffect:fn=>cleanups.push(fn())},{getSnapshot:()=>({value:{enabled:true}}),subscribe:()=>()=>{}},'',{
+    rpc:()=>{calls++;return new Promise(resolve=>{resolveSnapshot=resolve;});}
+  });
+  t.after(()=>{for(const cleanup of cleanups)cleanup?.();pet.dispose();});
+  pet.Controller();await pet.refresh();assert.equal(calls,1);
+  pet.dispose();resolveSnapshot({version:1,tasks:[{id:'stale'}],teams:[]});
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.deepEqual(pet.getLive().data.tasks,[]);
+});

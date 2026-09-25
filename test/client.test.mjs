@@ -3,6 +3,10 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 import { createClientPlugin } from '../plugin/client/client-source.mjs';
+import { createWorkbenchPlugin } from '../plugin/client/workbench-entry.mjs';
+import { createWorkbenchNavigation } from '../plugin/client/navigation-source.mjs';
+import { createWorkbenchShell } from '../plugin/client/workbench-shell-source.mjs';
+import { createMessagePresentation } from '../plugin/client/message-presentation.mjs';
 import { createWorkspaceModel } from '../plugin/client/workspace-model.mjs';
 import { dshRequire } from '../plugin/page-native.mjs';
 import { createFileViewComponents } from '../plugin/client/file-view-source.mjs';
@@ -19,8 +23,8 @@ test('the built client retains its native lazy module entry', async () => {
   assert.equal(typeof record.factory, 'function');
 });
 
-function mountClient(reply = { ok: true, value: {} }) {
-  const commands = []; const fileQueries = []; const drafts = []; const openedSubagents = []; let frostDisposed = 0;
+function mountClient(reply = { ok: true, value: {} }, extras = {}) {
+  const commands = []; const fileQueries = []; const drafts = []; const openedSubagents = []; let frostDisposed = 0, companionNavigation, companionInstance;
   const CodingModeControl = () => null;
   const AttachmentControl = () => null;
   const ComposerAttachments = () => null;
@@ -29,10 +33,13 @@ function mountClient(reply = { ok: true, value: {} }) {
   const TerminalSettingsRow = () => null;
   const React = { useEffect() {}, useSyncExternalStore: (_subscribe, read) => read(), Fragment: 'fragment', createElement: (type, props, ...children) => ({ type, props: { ...props, children } }) };
   const InlineTool = props => React.createElement('article', props);
-  const plugin = createClientPlugin(React, { MarkdownText: () => null }, {
+  const plugin = (extras.workbench ? createWorkbenchPlugin : createClientPlugin)(React, { MarkdownText: () => null }, {
+    workbenchShell:createWorkbenchShell,
+    navigation:createWorkbenchNavigation,
+    messages:createMessagePresentation,
     brand: () => ({ Mark() {}, Name() {}, HeroBrand() {} }),
     workspaceShell: createWorkspaceShell,
-    companion: createCompanionComponents,
+    companion: (react,settings,actions) => { companionNavigation=actions; companionInstance=createCompanionComponents(react,settings,'',actions); return {...companionInstance,...extras.companion}; },
     modelControl: () => ({ ModelControl() {} }),
     superpowers: () => ({SuperpowersControl(){},SuperpowersSettingsRow(){},dispose(){}}),
     usage: () => ({UsageEntry(){},UsageSettingsRow(){},BalanceNotice(){}}),
@@ -63,6 +70,7 @@ function mountClient(reply = { ok: true, value: {} }) {
     commands: { async execute(...args) { commands.push(args); return reply; } },
     fileReferences: { async list(...args) { fileQueries.push(args); return { ok: true, value: [{ path: 'README.md', kind: 'file' }] }; } },
   }, slots: {
+    entries(name) { return [...options].filter(([,spec])=>spec.name===name).map(([key,spec])=>({options:spec,component:entries.get(key)})); },
     inject(_name, callback) { const result = callback(); if (result?.next) for (const item of result) disposers.push(item); else disposers.push(result); return result; },
     register(config, component) {
       const key = `${config.name}:${config.key ?? config.id ?? ''}`;
@@ -71,17 +79,67 @@ function mountClient(reply = { ok: true, value: {} }) {
     },
   }, theme: { getTheme: () => ({ active: { colorScheme: 'light' } }), overrideTokens: () => () => {} }, effect(callback) { disposers.push(callback()); } };
   const uploads = [];
+  Object.assign(ctx.sessions,extras.sessions);
   ctx.connection = { rpc: { async call(...args) { uploads.push(args); return reply; } } };
   ctx.provide = () => {};
   plugin.apply(ctx);
   entries.uploads = uploads;
+  entries.companionNavigation=companionNavigation; entries.companion=companionInstance; entries.sessions=ctx.sessions;
   return { entries, options, InlineTool, CodingModeControl, AttachmentControl, ComposerAttachments, ActivityLens, SessionTerminal, TerminalSettingsRow, plugin, commands, fileQueries, drafts, openedSubagents, settingsScope, get settingsSpec() { return settingsSpec; }, get frostDisposed() { return frostDisposed; }, dispose() { for (const dispose of disposers.reverse()) if (typeof dispose === 'function') dispose(); } };
 }
+
+test('companion loads the native parent catalog before opening a background child',async t=>{
+  const mounted=mountClient();t.after(()=>mounted.dispose());
+  const {companionNavigation:navigation,sessions}=mounted.entries;
+  let ready=false,refreshed=[];
+  sessions.refreshSubagents=async parent=>{refreshed.push(parent);await new Promise(resolve=>setImmediate(resolve));ready=true;};
+  sessions.openSubagent=address=>{assert.equal(ready,true,'native catalog must exist before selection');return address;};
+  const task={parentSessionId:'background-parent',mode:'continuable'};
+  assert.equal((await navigation.openTask('background-child',task)).childSessionId,'background-child');
+  assert.deepEqual(refreshed,['background-parent']);
+  sessions.refreshSubagents=async()=>{throw Error('disconnected');};
+  await assert.rejects(navigation.openTask('background-child',task),/disconnected/);
+});
+
+test('groups use the native main slot and selecting the same parent restores ordinary conversation',t=>{
+  let current='parent',view=null;
+  const groupListeners=new Set(),sessionListeners=new Set();
+  const setView=next=>{view=next;for(const fn of groupListeners)fn();};
+  const select=id=>{current=id;for(const fn of sessionListeners)fn();};
+  const mounted=mountClient(undefined,{sessions:{list:{getSnapshot:()=>({current}),subscribe:fn=>{sessionListeners.add(fn);return()=>sessionListeners.delete(fn);}},clear:()=>select(undefined),open:select},companion:{GroupPage(){},GroupSidebar(){},getGroupView:()=>view,subscribeGroup:fn=>{groupListeners.add(fn);return()=>groupListeners.delete(fn);},closeGroup:()=>setView(null)}});
+  t.after(()=>mounted.dispose());
+  assert.ok(mounted.entries.has('sidebar.footer.action:coldx-groups'));
+  setView({teamId:'team',parentSessionId:'parent'});
+  assert.ok(mounted.entries.has('conversation:coldx-group'));
+  assert.equal(current,undefined,'native and group selections are mutually exclusive');
+  select('parent');
+  assert.equal(view,null);
+  assert.equal(mounted.entries.has('conversation:coldx-group'),false);
+  setView({teamId:'team',parentSessionId:'parent'});setView(null);
+  assert.equal(current,'parent','closing the group returns to its actual parent');
+});
+
+test('native navigation cancels a pending group open without clearing the new selection',async t=>{
+  let current='parent',ready=false;
+  const sessionListeners=new Set(),loadListeners=new Set();
+  const select=id=>{current=id;for(const fn of sessionListeners)fn();};
+  const mounted=mountClient(undefined,{sessions:{
+    list:{getSnapshot:()=>({current}),subscribe:fn=>{sessionListeners.add(fn);return()=>sessionListeners.delete(fn);}},
+    clear:()=>select(undefined),open:select,
+    binding:()=>({session:{getSnapshot:()=>({openState:ready?'open':'opening'}),subscribe:fn=>{loadListeners.add(fn);return()=>loadListeners.delete(fn);}}}),
+  }});t.after(()=>mounted.dispose());
+  const opening=mounted.entries.companion.openGroup('new');
+  await new Promise(resolve=>setImmediate(resolve));assert.equal(loadListeners.size,1);
+  select('ordinary-chat');ready=true;for(const fn of loadListeners)fn();await opening;
+  assert.equal(mounted.entries.companion.getGroupView(),null);
+  assert.equal(current,'ordinary-chat');assert.equal(loadListeners.size,0);
+  assert.equal(mounted.entries.has('conversation:coldx-group'),false);
+});
 
 test('ColdX owns only its inline tool renderers and releases every slot on disposal', t => {
   const mounted = mountClient(); t.after(() => mounted.dispose());
   const { entries, options, InlineTool } = mounted;
-  assert.equal(entries.size, 25);
+  assert.equal(entries.size, 26);
   assert.ok(entries.has('sidebar.footer.action:coldx-companion'));
   assert.ok(entries.has('settings.general.item:coldx-companion'));
   assert.equal(entries.get('sidebar.footer.action:coldx-marketplace').name,'MarketplaceEntry');
@@ -269,4 +327,20 @@ test('local upload sends bounded file bytes through the authenticated native con
   const rejected = mountClient({ ok: false, error: { message: 'disk full' } });
   await assert.rejects(rejected.entries.get('conversation.input.add:')({ sessionId: 'owner' }).props.children[0].props.uploadFile(file, signal), /disk full/);
   rejected.dispose();
+});
+
+test('rebuilt entry retains native modes, files, approvals and tool carriers without activating companion state', t=>{
+  const mounted=mountClient(undefined,{workbench:true}); t.after(()=>mounted.dispose());
+  assert.equal(mounted.entries.companionNavigation,undefined);
+  assert.ok(mounted.entries.has('conversation.input.add:'));
+  assert.ok(mounted.entries.has('conversation.input.plan:'));
+  assert.ok(mounted.entries.has('conversation.input.model.effort:'));
+  assert.ok(mounted.entries.has('tool.call.toolview:coldx_present_page'));
+  assert.ok(mounted.entries.has('conversation.session.header.utilities:coldx-activity'));
+  assert.ok(mounted.entries.has('sidebar.footer.action:coldx-balance'),'low-balance reminders remain mounted');
+  assert.ok(mounted.entries.has('sidebar.footer.action:coldx-update'),'available application updates remain visible');
+  const takeover=mounted.options.get('conversation.composer:coldx-page-wait');
+  assert.equal(takeover.select({interactions:[{kind:'approval'}],session:{}}),null);
+  assert.equal(mounted.entries.has('sidebar.footer.action:coldx-companion'),false);
+  assert.equal(mounted.entries.has('sidebar.footer.action:coldx-groups'),false);
 });

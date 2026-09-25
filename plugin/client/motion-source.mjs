@@ -272,13 +272,28 @@ export function createMotionRuntime({ environment = globalThis, reducedMotion } 
     const state = record(node);
     if (state.pressed === pressed) return state.animation;
     state.pressed = pressed;
-    state.pressBase ??= presentation(node, ['transform']).transform;
+    if (state.pressBase === undefined) {
+      state.pressInline = node.style.transform ?? '';
+      state.pressBase = presentation(node, ['transform']).transform;
+    }
     const baseline = state.pressBase;
     const target = pressed && !immediate(options) ? `${baseline === 'none' ? '' : `${baseline} `}scale(.98)` : baseline;
     return animate(node, { transform: target }, {
       ...options, duration: 140, staticTarget: { transform: baseline },
       // Frequent controls give feedback without a decorative release bounce.
       spring: undefined,
+      onFinish() {
+        if (!state.pressed) {
+          // A hover/expanded transition can be mid-frame on pointerdown. That
+          // sampled pose is not an authored resting style; return ownership to
+          // CSS after release, and sample afresh for the next gesture.
+          node.style.transform = state.pressInline;
+          delete state.pressBase;
+          delete state.pressInline;
+          state.staticTarget = undefined;
+        }
+        options.onFinish?.();
+      },
     });
   }
 

@@ -244,6 +244,32 @@ test('untouched and duplicate releases never start a rebound', () => {
   assert.equal(release.cancelled, false);
 });
 
+test('press release returns transform ownership to CSS instead of freezing a hover frame', () => {
+  const f = fixture(); const node = f.element();
+  node.presentation = { transform: 'matrix(1.01, -.014, .014, 1.01, 0, -.2)' };
+  f.runtime.press(node, true);
+  f.runtime.press(node, false);
+  node.animations.at(-1).finish();
+  assert.equal(node.style.transform, '', 'release must not persist the sampled hover pose');
+  f.runtime.press(node, true);
+  assert.equal(node.animations.at(-1).frames.at(-1).transform, 'scale(.98)', 'next gesture samples a fresh baseline');
+  f.runtime.press(node, false, { instant: true });
+  assert.equal(node.style.transform, '', 'keyboard blur must restore CSS synchronously');
+});
+
+test('rapid repress keeps the original inline transform until the final release', () => {
+  const f = fixture(); const node = f.element({ style: { transform: 'translateX(4px)' } });
+  f.runtime.press(node, true);
+  f.runtime.press(node, false);
+  const staleFinish = node.animations.at(-1).onfinish;
+  node.animations.at(-1).sample({ transform: 'matrix(.99, 0, 0, .99, 4, 0)' });
+  f.runtime.press(node, true);
+  staleFinish();
+  f.runtime.press(node, false);
+  node.animations.at(-1).finish();
+  assert.equal(node.style.transform, 'translateX(4px)');
+});
+
 test('cancelled press settles without a release overshoot', () => {
   const f = fixture(); const node = f.element();
   f.runtime.press(node, true); node.animations.at(-1).finish();

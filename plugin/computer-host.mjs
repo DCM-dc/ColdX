@@ -225,5 +225,14 @@ export function apply(ctx, config = {}) {
     }).catch(() => {}).finally(() => service.pendingImages.delete(task));
     service.pendingImages.add(task);
   });
-  ctx.on('agent/disposed', agent => { const state = service.states.get(agent.id); if (state) void service.closeState(state); if(service.desktop.owner===agent.id)void service.desktop.stop(agent.id); });
+  ctx.on('agent/disposed', async ({agent}) => {
+    // Native lifecycle events carry an envelope. Return the cleanup promise so
+    // the native contained emitter can observe errors instead of a fatal,
+    // unhandled rejection when an unrelated child finishes.
+    const state=service.states.get(agent.id);
+    await Promise.all([
+      state?service.closeState(state):undefined,
+      service.desktop.owner===agent.id?service.desktop.stop(agent.id):undefined,
+    ]);
+  });
 }

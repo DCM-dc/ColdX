@@ -1,0 +1,20 @@
+# Desktop companions implementation plan
+
+Spec: `docs/superpowers/specs/2026-09-19-desktop-companion-team.md`
+
+Latest scope amendment (2026-09-19): user requested uninstall of the currently installed version and isolated retesting. This supersedes the distribution/install steps below for this turn. Retain source changes and data backup; do not reinstall or publish the unfinished desktop feature. Results: `docs/desktop-companion-retest-2026-09-19.md`.
+
+## Global constraints
+Native DSH owns execution, permissions and sessions. No fake group responses or autonomous unbounded paid chatter. Never auto-approve. Preserve current files/configuration. Use existing linked worktree. User authorized autonomous implementation, GitHub publication and installation in the continuing project. No new confirmation ceremony. Root owns integration files/version/release; task owners edit only assigned surfaces and run focused meaningful tests before reporting. Implementation reviews follow the task boundaries and a final whole-branch review.
+
+## Task 1: Native host state and team service
+Create `plugin/companion-host.mjs`, bounded pure helpers/persistence under `lib/companion/`, and `test/companion-host*.test.mjs`. Implement spec RPC contract and real continuable native subagent rounds. Discover public installed APIs through `plugin/page-native.mjs`; use exact live parent ownership. Native pending interactions must include child pending too. Test actual loop with deterministic mock and scope/permission/cancellation/errors. Do not edit profile/client/desktop; report required inject/config. Review focus: stale parent authority, cancellation, restart recovery, hidden reasoning, event-fold performance and asynchronous failure safety.
+
+## Task 2: Secure desktop pet window
+Create `desktop/companion-*` host/preload/renderer/html/css and tests. Factory receives BrowserWindow/ipcMain/screen, main window getter and trusted backend URL getter, callbacks open/hide. Main preload bridge supplied separately so root integrates existing titlebar preload. Packaged fur asset path via existing PNG copied to desktop/assets by root. Implement bounds, drag, expressions, no focus stealing, settings, strict IPC and teardown. Do not edit main.mjs/titlebar-preload.cjs/electron-builder.cjs; provide integration instructions. Review focus: renderer spoofing, main close, task identity, stale workspace, multi-monitor and pointer behavior.
+
+## Task 3: Companion expressions and team UI
+Extend `plugin/client/companion-source.mjs` and `companion.css`, tests `test/companion*.browser.mjs`/`test/companion.test.mjs` only. Keep old factory params; fourth optional `{rpc,openTask,getSessionId,desktop}` adapter; desktop conforms spec. Export `Controller` mounted once by root, `Companion`, `CompanionSettingsRow`, legacy `SessionObserver`, dispose etc. Controller polls global snapshot, publishes desktop settings/state and responds to safe open/hide. Expose team modal via companion button, member roles/colors editor, create/send/stop/remove, display actual replies and errors. Reuse generated body; 11 moods, stable colors, unobtrusive motion. No fake data in product. If no RPC retain existing legacy behavior for old tests. Review focus: modal keyboard/focus, no duplicated polls, stale responses, disconnect empty-state, no flashing, preserving native controls.
+
+## Task 4: Integration, acceptance and distribution (root)
+Register host in lib/profile.mjs; expand native settings and decode; wire client adapters/controller, preload/main lifecycle, packaged assets. Extend existing contract tests and run targeted plus complete suites. Isolated real Electron acceptance covers minimized main with pet, restored task and global reminder without approval. Review all branch changes independently. Version 0.3.0 (new desktop subsystem), manifest/lock sync, release notes/documentation. Publish to GitHub and build Windows installer; backup then update installed app, verify sessions preserved. Do not claim other OS acceptance.

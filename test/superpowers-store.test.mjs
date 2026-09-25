@@ -20,6 +20,7 @@ async function fixture(t,{treeExtra=[],corrupt=false,alias=false}={}) {
   let calls=0;
   const fetchImpl=async url=>{calls++;const path=new URL(url).pathname;let data;
     if(path.endsWith('/commits/main'))data={sha:next};
+    else if(path.endsWith('/git/ref/heads/main'))data={object:{type:'commit',sha:next}};
     else if(path.endsWith('/package.json'))data={version:'6.4.0'};
     else if(path.includes('/git/trees/'))data={truncated:false,tree:[...Object.entries(texts).map(([path,text])=>({path,type:'blob',mode:'100644',size:Buffer.byteLength(text),sha:blob(text)})),...treeExtra]};
     else {const relative=path.split('/').slice(4).join('/');if(!Object.hasOwn(texts,relative))throw Error('Unexpected URL '+url);return new Response(corrupt?'bad bytes':texts[relative]);}
@@ -29,6 +30,17 @@ async function fixture(t,{treeExtra=[],corrupt=false,alias=false}={}) {
   const store=new SuperpowersStore({root:join(root,'state'),bundledDir,fetchImpl});await store.ready;t.after(()=>store.dispose());
   return{store,root,bundledDir,get calls(){return calls;}};
 }
+test('update lookup reads a small branch ref instead of downloading a commit diff',async t=>{
+  const f=await fixture(t),fetch=f.store.fetch;
+  f.store.fetch=async(url,options)=>{
+    assert.equal(url.includes('/commits/'),false,'large commit patches are not needed to resolve the branch');
+    return fetch(url,options);
+  };
+  await f.store.check();
+  assert.equal(f.store.state().candidate.commit,next);
+  assert.equal(f.store.state().active.commit,old);
+});
+
 test('candidate download preserves active skills until exact confirmation and survives restart',async t=>{
   const f=await fixture(t);assert.equal(f.store.state().active.commit,old);assert.equal(f.store.state().enabled,false);
   await f.store.check();assert.equal(f.store.state().candidate.commit,next);assert.equal(f.store.state().active.commit,old);
