@@ -35,6 +35,75 @@ test('browser and desktop share the same session pane and cannot close each othe
   assert.equal(pane.get('b').active, 'browser');
 });
 
+test('workbench remembers open documents per conversation and selects a neighbor when one closes', () => {
+  const pane = createWorkbenchPane({ createElement() {} });
+  pane.openDocument('a', 'src/first.md');
+  pane.openDocument('a', 'src/second.md');
+  pane.openDocument('b', 'other.md');
+  assert.deepEqual(pane.get('a').documents, ['src/first.md', 'src/second.md']);
+  assert.equal(pane.get('a').activeDocument, 'src/second.md');
+  pane.open('a', 'browser');
+  assert.deepEqual(pane.get('a').documents, ['src/first.md', 'src/second.md'], 'switching surface keeps document tabs');
+  pane.selectDocument('a', 'src/first.md');
+  assert.equal(pane.get('a').active, 'files');
+  assert.equal(pane.get('a').activeDocument, 'src/first.md');
+  pane.closeDocument('a', 'src/first.md');
+  assert.deepEqual(pane.get('a').documents, ['src/second.md']);
+  assert.equal(pane.get('a').activeDocument, 'src/second.md');
+  assert.deepEqual(pane.get('b').documents, ['other.md']);
+  assert.equal(pane.get('b').activeDocument, 'other.md');
+});
+
+test('keyboard closing a document focuses the selected tab, while pointer and unfocused closes preserve focus', () => {
+  const document = { activeElement: null };
+  let cursor = 0, layout = [], liveTabs = [];
+  const rail = { querySelector: selector => selector === '[role="tab"][aria-selected="true"]'
+    ? liveTabs.find(tab => tab.getAttribute('aria-selected') === true) : null };
+  const refs = [{ current: rail }];
+  const React = {
+    createElement(type, props, ...children) { return { type, props: props ?? {}, children }; },
+    useRef(initial) { return refs[cursor++] ??= { current: initial }; },
+    useSyncExternalStore(_subscribe, snapshot) { return snapshot(); },
+    useEffect() {},
+    useLayoutEffect(effect) { layout.push(effect); },
+  };
+  const pane = vm.runInNewContext(`(${createWorkbenchPane.toString()})`, { document })(React);
+  const nodes = tree => [tree, ...tree.children.flatMap(child => child && typeof child === 'object' && 'type' in child ? nodes(child) : Array.isArray(child) ? child.flatMap(item => item && typeof item === 'object' && 'type' in item ? nodes(item) : []) : [])];
+  const render = () => {
+    cursor = 0; layout = [];
+    const tree = pane.Tabs({ sessionId: 'a' });
+    liveTabs = nodes(tree).filter(node => node.props.role === 'tab').map(node => ({
+      dataset: { workbenchFile: node.props['data-workbench-file'], workbenchTab: node.props['data-workbench-tab'] },
+      getAttribute(name) { return node.props[name]; },
+      focus() { document.activeElement = this; },
+    }));
+    for (const effect of layout) effect();
+    return tree;
+  };
+  const close = (path, detail, focused) => {
+    const tree = render();
+    const button = nodes(tree).find(node => node.props['aria-label'] === `关闭 ${path}`);
+    assert.ok(button);
+    const currentTarget = {};
+    if (focused) document.activeElement = currentTarget;
+    button.props.onClick({ detail, currentTarget });
+    render();
+  };
+
+  pane.openDocument('a', 'first.md'); pane.openDocument('a', 'second.md');
+  close('second.md', 0, true);
+  assert.equal(document.activeElement?.dataset.workbenchFile, 'first.md');
+  close('first.md', 0, true);
+  assert.equal(document.activeElement?.dataset.workbenchTab, 'files', 'closing the last document focuses Files');
+
+  const composer = { name: 'composer' }; document.activeElement = composer;
+  pane.openDocument('a', 'first.md'); pane.openDocument('a', 'second.md');
+  close('second.md', 1, false);
+  assert.equal(document.activeElement, composer, 'pointer close does not move focus');
+  close('first.md', 0, false);
+  assert.equal(document.activeElement, composer, 'unfocused programmatic close does not move focus');
+});
+
 test('desktop remains nonmodal, narrow drawers use native modality, and hidden panels never steal later focus', () => {
   const hooks = [], observers = new Set(), events = new Map(), calls = [];
   let cursor = 0, pending = [], width = 1000, controls;

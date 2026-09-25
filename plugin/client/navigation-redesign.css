@@ -1,5 +1,98 @@
 /* Secondary pages sit in the native DSH conversation column. The source of
    truth for content and actions remains navigation-source.mjs and DSH. */
+.coldx-shell .cx-command-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  width: 100vw;
+  max-width: none;
+  height: 100vh;
+  max-height: none;
+  margin: 0;
+  align-items: flex-start;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: clamp(64px, 12vh, 132px) 16px 20px;
+  border: 0;
+  background: transparent;
+  color: var(--cx-wb-text);
+}
+.coldx-shell .cx-command-overlay:not([open]) { display: none; }
+.coldx-shell .cx-command-overlay::backdrop { background: rgb(20 25 35 / 30%); }
+.coldx-shell .cx-command-dialog {
+  position: relative;
+  display: flex;
+  width: min(600px, 100%);
+  max-height: min(680px, calc(100vh - 84px));
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--cx-wb-line);
+  border-radius: 16px;
+  background: var(--cx-wb-floating);
+  color: var(--cx-wb-text);
+  box-shadow: 0 28px 72px rgb(0 0 0 / 18%), 0 5px 16px rgb(0 0 0 / 8%);
+  animation: cx-command-enter 160ms cubic-bezier(.2,.8,.2,1) both;
+}
+.coldx-shell .cx-command-content { display: flex; min-height: 0; flex-direction: column; }
+.coldx-shell .cx-command-search {
+  display: flex;
+  height: 58px;
+  flex: none;
+  align-items: center;
+  gap: 12px;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--cx-wb-line);
+  color: var(--cx-wb-muted);
+}
+.coldx-shell .cx-command-search > svg { width: 18px; height: 18px; flex: none; }
+.coldx-shell .cx-command-search input {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--cx-wb-text);
+  font: inherit;
+  font-size: 15px;
+}
+.coldx-shell .cx-command-search input::placeholder { color: var(--cx-wb-muted); }
+.coldx-shell .cx-command-results { min-height: 80px; overflow: auto; padding: 8px; }
+.coldx-shell .cx-command-group + .cx-command-group { margin-top: 5px; padding-top: 5px; border-top: 1px solid var(--cx-wb-line); }
+.coldx-shell .cx-command-group-title { padding: 8px 10px 5px; color: var(--cx-wb-muted); font-size: 11px; font-weight: 600; }
+.coldx-shell .cx-command-row {
+  display: flex;
+  width: 100%;
+  min-height: 43px;
+  align-items: center;
+  gap: 11px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--cx-wb-text);
+  text-align: left;
+  cursor: pointer;
+}
+.coldx-shell .cx-command-row:is(:hover,[aria-selected="true"]) { background: color-mix(in srgb, var(--cx-wb-text) 7%, var(--cx-wb-floating)); }
+.coldx-shell .cx-command-row:focus-visible,
+.coldx-shell .cx-command-search input:focus-visible,
+.coldx-shell .cx-command-status button:focus-visible { outline: 2px solid var(--cx-wb-accent); outline-offset: -2px; }
+.coldx-shell .cx-command-icon { display: grid; width: 26px; height: 26px; flex: none; place-items: center; color: var(--cx-wb-muted); }
+.coldx-shell .cx-command-icon svg { width: 17px; height: 17px; }
+.coldx-shell .cx-command-copy { display: block; min-width: 0; flex: 1; }
+.coldx-shell .cx-command-title,
+.coldx-shell .cx-command-copy small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.coldx-shell .cx-command-title { font-size: 13px; font-weight: 550; }
+.coldx-shell .cx-command-copy small { margin-top: 2px; color: var(--cx-wb-muted); font-size: 11px; }
+.coldx-shell .cx-command-row kbd { flex: none; color: var(--cx-wb-muted); font: inherit; font-size: 11px; }
+.coldx-shell .cx-command-row > svg { width: 14px; height: 14px; color: var(--cx-wb-muted); opacity: .6; }
+.coldx-shell .cx-command-empty { margin: 24px 12px; color: var(--cx-wb-muted); text-align: center; font-size: 13px; }
+.coldx-shell .cx-command-status { display: flex; justify-content: space-between; gap: 12px; padding: 9px 18px; border-top: 1px solid var(--cx-wb-line); color: var(--cx-wb-muted); font-size: 12px; }
+.coldx-shell .cx-command-status[role="alert"] { color: var(--cx-wb-danger, #b44545); }
+.coldx-shell .cx-command-status button { border: 0; padding: 0; background: none; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
+.coldx-shell .cx-command-footer { display: flex; gap: 16px; flex: none; padding: 10px 18px; border-top: 1px solid var(--cx-wb-line); color: var(--cx-wb-muted); font-size: 11px; }
+@keyframes cx-command-enter { from { opacity: 0; transform: translateY(-5px) scale(.985); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .coldx-shell .cx-command-dialog { animation: none; } }
 .coldx-shell .cx-workbench-page:has(.cx-navpage) .cx-workbench-page-body {
   max-width: 880px;
   margin: 36px auto 0;

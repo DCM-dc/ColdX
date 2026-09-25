@@ -26,9 +26,20 @@ export function createFileViewComponents(React, MarkdownText, requestFile, openN
   function open(sessionId, path = '.', line) {
     if (typeof sessionId !== 'string' || typeof path !== 'string') return false;
     update(sessionId, { open: true, path, line, tabs: path === '.' ? get(sessionId).tabs : [...new Set([...get(sessionId).tabs, path])].slice(-12) });
-    pane?.open(sessionId, 'files');
+    if (path === '.') pane?.open(sessionId, 'files');
+    else pane?.openDocument(sessionId, path);
     return true;
   }
+  function closeTab(sessionId, path) {
+    const state = get(sessionId), index = state.tabs.indexOf(path);
+    if (index < 0) return false;
+    const tabs = state.tabs.filter(item => item !== path);
+    const next = tabs[Math.max(0, index-1)] ?? '.';
+    update(sessionId, { tabs, ...(state.path === path ? {path:next,line:undefined} : {}) });
+    pane?.closeDocument(sessionId, path, {prefer:next === '.' ? null : next});
+    return true;
+  }
+  pane?.bindFiles({open,close:closeTab});
   function reference(sessionId, path, selection) {
     const destination = getReferenceTarget?.(sessionId);
     const input = destination ? undefined : inputs.get(sessionId);
@@ -85,7 +96,10 @@ export function createFileViewComponents(React, MarkdownText, requestFile, openN
           }
           if (!controller.signal.aborted) {
             setLoaded({owner,value});
-            if (value.entries && get(sessionId).tabs.includes(filePath)) update(sessionId,{tabs:get(sessionId).tabs.filter(path=>path!==filePath)});
+            if (value.entries && get(sessionId).tabs.includes(filePath)) {
+              update(sessionId,{tabs:get(sessionId).tabs.filter(path=>path!==filePath)});
+              pane?.closeDocument(sessionId,filePath,{prefer:null});
+            }
           }
         } catch (reason) { if (!controller.signal.aborted) setError(reason?.message || String(reason)); }
         finally { if (!controller.signal.aborted) setLoading(false); }
@@ -174,27 +188,21 @@ export function createFileViewComponents(React, MarkdownText, requestFile, openN
     }, [visible, sessionId, state.open]);
     React.useEffect(() => {
       const rail = tabsRef.current, tab = rail?.querySelector?.('[data-active="true"]');
-      if (!visible || !tab) return;
+      if (pane || !visible || !tab) return;
       const edge = rail.getBoundingClientRect(), selected = tab.getBoundingClientRect();
-      // Scroll only the horizontal tab rail. scrollIntoView would also move the
-      // conversation or an open document while switching files.
       if (selected.left < edge.left) rail.scrollLeft += selected.left - edge.left;
       else if (selected.right > edge.right) rail.scrollLeft += selected.right - edge.right;
     }, [visible, state.path, state.tabs]);
     const paths = [...new Set([...state.tabs, state.path])];
-    const closeTab = tab => {
-      const tabs = state.tabs.filter(path => path !== tab);
-      update(sessionId, { tabs, ...(state.path === tab ? {path:tabs[Math.max(0,state.tabs.indexOf(tab)-1)] ?? '.',line:undefined} : {}) });
-    };
     return h(React.Fragment, null,
       // Browsing starts in the shared work panel's Files tab; explicit file
       // links still open this same persistent view through open().
       present && h('dialog', { ref:panelRef, className:'cx-file-workspace cx-workbench-panel', 'data-open':visible ? 'true' : 'false', 'aria-label':'工作面板 · 文件', ...panelEvents },
         h('header', { className:'cx-file-header cx-workbench-header' }, h('strong', null, '工作面板'), h('button', { type:'button', onClick:close, 'aria-label':'关闭文件预览' }, '×')),
         pane && h(pane.Tabs, {sessionId}),
-        state.tabs.length > 0 && h('nav', { ref:tabsRef, className:'cx-file-tabs', 'aria-label':'已打开文件' }, state.tabs.map(tab => h('div', { key:tab, 'data-active':tab === state.path },
+        !pane && state.tabs.length > 0 && h('nav', { ref:tabsRef, className:'cx-file-tabs', 'aria-label':'已打开文件' }, state.tabs.map(tab => h('div', { key:tab, 'data-active':tab === state.path },
           h('button', { type:'button', title:tab, 'aria-current':tab === state.path ? 'page' : undefined, onClick:()=>open(sessionId,tab) }, leaf(tab)),
-          h('button', { type:'button', 'aria-label':`关闭 ${leaf(tab)}`, onClick:()=>closeTab(tab) }, '×')))),
+          h('button', { type:'button', 'aria-label':`关闭 ${leaf(tab)}`, onClick:()=>closeTab(sessionId,tab) }, '×')))),
         h('div', {className:'cx-file-documents'}, paths.map(path => h(FileDocument, {key:`${sessionId}\u0000${path}`,sessionId,filePath:path,active:state.path===path,line:state.path===path ? state.line : undefined})))));
   }
   function setKnown(sessionId, paths) { knownFiles.set(sessionId, [...new Set(paths)].slice(-500)); }

@@ -592,11 +592,14 @@
 .coldx-shell [data-embedded="true"] .cx-marketplace-repo:hover { background:var(--cx-wb-hover); }
 .coldx-shell [data-embedded="true"] .cx-marketplace-repo-icon { background:var(--cx-wb-hover); border:0; border-radius:9px; }
 .coldx-shell [data-embedded="true"] .cx-marketplace-footer { background:transparent; padding:16px 0; }
-.coldx-shell .cx-file-workspace>.cx-workbench-tabs,.coldx-shell .cx-file-header strong { display:none; }
-.coldx-shell .cx-file-header { height:42px; min-height:42px; justify-content:flex-end; padding:4px 12px; border-bottom:1px solid var(--cx-wb-line); }
-.coldx-shell .cx-file-tabs { position:absolute; top:4px; left:8px; right:48px; height:34px; padding:0; border:0; }
-.coldx-shell .cx-file-tabs>div { border:0; border-radius:8px; background:transparent; height:32px; }
-.coldx-shell .cx-file-tabs>div[data-active="true"] { background:var(--cx-wb-hover); }
+.coldx-shell .cx-file-header { height:52px; min-height:52px; padding:8px 12px; }
+.coldx-shell .cx-workbench-tabs { align-items:center; gap:3px; min-height:44px; padding:4px 10px; overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; box-sizing:border-box; }
+.coldx-shell .cx-workbench-tabs > button[role="tab"] { flex:none; min-width:auto; padding-inline:10px; white-space:nowrap; }
+.coldx-shell .cx-workbench-document-tab { display:flex; align-items:center; flex:none; min-width:0; height:32px; border-radius:8px; background:transparent; }
+.coldx-shell .cx-workbench-document-tab[data-active="true"] { background:var(--cx-wb-hover); }
+.coldx-shell .cx-workbench-document-tab > button[role="tab"] { flex:none; max-width:145px; min-width:0; min-height:32px; overflow:hidden; padding:4px 4px 4px 10px; text-overflow:ellipsis; white-space:nowrap; }
+.coldx-shell .cx-workbench-document-tab > .cx-workbench-document-close { flex:none; width:25px; min-width:25px; min-height:30px; padding:0 4px; font-size:16px; line-height:1; }
+.coldx-shell .cx-workbench-document-tab > .cx-workbench-document-close:hover { color:var(--cx-wb-text); }
 .coldx-shell .cx-file-toolbar { padding:12px 16px; gap:12px; }
 @keyframes cx-navigation-spin { to { transform:rotate(360deg); } }
 @media (prefers-reduced-motion:reduce) { .cx-navigation-running { animation:none; border-top-color:var(--cx-wb-muted); } }

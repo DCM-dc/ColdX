@@ -14,6 +14,8 @@ function mountFiles(responses = {}) {
     useEffect(setup,deps){const hook=cell(()=>({}));if(!hook.deps||deps.some((value,index)=>!Object.is(value,hook.deps[index]))){hook.deps=deps;effects.push(()=>{hook.cleanup?.();hook.cleanup=setup();});}},
     useSyncExternalStore(subscribe,read){const hook=cell(()=>({}));hook.read=read;hook.value=read();if(!hook.cleanup)hook.cleanup=subscribe(()=>{const next=hook.read();if(!Object.is(next,hook.value)){hook.value=next;dirty=true;}});return hook.value;},
   };
+  // The fake renderer flushes both effect phases after reconciliation.
+  React.useLayoutEffect=React.useEffect;
   const pane=createWorkbenchPane(React);
   // Geometry and native focus are covered by workbench-pane.test. This fixture
   // checks reconciliation, real request ownership and persistent preview state.
@@ -69,7 +71,8 @@ test('file tabs preserve PDF and HTML state through workbench switches and relea
   f.api.reference('a','a.pdf','chosen text');f.render();assert.equal(f.pane.get('a').active,'files');assert.match(f.draft,/@"a.pdf"\n> chosen text/);
   f.click(f.node('关闭 a.pdf'));await f.flush();assert.deepEqual(f.destroyed,['a.pdf']);assert.equal(f.text(f.node('preview b.html')),'2');
   f.pane.close('a','files');f.render();f.pane.open('a','timeline');f.render();
-  f.click(f.all.find(node=>node.props['data-workbench-tab']==='files'));await f.flush();assert.equal(f.requests.length,2);
+  f.click(f.all.find(node=>node.props['data-workbench-tab']==='files'));await f.flush();
+  assert.equal(f.requests.filter(item=>['a.pdf','b.html'].includes(item.path)).length,2,'visiting the folder root must not reread retained document previews');
 });
 
 test('the work panel files tab opens the workspace without a separate header button',async t=>{
@@ -89,6 +92,27 @@ test('the work panel files tab opens the workspace without a separate header but
   assert.equal(f.pane.get('a').active,'files','a native message file mention still reopens the shared preview');
   assert.equal(f.requests.filter(item=>item.path==='report.md').length,1,'reopening a known file retains the loaded preview');
   assert.equal(f.node('查看工作区文件'),undefined);
+});
+
+test('shared workbench rail retains sibling documents while browser and progress are selected',async t=>{
+  const f=mountFiles();t.after(()=>f.dispose());
+  f.api.open('a','a.pdf');await f.flush();
+  f.api.open('a','b.html');await f.flush();
+  const tab=path=>f.all.find(node=>node.props['data-workbench-file']===path);
+  assert.ok(tab('a.pdf'));
+  assert.ok(tab('b.html'));
+  assert.equal(tab('b.html').props['aria-selected'],true);
+  f.pane.open('a','browser');f.render();
+  assert.ok(tab('a.pdf'),'file tabs remain visible in the browser surface');
+  assert.equal(tab('a.pdf').props['aria-selected'],false);
+  f.pane.open('a','timeline');f.render();
+  f.click(tab('a.pdf'));await f.flush();
+  assert.equal(f.pane.get('a').active,'files');
+  assert.equal(f.pane.get('a').activeDocument,'a.pdf');
+  assert.equal(tab('a.pdf').props['aria-selected'],true);
+  f.click(f.node('关闭 a.pdf'));await f.flush();
+  assert.equal(f.pane.get('a').activeDocument,'b.html');
+  assert.equal(tab('b.html').props['aria-selected'],true);
 });
 
 test('closing an in-flight tab aborts only that file read',async t=>{

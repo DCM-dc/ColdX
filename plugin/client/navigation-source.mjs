@@ -1,7 +1,21 @@
 // Presentation over native DSH session/workspace services. No duplicate runtime.
 export function createWorkbenchNavigation(React,ctx,{icon,api,Marketplace,Usage,files,pane}) {
-  const h=React.createElement,listeners=new Set();let page=null;
+  const h=React.createElement,listeners=new Set();let page=null,paletteOrigin=null,paletteReturnPage=null;
   const navigate=value=>{page=value;for(const listener of listeners)listener();};
+  const openPalette=trigger=>{
+    if(page==='search'){document.querySelector('.cx-command-search input')?.focus();return;}
+    paletteOrigin=trigger??document.activeElement;paletteReturnPage=page;navigate('search');
+  };
+  const closePalette=(restoreFocus=true)=>{
+    const origin=paletteOrigin,returnPage=restoreFocus?paletteReturnPage:null;
+    document.querySelector('.cx-command-overlay[open]')?.close();
+    paletteOrigin=null;paletteReturnPage=null;navigate(returnPage);
+    if(restoreFocus)queueMicrotask(()=>{
+      if(origin?.isConnected&&origin!==document.body&&origin!==document.documentElement)origin.focus({preventScroll:true});
+      else document.querySelector('.cx-navigation-search, .cx-rebuild-icon[aria-label="搜索与命令"], .cx-workbench-page button, .cx-rebuild-sidebar button')?.focus({preventScroll:true});
+    });
+  };
+  const showPage=id=>{paletteOrigin=null;paletteReturnPage=null;navigate(id);};
   const subscribe=listener=>{listeners.add(listener);return()=>listeners.delete(listener);};
   const usePage=()=>React.useSyncExternalStore(subscribe,()=>page,()=>null);
   const preference=ctx.settingsScope.bind({namespace:'coldx-navigation',decode:value=>value&&Array.isArray(value.pinned)?{pinned:value.pinned.filter(x=>typeof x==='string')}:undefined});
@@ -14,7 +28,7 @@ export function createWorkbenchNavigation(React,ctx,{icon,api,Marketplace,Usage,
     const active=usePage(),[more,setMore]=React.useState(false);
     const button=(id,label,glyph)=>h('button',{key:id,type:'button',className:'cx-rebuild-nav','aria-current':active===id?'page':undefined,title:wide?undefined:label,onClick:()=>{setMore(false);navigate(id);}},icon(glyph),wide&&h('span',null,label));
     return h(React.Fragment,null,
-      h('button',{type:'button',className:'cx-navigation-search cx-rebuild-icon','aria-label':'搜索会话',onClick:()=>navigate('search')},icon('search')),
+      h('button',{type:'button',className:'cx-navigation-search cx-rebuild-icon','aria-label':'搜索与命令',title:'搜索与命令 · Ctrl+K',onClick:event=>openPalette(event.currentTarget)},icon('search')),
       button('pullRequests','Pull Request','branch'),button('schedules','定时任务','clock'),button('plugins','插件','plugin'),
       h('div',{className:'cx-navigation-more'},h('button',{type:'button',className:'cx-rebuild-nav','aria-expanded':more,onClick:()=>setMore(!more)},icon('more'),wide&&h('span',null,'探索')),
         more&&h('div',{className:'cx-navigation-popover',onKeyDown:event=>{if(event.key==='Escape')setMore(false);}},button('usage','用量与活动','chart'),h('button',{type:'button',className:'cx-rebuild-nav',onClick:()=>{setMore(false);navigate(null);const id=ctx.sessions.list.getSnapshot().current;if(id)files.open(id,'.');}},icon('file'),'工作区文件'))));
@@ -32,7 +46,7 @@ export function createWorkbenchNavigation(React,ctx,{icon,api,Marketplace,Usage,
     const label=(text,action)=>h('div',{className:'cx-navigation-section'},h('span',null,text),action);
     const addProject=perform(async()=>{const path=await ctx.workspaces.pickDirectory();if(path)await ctx.workspaces.create({path});});
     const selected=menu&&sessions.byId[menu.id];
-    if(!wide)return h('button',{type:'button',className:'cx-rebuild-icon','aria-label':'搜索会话',onClick:()=>navigate('search')},icon('search'));
+    if(!wide)return h('button',{type:'button',className:'cx-rebuild-icon','aria-label':'搜索与命令',onClick:event=>openPalette(event.currentTarget)},icon('search'));
     return h('div',{className:'cx-navigation-tree'},
       pins.some(id=>rows.some(row=>row.id===id))&&h('section',null,label('置顶'),pins.map(id=>rows.find(item=>item.id===id)).filter(Boolean).map(row)),
       h('section',null,label('项目',h('button',{type:'button',className:'cx-rebuild-icon','aria-label':'添加项目',onClick:addProject,disabled:busy},icon('plus'))),
@@ -74,7 +88,10 @@ export function createWorkbenchNavigation(React,ctx,{icon,api,Marketplace,Usage,
   function Search(){
     const [query,setQuery]=React.useState(''),[matches,setMatches]=React.useState(null),
       [loading,setLoading]=React.useState(false),[revision,refresh]=React.useState(0),
-      sessions=useList(),searchRef=React.useRef(null);
+      [selected,setSelected]=React.useState(0),[error,setError]=React.useState(''),
+      [fileMatches,setFileMatches]=React.useState({owner:null,query:'',items:[]}),[fileLoading,setFileLoading]=React.useState(false),[fileError,setFileError]=React.useState(''),
+      sessions=useList(),spaces=useSpaces(),searchRef=React.useRef(null),commandBusy=React.useRef(false);
+    React.useEffect(()=>{searchRef.current?.focus({preventScroll:true});},[]);
     React.useEffect(()=>{
       setMatches(null);setLoading(Boolean(query.trim()));
       if(!query.trim())return;
@@ -86,33 +103,88 @@ export function createWorkbenchNavigation(React,ctx,{icon,api,Marketplace,Usage,
       }),180);
       return()=>{clearTimeout(timer);controller.abort();};
     },[query,revision]);
-    const recent=sessions.ids.map(id=>sessions.byId[id]).filter(row=>row&&!row.blank&&!row.parentId&&row.origin!=='subagent')
+    React.useEffect(()=>{
+      setFileMatches({owner:null,query:'',items:[]});setFileError('');setFileLoading(false);
+      const owner=sessions.current;
+      if(!query.trim()||!owner||ctx.sessions.subagentAddress?.(owner))return;
+      const controller=new AbortController();setFileLoading(true);
+      const timer=setTimeout(()=>{
+        Promise.resolve().then(()=>ctx.remote.fileReferences.list(owner,query.trim(),controller.signal)).then(receipt=>{
+          if(controller.signal.aborted)return;
+          if(!receipt?.ok||!Array.isArray(receipt.value))throw Error(receipt?.error?.message||'文件搜索失败。');
+          setFileMatches({owner,query:query.trim(),items:receipt.value.filter(item=>item.kind==='file'&&typeof item.path==='string').slice(0,12)});setFileLoading(false);
+        }).catch(reason=>{if(!controller.signal.aborted){setFileError(reason?.message||'文件搜索失败。');setFileLoading(false);}});
+      },120);
+      return()=>{clearTimeout(timer);controller.abort();};
+    },[query,sessions.current,revision]);
+    const archived=new Set(spaces.archivedSessionIds??[]);
+    const recent=sessions.ids.map(id=>sessions.byId[id]).filter(row=>row&&!row.blank&&!row.parentId&&row.origin!=='subagent'&&!archived.has(row.id))
       .sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
     const term=query.trim().toLocaleLowerCase();
     const titleMatches=term?recent.filter(row=>row.displayTitle?.toLocaleLowerCase().includes(term)):[];
     const ids=term?[...new Set([...titleMatches.map(item=>item.id),...(matches?.ok?matches.value.items.map(item=>item.sessionId):[])])]:
-      recent.slice(0,12).map(item=>item.id);
-    return h('div',{className:'cx-navpage cx-navpage-search'},
-      intro('工作区','搜索会话','查找会话名称和对话内容'),
-      h('div',{className:'cx-navpage-searchbox'},icon('search'),
-        h('input',{ref:searchRef,type:'search',autoFocus:true,placeholder:'搜索名称或对话内容','aria-label':'搜索名称或对话内容',value:query,onChange:event=>setQuery(event.target.value)})),
-      h('div',{className:'cx-navpage-section-title'},h('h2',null,term?'搜索结果':'最近会话'),
-        h('span',null,term&&loading?'搜索中':ids.length+' 项')),
-      matches?.ok===false&&status(matches.error?.message||'搜索失败，请重试。','error',
-        h('button',{type:'button',onClick:()=>refresh(value=>value+1)},'重试')),
-      loading&&status('正在搜索对话内容…'),
-      ids.length?h('div',{className:'cx-navpage-list'},ids.map(id=>{
-        const row=sessions.byId[id],found=matches?.ok&&matches.value.items.find(item=>item.sessionId===id);
-        return h('button',{type:'button',key:id,className:'cx-page-list-row cx-navpage-row',
-          'aria-label':'打开会话 '+(row?.displayTitle||id),onClick:()=>open(id)},
-          h('span',{className:'cx-navpage-row-icon'},icon('chat')),
-          h('span',{className:'cx-navpage-row-body'},h('strong',null,row?.displayTitle||id),
-            found?.snippet&&h('small',null,found.snippet)),
-          h('span',{className:'cx-navpage-row-chevron','aria-hidden':true},icon('chevron')));
-      })):!loading&&matches?.ok!==false&&empty('search',term?'没有找到匹配的会话':'还没有最近会话',
-        term?'尝试更短的关键词，或搜索对话中出现过的内容。':'开始对话后，会话会出现在这里。',
-        term&&h('button',{type:'button',onClick:()=>searchRef.current?.focus()},'修改关键词')),
-      matches?.ok&&matches.value.hasMore&&status('结果较多，请缩小搜索范围。','info'));
+      recent.slice(0,8).map(item=>item.id);
+    const sessionItems=ids.filter(id=>!archived.has(id)).map(id=>{
+      const row=sessions.byId[id],found=matches?.ok&&matches.value.items.find(item=>item.sessionId===id);
+      return {key:`session-${id}`,group:'会话',label:row?.displayTitle||id,detail:found?.snippet,id,
+        glyph:'chat',run:()=>{ctx.sessions.open(id);closePalette(false);}};
+    });
+    const currentFiles=fileMatches.owner===sessions.current&&fileMatches.query===query.trim()?fileMatches.items:[];
+    const fileItems=currentFiles.map(item=>({key:`file-${item.path}`,label:item.path.split(/[\\/]/).pop()||item.path,
+      detail:item.path,path:item.path,glyph:'file',run:async()=>{await files.open(sessions.current,item.path);closePalette(false);}}));
+    const commands=[
+      {key:'new',label:'新对话',detail:'在当前工作区开始',glyph:'edit',run:async()=>{await ctx.workspaces.startSession();closePalette(false);}},
+      {key:'add-project',label:'添加项目',detail:'选择本机文件夹',glyph:'folder',run:async()=>{const path=await ctx.workspaces.pickDirectory();if(path){await ctx.workspaces.create({path});closePalette(false);}}},
+      ...spaces.items.map(space=>({key:`project-${space.workspaceId}`,label:`在 ${space.title||space.path?.split(/[\\/]/).pop()||'项目'} 中新建对话`,detail:space.path,glyph:'folder',run:async()=>{await ctx.workspaces.startSession(space.workspaceId);closePalette(false);}})),
+      {key:'pullRequests',label:'Pull Request',glyph:'branch',run:()=>showPage('pullRequests')},
+      {key:'schedules',label:'定时任务',glyph:'clock',run:()=>showPage('schedules')},
+      {key:'plugins',label:'插件',glyph:'plugin',run:()=>showPage('plugins')},
+      {key:'usage',label:'用量与活动',glyph:'chart',run:()=>showPage('usage')},
+    ].filter(item=>!term||`${item.label} ${item.detail||''}`.toLocaleLowerCase().includes(term));
+    const items=[...sessionItems,...fileItems,...commands],active=Math.min(selected,items.length-1);
+    const execute=item=>{
+      if(!item||commandBusy.current)return;
+      commandBusy.current=true;
+      setError('');
+      try{Promise.resolve(item.run()).then(()=>{commandBusy.current=false;},problem=>{
+        commandBusy.current=false;setError(problem?.message||'操作失败，请重试。');
+      });}
+      catch(problem){commandBusy.current=false;setError(problem?.message||'操作失败，请重试。');}
+    };
+    const keyDown=event=>{
+      if(event.nativeEvent?.isComposing||event.isComposing)return;
+      if(event.key==='ArrowDown'||event.key==='ArrowUp'||event.key==='Home'||event.key==='End'){
+        event.preventDefault();
+        setSelected(value=>event.key==='Home'?0:event.key==='End'?Math.max(0,items.length-1):Math.max(0,Math.min(items.length-1,value+(event.key==='ArrowDown'?1:-1))));
+      }else if(event.key==='Enter'){
+        event.preventDefault();execute(items[active]);
+      }else if(event.key==='Escape'){
+        event.preventDefault();event.stopPropagation();closePalette();
+      }
+    };
+    const renderItem=(item,index)=>h('button',{key:item.key,id:`cx-command-${index}`,type:'button',role:'option','aria-selected':active===index,
+      'aria-label':item.path?`文件：${item.path}`:item.detail?`${item.label}，${item.detail}`:item.label,
+      'data-session-id':item.id,'data-file-path':item.path,className:'cx-command-row',onMouseEnter:()=>setSelected(index),onClick:()=>execute(item)},
+      h('span',{className:'cx-command-icon'},icon(item.glyph)),
+      h('span',{className:'cx-command-copy'},h('span',{className:'cx-command-title'},item.label),item.detail&&h('small',null,item.detail)),
+      item.shortcut&&h('kbd',null,item.shortcut),icon('chevron'));
+    return h('div',{className:'cx-command-content'},
+      h('div',{className:'cx-command-search'},icon('search'),
+        h('input',{ref:searchRef,type:'search',role:'combobox','aria-label':'搜索会话与命令','aria-controls':'cx-command-results',
+          'aria-expanded':true,'aria-autocomplete':'list','aria-activedescendant':items.length?`cx-command-${active}`:undefined,
+          autoFocus:true,placeholder:'搜索会话、项目与命令',value:query,onChange:event=>{setQuery(event.target.value);setSelected(0);},onKeyDown:keyDown})),
+      h('div',{className:'cx-command-results',id:'cx-command-results',role:'listbox','aria-label':'搜索结果'},
+        sessionItems.length>0&&h('div',{className:'cx-command-group',role:'group','aria-label':term?'搜索结果':'最近会话'},
+          h('div',{className:'cx-command-group-title'},term?'搜索结果':'最近会话'),sessionItems.map((item,index)=>renderItem(item,index))),
+        fileItems.length>0&&h('div',{className:'cx-command-group',role:'group','aria-label':'工作区文件'},
+          h('div',{className:'cx-command-group-title'},'工作区文件'),fileItems.map((item,index)=>renderItem(item,sessionItems.length+index))),
+        commands.length>0&&h('div',{className:'cx-command-group',role:'group','aria-label':'命令'},
+          h('div',{className:'cx-command-group-title'},'命令'),commands.map((item,index)=>renderItem(item,sessionItems.length+fileItems.length+index))),
+        !items.length&&!loading&&!fileLoading&&h('p',{className:'cx-command-empty'},'没有找到匹配的会话、文件或命令。')),
+      (loading||fileLoading||matches?.ok===false||fileError||error||matches?.ok&&matches.value.hasMore)&&h('div',{className:'cx-command-status',role:matches?.ok===false||fileError||error?'alert':'status'},
+        error||fileError&&`文件搜索失败：${fileError}${sessionItems.length?'；会话结果仍可使用。':''}`||matches?.ok===false&&`会话搜索失败：${matches.error?.message||'请重试。'}${fileItems.length?'；文件结果仍可使用。':''}`||(loading||fileLoading)&&'正在搜索…'||'结果较多，请缩小搜索范围。',
+        (matches?.ok===false||fileError)&&h('button',{type:'button',onClick:()=>refresh(value=>value+1)},'重试')),
+      h('div',{className:'cx-command-footer'},h('span',null,'↑↓ 选择'),h('span',null,'Enter 打开'),h('span',null,'Esc 关闭')));
   }
   function Schedules(){
     const [state,refresh]=useLoad('schedules',{},'schedules'),sessions=useList();
@@ -219,13 +291,48 @@ export function createWorkbenchNavigation(React,ctx,{icon,api,Marketplace,Usage,
               h('small',{className:'cx-navpage-link-error'},'链接不可用'));
         })):empty('branch','暂无开放的 Pull Request','这个项目还没有开放的代码审查。'),
         state.data.limited&&status('显示最近 50 项。','info')));
-  }  function Pages(){
-    const current=usePage(),root=React.useRef(null);
-    React.useEffect(()=>{if(!current)return;const center=document.querySelector('.pI_x6G_centerCol'),conversation=document.querySelector('.wSkVaW_root');const original=conversation?.inert;if(conversation)conversation.inert=true;
-      const align=()=>{if(!center||!root.current)return;const rect=center.getBoundingClientRect();Object.assign(root.current.style,{left:`${rect.left}px`,top:`${rect.top}px`,width:`${rect.width}px`,height:`${rect.height}px`});};align();const observer=new ResizeObserver(align);if(center)observer.observe(center);window.addEventListener('resize',align);if(!root.current?.contains(document.activeElement))root.current?.focus();return()=>{observer.disconnect();window.removeEventListener('resize',align);if(conversation)conversation.inert=original;};},[current]);
-    if(!current)return null;const title={plugins:'插件',usage:'用量与活动',search:'搜索会话',schedules:'定时任务',pullRequests:'Pull Request'}[current];
+  }
+  function Pages(){
+    const current=usePage(),root=React.useRef(null),paletteRef=React.useRef(null);
+    React.useEffect(()=>{
+      const shortcut=event=>{
+        if(event.defaultPrevented||event.isComposing||event.altKey||event.shiftKey||!(event.ctrlKey||event.metaKey))return;
+        const key=event.key.toLocaleLowerCase();
+        if(key==='k'||key==='p'){event.preventDefault();openPalette(document.activeElement);}
+      };
+      document.addEventListener('keydown',shortcut);
+      return()=>document.removeEventListener('keydown',shortcut);
+    },[]);
+    React.useEffect(()=>{
+      if(!current)return;
+      const conversation=document.querySelector('.wSkVaW_root'),original=conversation?.inert;
+      if(conversation)conversation.inert=true;
+      if(current==='search')return()=>{if(conversation)conversation.inert=original;};
+      const center=document.querySelector('.pI_x6G_centerCol');
+      const align=()=>{if(!center||!root.current)return;const rect=center.getBoundingClientRect();Object.assign(root.current.style,{left:`${rect.left}px`,top:`${rect.top}px`,width:`${rect.width}px`,height:`${rect.height}px`});};
+      align();const observer=new ResizeObserver(align);if(center)observer.observe(center);window.addEventListener('resize',align);
+      if(!root.current?.contains(document.activeElement))root.current?.focus();
+      return()=>{observer.disconnect();window.removeEventListener('resize',align);if(conversation)conversation.inert=original;};
+    },[current]);
+    React.useEffect(()=>{
+      if(current!=='search')return;
+      const dialog=paletteRef.current;
+      dialog?.showModal();
+      return()=>{if(dialog?.open)dialog.close();};
+    },[current]);
+    if(!current)return null;
+    if(current==='search')return h('dialog',{ref:paletteRef,role:'dialog','aria-modal':true,'aria-label':'搜索与命令',className:'cx-command-overlay',onCancel:event=>{event.preventDefault();closePalette();},onClick:event=>{if(event.target===event.currentTarget)closePalette();},onKeyDown:event=>{
+        if(event.key==='Escape'){event.preventDefault();event.stopPropagation();closePalette();}
+        if(event.key==='Tab'){
+          const focusable=[...event.currentTarget.querySelectorAll('input,button:not(:disabled)')];
+          if(!focusable.length)return;
+          if(event.shiftKey&&document.activeElement===focusable[0]){event.preventDefault();focusable.at(-1).focus();}
+          else if(!event.shiftKey&&document.activeElement===focusable.at(-1)){event.preventDefault();focusable[0].focus();}
+        }
+      }},h('div',{className:'cx-command-dialog'},h(Search)));
+    const title={plugins:'插件',usage:'用量与活动',schedules:'定时任务',pullRequests:'Pull Request'}[current];
     return h('section',{ref:root,className:'cx-workbench-page',tabIndex:-1,'aria-label':title,onKeyDown:event=>{if(event.key==='Escape')navigate(null);}},h('header',null,h('span',null,title),h('button',{type:'button',className:'cx-rebuild-icon','aria-label':'返回对话',onClick:()=>navigate(null)},icon('close'))),
-      current==='plugins'?h(Marketplace,{embedded:true,onClose:()=>navigate(null)}):current==='usage'?h(Usage,{embedded:true,onClose:()=>navigate(null)}):h('div',{className:'cx-workbench-page-body'},current==='search'?h(Search):current==='schedules'?h(Schedules):h(PullRequests)));
+      current==='plugins'?h(Marketplace,{embedded:true,onClose:()=>navigate(null)}):current==='usage'?h(Usage,{embedded:true,onClose:()=>navigate(null)}):h('div',{className:'cx-workbench-page-body'},current==='schedules'?h(Schedules):h(PullRequests)));
   }
   const start=()=>navigate(null);
   return {Nav,TaskList,Pages,navigate,start};
