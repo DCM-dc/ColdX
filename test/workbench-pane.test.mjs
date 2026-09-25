@@ -18,6 +18,42 @@ test('one session workbench switches views without opening competing panels or l
   unsubscribe(); pane.open('a', 'files'); assert.equal(changes, 4);
 });
 
+test('primary workbench navigation stays separate from session file tabs', () => {
+  const React = {
+    createElement(type, props, ...children) { return { type, props: props ?? {}, children: children.flat() }; },
+    useRef(initial) { return { current: initial }; },
+    useSyncExternalStore(_subscribe, snapshot) { return snapshot(); },
+    useEffect() {}, useLayoutEffect() {},
+  };
+  const pane = createWorkbenchPane(React);
+  const nodes = root => [root, ...root.children.flatMap(child => child && typeof child === 'object' && 'type' in child ? nodes(child) : [])];
+  const render = () => nodes(pane.Tabs({ sessionId: 'a' }));
+  pane.openDocument('a', 'docs/first.md');
+  pane.openDocument('a', 'docs/second.md');
+  let tree = render();
+  let rails = tree.filter(node => node.type === 'nav');
+  assert.equal(rails.length, 2, 'file documents have their own navigation row');
+  assert.deepEqual(rails[0].children.map(node => node.props['data-workbench-tab']), ['timeline', 'evidence', 'files', 'browser', 'desktop']);
+  assert.deepEqual(nodes(rails[1]).filter(node => node.props['data-workbench-file']).map(node => node.props['data-workbench-file']), ['docs/first.md', 'docs/second.md']);
+  assert.equal(rails[0].children.find(node => node.props['data-workbench-tab'] === 'files').props['aria-selected'], true);
+  assert.equal(nodes(rails[1]).find(node => node.props['data-workbench-file'] === 'docs/second.md').props['aria-selected'], true);
+  pane.open('a', 'browser');
+  tree = render(); rails = tree.filter(node => node.type === 'nav');
+  assert.equal(rails.length, 1, 'document row stays within Files, while the files remain session-scoped');
+  assert.equal(rails[0].children.find(node => node.props['data-workbench-tab'] === 'browser').props['aria-selected'], true);
+  pane.open('a', 'files');
+  tree = render(); rails = tree.filter(node => node.type === 'nav');
+  assert.equal(rails.length, 2);
+  const key = (rail, value) => rail.props.onKeyDown({ key:value, preventDefault() {} });
+  key(rails[0], 'ArrowRight');
+  assert.equal(pane.get('a').active, 'browser', 'primary arrow navigation crosses only primary views');
+  pane.openDocument('a', 'docs/first.md');
+  rails = render().filter(node => node.type === 'nav');
+  key(rails[1], 'ArrowRight');
+  assert.equal(pane.get('a').activeDocument, 'docs/second.md', 'document arrow navigation selects the sibling file');
+  assert.deepEqual(pane.get('a').documents, ['docs/first.md', 'docs/second.md']);
+});
+
 test('pane factory survives the native lazy factory serialization boundary', () => {
   const factory = vm.runInNewContext(`(${createWorkbenchPane.toString()})`);
   const pane = factory({ createElement() {} }); pane.open('owner', 'files');
@@ -57,8 +93,7 @@ test('workbench remembers open documents per conversation and selects a neighbor
 test('keyboard closing a document focuses the selected tab, while pointer and unfocused closes preserve focus', () => {
   const document = { activeElement: null };
   let cursor = 0, layout = [], liveTabs = [];
-  const rail = { querySelector: selector => selector === '[role="tab"][aria-selected="true"]'
-    ? liveTabs.find(tab => tab.getAttribute('aria-selected') === true) : null };
+  const rail = { querySelectorAll: selector => selector === '[role="tab"]' ? liveTabs : [] };
   const refs = [{ current: rail }];
   const React = {
     createElement(type, props, ...children) { return { type, props: props ?? {}, children }; },

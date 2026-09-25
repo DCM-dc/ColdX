@@ -94,7 +94,7 @@ test('the work panel files tab opens the workspace without a separate header but
   assert.equal(f.node('查看工作区文件'),undefined);
 });
 
-test('shared workbench rail retains sibling documents while browser and progress are selected',async t=>{
+test('file navigation retains sibling documents while browser and progress are selected',async t=>{
   const f=mountFiles();t.after(()=>f.dispose());
   f.api.open('a','a.pdf');await f.flush();
   f.api.open('a','b.html');await f.flush();
@@ -103,9 +103,11 @@ test('shared workbench rail retains sibling documents while browser and progress
   assert.ok(tab('b.html'));
   assert.equal(tab('b.html').props['aria-selected'],true);
   f.pane.open('a','browser');f.render();
-  assert.ok(tab('a.pdf'),'file tabs remain visible in the browser surface');
-  assert.equal(tab('a.pdf').props['aria-selected'],false);
+  assert.equal(tab('a.pdf'),undefined,'file tabs stay inside Files instead of crowding Browser navigation');
+  assert.deepEqual(f.pane.get('a').documents,['a.pdf','b.html']);
   f.pane.open('a','timeline');f.render();
+  assert.equal(tab('a.pdf'),undefined);
+  f.click(f.all.find(node=>node.props['data-workbench-tab']==='files'));await f.flush();
   f.click(tab('a.pdf'));await f.flush();
   assert.equal(f.pane.get('a').active,'files');
   assert.equal(f.pane.get('a').activeDocument,'a.pdf');

@@ -68,6 +68,16 @@ pnpm start --cwd ../my-project
 
 关闭浏览器不会停止后端；在启动终端按 Ctrl+C 停止服务。Windows 也提供 [Start-ColdX.ps1](Start-ColdX.ps1)。
 
+### 终端界面（开发预览）
+
+ColdX TUI 连接同一个正在运行的 DSH Web Host，不创建另一套 agent 或会话数据库。在一个终端运行 `pnpm start --no-open`，再在另一个终端运行：
+
+```sh
+pnpm tui --url http://127.0.0.1:3086
+```
+
+终端用于恢复会话、查看真实事件和工具摘要、发送消息与处理审批；文件、图片、PDF、浏览器和电脑画面继续由 Web 工作面板查看。退出 TUI 不停止 Host。具体设计、当前边界与验收条件见 [ColdX TUI 设计](docs/coldx-tui-design-2026-09-25.md)。
+
 首次使用时，在设置中添加模型提供方、Base URL、API Key 和模型；DeepSeek 引导可选择稍后配置。选择工作区及 **ColdX 创造工作台** 预设后即可开始。密钥由 DSH 宿主配置管理，不传给生成页面。模型、多模态和推理档位是否可用，取决于你配置的提供方。
 
 ## 日常使用

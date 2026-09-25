@@ -12,6 +12,13 @@ const React = {
   useEffect() {},
 };
 const flatten = node => !node || typeof node !== 'object' ? [] : [node, ...(node.props?.children ?? []).flat(Infinity).flatMap(flatten)];
+const openedSummary = () => {
+  let slot = 0;
+  return createWorkbenchShell({...React,useState(initial) {
+    const value = typeof initial === 'function' ? initial() : initial;
+    return [slot++ === 0 ? true : value, () => {}];
+  }}).Summary;
+};
 
 test('navigation reads native preference handles with their receiver and groups real workspace ids',()=>{
   const react={...React,useSyncExternalStore:(_subscribe,read)=>read()};
@@ -73,7 +80,7 @@ test('file links disambiguate repeated labels across blocks and preserve unfinis
 
 test('summary opens real files and native children with their owning session', async () => {
   const calls = [];
-  const { Summary } = createWorkbenchShell(React);
+  const Summary = openedSummary();
   const tree = Summary({ sessionId:'parent', model:{outputs:[{key:'file',kind:'file',path:'report.md',label:'report.md'}],sources:{web:[],workspace:[],session:[],loadedCount:0},subagents:[{key:'child',id:'child',kind:'child',mode:'continuable',label:'Review',status:'running',statusLabel:'运行中'}],computers:[]},
     onOpenOutput:output=>calls.push(output.path),onOpenSubagent:address=>calls.push(address),onOpenView:view=>calls.push(view) });
   const nodes = flatten(tree);
@@ -83,7 +90,7 @@ test('summary opens real files and native children with their owning session', a
 });
 
 test('unknown or failed subagents are never reported as completed', () => {
-  const { Summary } = createWorkbenchShell(React);
+  const Summary = openedSummary();
   const tree = Summary({sessionId:'p',model:{outputs:[],sources:{web:[],workspace:[],session:[],loadedCount:0},computers:[],subagents:[{key:'a',status:'failed',label:'A'},{key:'b',status:'unknown',label:'B'}]},onOpenView(){}});
   const copy = JSON.stringify(tree);
   assert.doesNotMatch(copy,/2 完成/);

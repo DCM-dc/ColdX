@@ -251,6 +251,8 @@
 /* Shared progress / results / file surface. show() is nonmodal on desktop;
    showModal() only supplies native focus containment for the narrow drawer. */
 .coldx-shell .cx-workbench-panel {
+  /* The conversation margin and panel must resolve to the same width. */
+  --cx-inspector-width: inherit;
   position: absolute;
   inset: var(--cx-workbench-top, 83px) 0 0 auto;
   width: min(var(--cx-inspector-width), 100%);
@@ -435,7 +437,7 @@
 .coldx-shell .qDHVXG_sectionHeader { min-height:32px; padding:4px 8px; color:var(--cx-wb-muted); font-size:13px; }
 .coldx-shell .YDXeBa_sessionRow { min-height:32px; height:32px; border-radius:7px; border:0; padding-block:4px; box-shadow:none; font-size:14px; }
 .coldx-shell .YDXeBa_selected { background:color-mix(in srgb,var(--cx-wb-text) 6%,var(--dsw-specific-sidebar-fill)); }
-.coldx-shell .wSkVaW_root { position:relative; container:coldx-conversation / inline-size; --dsh-chat-content-width:var(--cx-wb-reading-width); --dsh-composer-card-max-width:var(--cx-wb-reading-width); --cx-inspector-width:clamp(420px, 56cqw, 1100px); --dsh-composer-dock-inset:20px; }
+.coldx-shell .wSkVaW_root { position:relative; container:coldx-conversation / inline-size; --dsh-chat-content-width:var(--cx-wb-reading-width); --dsh-composer-card-max-width:var(--cx-wb-reading-width); --cx-inspector-width:clamp(340px, 34cqw, 460px); --dsh-composer-dock-inset:20px; }
 .coldx-shell .wSkVaW_header { padding:7px 16px 7px 20px; position:static; border:0; min-height:46px; box-sizing:border-box; }
 .coldx-shell .wSkVaW_header::after { content:none; }
 .coldx-shell .wSkVaW_titleRow { min-height:32px; gap:8px; }
@@ -593,11 +595,16 @@
 .coldx-shell [data-embedded="true"] .cx-marketplace-repo-icon { background:var(--cx-wb-hover); border:0; border-radius:9px; }
 .coldx-shell [data-embedded="true"] .cx-marketplace-footer { background:transparent; padding:16px 0; }
 .coldx-shell .cx-file-header { height:52px; min-height:52px; padding:8px 12px; }
-.coldx-shell .cx-workbench-tabs { align-items:center; gap:3px; min-height:44px; padding:4px 10px; overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; box-sizing:border-box; }
-.coldx-shell .cx-workbench-tabs > button[role="tab"] { flex:none; min-width:auto; padding-inline:10px; white-space:nowrap; }
+.coldx-shell .cx-workbench-tab-stack { flex:none; min-width:0; border-bottom:1px solid var(--cx-wb-line); }
+.coldx-shell .cx-workbench-tabs { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); align-items:stretch; gap:0; width:100%; min-height:44px; padding:0 8px; overflow:visible; border:0; box-sizing:border-box; }
+.coldx-shell .cx-workbench-tabs > button[role="tab"] { display:block; flex:none; width:100%; min-width:0; min-height:44px; overflow:hidden; padding-inline:4px; text-overflow:ellipsis; white-space:nowrap; }
+.coldx-shell .cx-workbench-document-tabs { display:flex; align-items:center; gap:4px; min-width:0; min-height:42px; overflow-x:auto; overflow-y:hidden; padding:3px 10px 6px; box-sizing:border-box; border-top:1px solid var(--cx-wb-line); scrollbar-width:none; }
+.coldx-shell .cx-workbench-document-tabs::-webkit-scrollbar { display:none; }
 .coldx-shell .cx-workbench-document-tab { display:flex; align-items:center; flex:none; min-width:0; height:32px; border-radius:8px; background:transparent; }
 .coldx-shell .cx-workbench-document-tab[data-active="true"] { background:var(--cx-wb-hover); }
-.coldx-shell .cx-workbench-document-tab > button[role="tab"] { flex:none; max-width:145px; min-width:0; min-height:32px; overflow:hidden; padding:4px 4px 4px 10px; text-overflow:ellipsis; white-space:nowrap; }
+.coldx-shell .cx-workbench-document-tab > button { flex:none; border:0; background:transparent; color:var(--cx-wb-muted); font:inherit; cursor:pointer; }
+.coldx-shell .cx-workbench-document-tab > button[role="tab"] { max-width:145px; min-width:0; min-height:32px; overflow:hidden; padding:4px 4px 4px 10px; color:var(--cx-wb-text); font-size:12px; text-overflow:ellipsis; white-space:nowrap; }
+.coldx-shell .cx-workbench-document-tabs button:focus-visible { outline:2px solid var(--cx-sys-accent); outline-offset:-2px; }
 .coldx-shell .cx-workbench-document-tab > .cx-workbench-document-close { flex:none; width:25px; min-width:25px; min-height:30px; padding:0 4px; font-size:16px; line-height:1; }
 .coldx-shell .cx-workbench-document-tab > .cx-workbench-document-close:hover { color:var(--cx-wb-text); }
 .coldx-shell .cx-file-toolbar { padding:12px 16px; gap:12px; }

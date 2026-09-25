@@ -12,6 +12,7 @@
     "build": "node plugin/client/build.mjs",
     "pretest": "node plugin/client/build.mjs",
     "start": "node bin/coldx-web.mjs",
+    "tui": "node bin/coldx-tui.mjs",
     "computer:install": "node scripts/install-browser.mjs",
     "test": "node --test test/*.test.mjs",
     "desktop:dev": "node scripts/desktop/dev.mjs",

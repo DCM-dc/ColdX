@@ -1,5 +1,5 @@
-/* Application chrome only. Load after component styles; reuse the workbench
- * tokens and native state/permission semantics. Generated page content is out
+/* Application chrome only. Load after feature styles, before the rebuilt shell;
+ * reuse its tokens and native state/permission semantics. Generated pages are out
  * of scope. Native rc.2 module names are pinned by the frontend dependency. */
 
 /* Sidebar actions must be reachable without first hovering with a mouse. */

@@ -32,7 +32,7 @@ const {Sidebar}=(function createWorkbenchShell(React) {
       h('div',{className:'cx-rebuild-settings'},renderSlot('sidebar.settings',{wide})));
   }
   function Summary({sessionId,model,onOpenOutput,onOpenFile,onOpenSubagent,onOpenView}) {
-    const [open,setOpen] = React.useState(()=>model?.visible!==false), [error,setError] = React.useState(null);
+    const [open,setOpen] = React.useState(false), [error,setError] = React.useState(null);
     const trigger = React.useRef(null), card = React.useRef(null);
     const close = restoreFocus => {setOpen(false);if(restoreFocus)trigger.current?.focus?.({preventScroll:true});};
     (React.useLayoutEffect??React.useEffect)(()=>{

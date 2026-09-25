@@ -2,13 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createWorkbenchShell } from '../plugin/client/workbench-shell-source.mjs';
 
-function fixture() {
+function fixture(summaryOpen = false) {
   const states = [];
   const React = {
     createElement(type, props, ...children) { return { type, props: { ...props, children } }; },
     useState(initial) {
       const slot = states.length;
-      states.push(typeof initial === 'function' ? initial() : initial);
+      const value = typeof initial === 'function' ? initial() : initial;
+      states.push(slot === 0 && summaryOpen ? true : value);
       return [states[slot], value => { states[slot] = typeof value === 'function' ? value(states[slot]) : value; }];
     },
     useRef(value) { return { current: value }; },
@@ -26,8 +27,8 @@ const model = overrides => ({
   ...overrides,
 });
 
-test('summary remains open without width-driven auto-close and exposes native progress', async () => {
-  const { Summary, states } = fixture();
+test('explicitly opened summary exposes native progress', async () => {
+  const { Summary, states } = fixture(true);
   const opened = [];
   const tree = Summary({ sessionId: 'parent', model: model({
     now: { kind: 'call', text: '读取工作区', status: 'running', tone: 'accent' },
@@ -51,8 +52,19 @@ test('an empty new conversation keeps its composer unobstructed', () => {
   assert.equal(nodes.some(node => node.type === 'aside'), false);
 });
 
+test('a newly opened populated conversation leaves the summary closed until requested', () => {
+  const { Summary, states } = fixture();
+  const tree = Summary({ sessionId: 'existing', model: model({ visible: true, outputs: [{ key:'file', path:'report.md' }] }) });
+  const nodes = all(tree);
+  const trigger = nodes.find(node => node.props?.['aria-label'] === '任务摘要');
+  assert.equal(trigger.props['aria-expanded'], false);
+  assert.equal(nodes.some(node => node.type === 'aside'), false);
+  trigger.props.onClick();
+  assert.equal(states[0], true, 'the summary can still be opened explicitly');
+});
+
 test('outputs, sources and native children keep their real opening callbacks', async () => {
-  const { Summary } = fixture();
+  const { Summary } = fixture(true);
   const opened = [];
   const output = { key: 'file:report', kind: 'file', path: 'report.md', title: 'report.md', statusLabel: '已修改' };
   const tree = Summary({ sessionId: 'parent', model: model({
@@ -83,7 +95,7 @@ test('outputs, sources and native children keep their real opening callbacks', a
 });
 
 test('unknown agent status and empty output do not become success claims', () => {
-  const { Summary } = fixture();
+  const { Summary } = fixture(true);
   const tree = Summary({ sessionId: 'parent', model: model({
     subagents: [{ key: 'missing', kind: 'diagnostic', label: '状态不明', status: 'unknown', statusLabel: '状态未载入', disabled: true }],
   }) });
@@ -95,7 +107,7 @@ test('unknown agent status and empty output do not become success claims', () =>
 });
 
 test('summary close and Escape restore trigger focus', () => {
-  const { Summary, states } = fixture();
+  const { Summary, states } = fixture(true);
   const tree = Summary({ sessionId: 'parent', model: model() });
   const nodes = all(tree);
   const trigger = nodes.find(node => node.props?.['aria-label'] === '任务摘要');

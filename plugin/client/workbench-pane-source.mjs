@@ -57,44 +57,55 @@ export function createWorkbenchPane(React) {
 
   function Tabs({ sessionId }) {
     const state = usePane(sessionId), rail = React.useRef(null), focusAfterClose = React.useRef(false);
+    const tabs = () => [...(rail.current?.querySelectorAll?.('[role="tab"]') ?? [])];
+    const primaryTab = id => tabs().find(tab => tab.dataset.workbenchTab === id);
+    const documentTab = path => tabs().find(tab => tab.dataset.workbenchFile === path);
     React.useLayoutEffect(() => {
       if (!focusAfterClose.current) return;
       focusAfterClose.current = false;
-      rail.current?.querySelector?.('[role="tab"][aria-selected="true"]')?.focus?.({ preventScroll: true });
+      const target = state.activeDocument ? documentTab(state.activeDocument) : null;
+      (target ?? primaryTab('files'))?.focus?.({ preventScroll: true });
     }, [state.active, state.activeDocument, state.documents]);
     React.useEffect(() => {
-      const node = rail.current, selected = node?.querySelector?.('[role="tab"][aria-selected="true"]');
-      if (!node?.closest?.('.cx-workbench-panel')?.open || !selected) return;
+      const selected = state.activeDocument && documentTab(state.activeDocument);
+      const row = selected?.closest?.('.cx-workbench-document-tabs');
+      if (!row?.closest?.('.cx-workbench-panel')?.open) return;
       const visible = selected.closest?.('.cx-workbench-document-tab') ?? selected;
-      const bounds = node.getBoundingClientRect(), tab = visible.getBoundingClientRect();
-      if (tab.left < bounds.left) node.scrollLeft += tab.left - bounds.left;
-      else if (tab.right > bounds.right) node.scrollLeft += tab.right - bounds.right;
+      const bounds = row.getBoundingClientRect(), tab = visible.getBoundingClientRect();
+      if (tab.left < bounds.left) row.scrollLeft += tab.left - bounds.left;
+      else if (tab.right > bounds.right) row.scrollLeft += tab.right - bounds.right;
     }, [state.active, state.activeDocument, state.documents]);
-    const entries = views.flatMap(([id, label]) => id === 'files'
-      ? [{id,label}, ...state.documents.map(path => ({path,label:path.replaceAll('\\','/').split('/').at(-1) || path}))]
-      : [{id,label}]);
-    const selected = entry => entry.path ? state.active === 'files' && state.activeDocument === entry.path
-      : state.active === entry.id && (entry.id !== 'files' || state.activeDocument === null);
+    const primary = views.map(([id, label]) => ({id, label}));
+    const documents = state.documents.map(path => ({path,label:path.replaceAll('\\','/').split('/').at(-1) || path}));
+    const selected = entry => entry.path ? state.active === 'files' && state.activeDocument === entry.path : state.active === entry.id;
     const select = (entry, keyboard) => {
       if (entry.path) selectDocument(sessionId, entry.path);
       else if (entry.id === 'files' && fileController?.open) fileController.open(sessionId, '.');
       else open(sessionId, entry.id);
       if (keyboard) queueMicrotask(() => {
-        // A view change may replace the rail. Resolve the live rail in this panel.
-        const root = rail.current?.closest?.('.wSkVaW_root');
-        const tabs = root?.querySelectorAll?.('.cx-workbench-panel[data-open="true"] [role="tab"]');
-        [...(tabs ?? [])].find(tab => entry.path ? tab.dataset.workbenchFile === entry.path : tab.dataset.workbenchTab === entry.id)?.focus?.();
+        (entry.path ? documentTab(entry.path) : primaryTab(entry.id))?.focus?.({ preventScroll: true });
       });
     };
-    return h('nav', { className: 'cx-workbench-tabs', ref: rail, role: 'tablist', 'aria-label': '工作面板内容', onKeyDown: event => {
-      const current = Math.max(0, entries.findIndex(selected));
-      const index = event.key === 'ArrowRight' ? (current + 1) % entries.length : event.key === 'ArrowLeft' ? (current + entries.length - 1) % entries.length : event.key === 'Home' ? 0 : event.key === 'End' ? entries.length - 1 : -1;
-      if (index < 0) return;
-      event.preventDefault(); select(entries[index], true);
-    } }, entries.map(entry => entry.path
-      ? h('div', { key:`file:${entry.path}`, className:'cx-workbench-document-tab', role:'presentation', 'data-active':selected(entry) },
+    return h('div', { className:'cx-workbench-tab-stack', ref:rail },
+      h('nav', { className:'cx-workbench-tabs', role:'tablist', 'aria-label':'工作面板内容', onKeyDown:event=>{
+        if (event.key === 'ArrowDown' && state.active === 'files' && documents.length) {
+          event.preventDefault(); (documentTab(state.activeDocument) ?? documentTab(documents[0].path))?.focus?.(); return;
+        }
+        const current = Math.max(0, primary.findIndex(entry => entry.id === state.active));
+        const index = event.key === 'ArrowRight' ? (current + 1) % primary.length : event.key === 'ArrowLeft' ? (current + primary.length - 1) % primary.length : event.key === 'Home' ? 0 : event.key === 'End' ? primary.length - 1 : -1;
+        if (index < 0) return;
+        event.preventDefault(); select(primary[index], true);
+      } }, primary.map(entry => h('button', { key:entry.id, type:'button', role:'tab', 'data-workbench-tab':entry.id,
+        'aria-selected':selected(entry), tabIndex:selected(entry) ? 0 : -1, onClick:event=>select(entry,event.detail===0) }, entry.label))),
+      state.active === 'files' && documents.length > 0 && h('nav', { className:'cx-workbench-document-tabs', role:'tablist', 'aria-label':'已打开文件', onKeyDown:event=>{
+        if (event.key === 'ArrowUp') { event.preventDefault(); primaryTab('files')?.focus?.(); return; }
+        const current = Math.max(0, documents.findIndex(entry => entry.path === state.activeDocument));
+        const index = event.key === 'ArrowRight' ? (current + 1) % documents.length : event.key === 'ArrowLeft' ? (current + documents.length - 1) % documents.length : event.key === 'Home' ? 0 : event.key === 'End' ? documents.length - 1 : -1;
+        if (index < 0) return;
+        event.preventDefault(); select(documents[index], true);
+      } }, documents.map((entry,index) => h('div', { key:`file:${entry.path}`, className:'cx-workbench-document-tab', role:'presentation', 'data-active':selected(entry) },
         h('button', { type:'button', role:'tab', 'data-workbench-file':entry.path, title:entry.path,
-          'aria-label':`文件：${entry.path}`, 'aria-selected':selected(entry), tabIndex:selected(entry) ? 0 : -1,
+          'aria-label':`文件：${entry.path}`, 'aria-selected':selected(entry), tabIndex:selected(entry) || (state.activeDocument === null && index === 0) ? 0 : -1,
           onClick:event=>select(entry,event.detail===0) }, entry.label),
         h('button', { type:'button', className:'cx-workbench-document-close', 'aria-label':`关闭 ${entry.path}`,
           onClick:event=>{
@@ -103,9 +114,7 @@ export function createWorkbenchPane(React) {
             if (event.detail === 0 && typeof document === 'object' && document.activeElement === event.currentTarget) focusAfterClose.current = true;
             const closed = fileController?.close ? fileController.close(sessionId,entry.path) : closeDocument(sessionId,entry.path);
             if (closed === false) focusAfterClose.current = false;
-          } }, '×'))
-      : h('button', { key:entry.id, type:'button', role:'tab', 'data-workbench-tab':entry.id,
-        'aria-selected':selected(entry), tabIndex:selected(entry) ? 0 : -1, onClick:event=>select(entry,event.detail===0) }, entry.label)));
+          } }, '×')))));
   }
 
   function usePanel({ sessionId, panelRef, triggerRef, present, visible, onClose }) {
